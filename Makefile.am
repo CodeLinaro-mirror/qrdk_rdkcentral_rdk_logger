@@ -20,6 +20,9 @@
 SUBDIRS = src include utils
 DIST_SUBDIRS = cfg src include
 
+rdkscriptsdir = $(libdir)/rdk
+dist_rdkscripts_SCRIPTS = scripts/logMilestone.sh
+
 distcleancheck_listfiles = *-libtool
 sysconf_DATA= debug.ini log4crc
 
