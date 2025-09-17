@@ -20,7 +20,7 @@
 SUBDIRS = src include utils
 DIST_SUBDIRS = cfg src include
 
-rdkscriptsdir = /lib/rdk
+rdkscriptsdir = ${base_libdir}/rdk
 dist_rdkscripts_SCRIPTS = scripts/logMilestone.sh
 
 distcleancheck_listfiles = *-libtool
