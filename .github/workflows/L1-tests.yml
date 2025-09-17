@@ -87,7 +87,7 @@ jobs:
           export ac_cv_func_memset=yes
           ./configure "--prefix=${{github.workspace}}/install"
           make
-          make install
+          sudo make install
 
       - name: Build and execute L1 unittesting for rdk_logger
         run: |
