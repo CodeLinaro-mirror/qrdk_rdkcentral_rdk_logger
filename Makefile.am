@@ -34,11 +34,11 @@ package_ipk:
 	$(MAKE) prefix=${abs_top_builddir}/staging_dir install
 	$(mkdir_p) $(IPK_GEN_STAGING_DIR)/usr/lib
 	$(mkdir_p) $(IPK_GEN_STAGING_DIR)/etc
-    $(mkdir_p) $(IPK_GEN_STAGING_DIR)/lib/rdk
+	$(mkdir_p) $(IPK_GEN_STAGING_DIR)/lib/rdk
 	cp -af $(abs_top_builddir)/log4crc $(IPK_GEN_STAGING_DIR)/etc/
 	cp -af $(abs_top_builddir)/debug.ini $(IPK_GEN_STAGING_DIR)/etc/
 	cp -af $(IPK_GEN_STAGING_DIR)/lib/*.so* $(IPK_GEN_STAGING_DIR)/usr/lib/
-    ln -sf /usr/bin/rdkLogMileStone $(IPK_GEN_STAGING_DIR)/lib/rdk/logMilestone.sh
+	ln -sf /usr/bin/rdkLogMileStone $(IPK_GEN_STAGING_DIR)/lib/rdk/logMilestone.sh
 	tar -czvf $(IPK_GEN_PATH)/data.tar.gz -C $(IPK_GEN_STAGING_DIR) usr etc lib
 	tar -czvf $(IPK_GEN_PATH)/control.tar.gz -C $(IPK_GEN_PATH) control
 	cd $(IPK_GEN_PATH) && ar cr $(IPK_GEN_OUTPUT) $(IPK_GEN_INPUT) && cd -
