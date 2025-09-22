@@ -38,6 +38,7 @@ package_ipk:
 	cp -af $(abs_top_builddir)/log4crc $(IPK_GEN_STAGING_DIR)/etc/
 	cp -af $(abs_top_builddir)/debug.ini $(IPK_GEN_STAGING_DIR)/etc/
 	cp -af $(IPK_GEN_STAGING_DIR)/lib/*.so* $(IPK_GEN_STAGING_DIR)/usr/lib/
+    cp -af $(abs_top_builddir)/utils/.libs/rdkLogMileStone $(IPK_GEN_STAGING_DIR)/usr/bin/
 	ln -sf /usr/bin/rdkLogMileStone $(IPK_GEN_STAGING_DIR)/lib/rdk/logMilestone.sh
 	tar -czvf $(IPK_GEN_PATH)/data.tar.gz -C $(IPK_GEN_STAGING_DIR) usr etc lib
 	tar -czvf $(IPK_GEN_PATH)/control.tar.gz -C $(IPK_GEN_PATH) control
