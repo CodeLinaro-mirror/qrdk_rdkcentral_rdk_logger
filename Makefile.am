@@ -24,7 +24,7 @@ distcleancheck_listfiles = *-libtool
 sysconf_DATA= debug.ini log4crc
 
 install-exec-hook:
-	$(mkdir_p) $(DESTDIR)/lib/rdk
+	$(mkdir_p) $(DESTDIR)$(prefix)/lib/rdk
 	ln -sf /usr/bin/rdkLogMileStone $(DESTDIR)${base_libdir}/rdk/logMilestone.sh
 
 ### IPK_GENERATION_PACKAGE###
