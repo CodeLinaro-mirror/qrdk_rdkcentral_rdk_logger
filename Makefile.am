@@ -24,6 +24,7 @@ distcleancheck_listfiles = *-libtool
 sysconf_DATA= debug.ini log4crc
 
 install-exec-hook:
+	$(mkdir_p) $(DESTDIR)$(prefix)/usr/bin
 	$(mkdir_p) $(DESTDIR)${base_libdir}/rdk
 	ln -sf /usr/bin/rdkLogMileStone $(DESTDIR)${base_libdir}/rdk/logMilestone.sh
 
