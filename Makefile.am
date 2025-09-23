@@ -23,7 +23,7 @@ DIST_SUBDIRS = cfg src include
 distcleancheck_listfiles = *-libtool
 sysconf_DATA= debug.ini log4crc
 
-rdkscriptsdir = $(base_libdir)/rdk
+rdkscriptsdir = /lib/rdk
 
 install-exec-hook:
 	$(mkdir_p) $(DESTDIR)$(rdkscriptsdir)
