@@ -25,7 +25,7 @@ sysconf_DATA= debug.ini log4crc
 
 install-exec-hook:
 	$(mkdir_p) $(DESTDIR)$(prefix)/lib/rdk
-	ln -sf /usr/bin/rdkLogMileStone $(DESTDIR)${base_libdir}/rdk/logMilestone.sh
+	ln -sf /usr/bin/rdkLogMileStone $(DESTDIR)$(prefix)/lib/rdk/logMilestone.sh
 
 ### IPK_GENERATION_PACKAGE###
 IPK_GEN_PATH = $(abs_top_builddir)/ipk
