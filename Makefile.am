@@ -23,11 +23,9 @@ DIST_SUBDIRS = cfg src include
 distcleancheck_listfiles = *-libtool
 sysconf_DATA= debug.ini log4crc
 
-rdkscriptsdir = ${base_libdir}/rdk
-dist_rdkscripts_SCRIPTS = logMilestone.sh
-install-dist_rdkscriptsSCRIPTS:
-	$(mkdir_p) $(DESTDIR)$(rdkscriptsdir)
-	ln -sf /usr/bin/rdkLogMileStone $(DESTDIR)$(rdkscriptsdir)/logMilestone.sh
+install-exec-hook:
+	$(mkdir_p) $(DESTDIR)${base_libdir}/rdk
+	ln -sf /usr/bin/rdkLogMileStone $(DESTDIR)${base_libdir}/rdk/logMilestone.sh
 
 ### IPK_GENERATION_PACKAGE###
 IPK_GEN_PATH = $(abs_top_builddir)/ipk
