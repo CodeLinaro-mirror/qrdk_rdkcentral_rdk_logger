@@ -26,7 +26,7 @@ sysconf_DATA= debug.ini log4crc
 rdkscriptsdir = $(base_libdir)/rdk
 
 install-exec-hook:
-	$(mkdir_p) $(DESTDIR)$(rdkscriptdir)
+	$(mkdir_p) $(DESTDIR)$(rdkscriptsdir)
 	ln -sf /usr/bin/rdkLogMileStone $(DESTDIR)$(rdkscriptsdir)/logMilestone.sh
 
 ### IPK_GENERATION_PACKAGE###
