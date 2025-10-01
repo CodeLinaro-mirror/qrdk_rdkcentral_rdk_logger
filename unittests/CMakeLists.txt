@@ -21,7 +21,7 @@ project(rdk_logger_gtest)
 # Find the gtest package
 find_package(GTest REQUIRED)
 
-
+message(STATUS "PROJECT_SOURCE_DIR is: ${PROJECT_SOURCE_DIR}")
 enable_testing()
 link_directories("${DEP_LIB_PATH}/")
 
@@ -29,6 +29,7 @@ link_directories("${DEP_LIB_PATH}/")
 add_executable(
   rdk_logger_gtest
   rdkloggerInit.cpp
+  rdkloggerDeInit.cpp
   rdkloggerMsgPrintf.cpp
   rdkloggerMsgVsprintf.cpp
   rdkIsDbgEnabled.cpp
