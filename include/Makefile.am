@@ -19,4 +19,4 @@
 
 SUBDIRS = 
 librdkloggers_la_includedir = $(includedir)
-librdkloggers_la_include_HEADERS = rdk_logger.h rdk_debug.h rdk_error.h rdk_logger_types.h rdk_logger_milestone.h
+librdkloggers_la_include_HEADERS = rdk_logger.h rdk_debug.h rdk_error.h rdk_logger_types.h rdk_logger_milestone.h rdk_utils.h
