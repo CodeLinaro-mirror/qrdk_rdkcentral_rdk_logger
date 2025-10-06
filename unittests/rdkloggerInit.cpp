@@ -35,7 +35,7 @@ TEST(rdkloggerInit, DISABLED_rdkLoggerInit_with_DebugConfFile)
   ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_init failed with return:\""<<ret<<"\" "<<"config_file ini is not found";
 }
 
-TEST(rdkloggerInit, DISABLED_rdkLoggerInitDeinit_with_DebugConfFile)
+TEST(rdkloggerInit, rdkLoggerInitDeinit_with_DebugConfFile)
 {
   rdk_Error ret = RDK_SUCCESS;
   char *conf_file = NULL;
