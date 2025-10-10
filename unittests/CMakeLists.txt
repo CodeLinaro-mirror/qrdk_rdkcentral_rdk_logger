@@ -21,7 +21,6 @@ project(rdk_logger_gtest)
 # Find the gtest package
 find_package(GTest REQUIRED)
 
-
 enable_testing()
 link_directories("${DEP_LIB_PATH}/")
 
@@ -30,8 +29,14 @@ add_executable(
   rdk_logger_gtest
   rdkloggerInit.cpp
   rdkloggerMsgPrintf.cpp
+  rdkloggerMsgRaw.cpp
+  rdkloggerMsgRaw1.cpp
   rdkloggerMsgVsprintf.cpp
   rdkIsDbgEnabled.cpp
+  rdkIsDbgEnable.cpp
+  rdkDbgEnabled.cpp
+  rdkLogLevelFromString.cpp
+  rdkloggerExtInit.cpp
   main.cpp
 )
 target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini")
@@ -50,7 +55,6 @@ target_link_libraries(
   rdk_logger_gtest
   GTest::gtest_main
 )
-
 include_directories(${DEP_LIB_PATH}/../include)
 include(GoogleTest)
 gtest_discover_tests(rdk_logger_gtest)

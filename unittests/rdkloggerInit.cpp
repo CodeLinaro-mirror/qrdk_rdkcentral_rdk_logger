@@ -73,8 +73,8 @@ TEST(rdkloggerInit, rdkLoggerInit_check_enabled)
   ret = rdk_logger_is_logLevel_enabled( "LOG.RDK.ONLYERROR", RDK_LOG_ERROR);
   EXPECT_EQ(ret, TRUE)<<"rdk_logger_is_logLevel_enabled for RDK_LOG_ERROR failed with return:\""<<ret<<"\"";
 
-  //ret = rdk_logger_deinit();
-  //ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:"<<ret;
+  ret = rdk_logger_deinit();
+  ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:"<<ret;
 }
 
 TEST(rdkloggerInit, rdkLogger_ReInit_check_enabled)
