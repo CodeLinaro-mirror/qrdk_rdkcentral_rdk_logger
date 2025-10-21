@@ -119,6 +119,7 @@ void rdk_dyn_log_process_pending_request()
         tv.tv_sec = 0;
         tv.tv_usec = 0;
         ret = select(g_dl_socket+1,&rfds,NULL,NULL,&tv);
+	printf("###################### ROSE MARY , return value from select ret = %d\n",ret);
         if(ret <= 0)
             break;
 
