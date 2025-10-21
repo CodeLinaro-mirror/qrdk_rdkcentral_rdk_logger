@@ -123,5 +123,8 @@ TEST(rdkLogLevelFromString, ONLYNONE_log_level_from_string)
     rdk_err = rdk_logger_init(conf_file);
     ASSERT_EQ(rdk_err,RDK_SUCCESS)<<"rdk_logger_init failed with err:\""<<rdk_err<<"\", Could not open user configuration file:"<<conf_file;
     level = rdk_logger_level_from_string("NONE");
-    EXPECT_EQ(level, RDK_LOG_NONE)<<"rdk_logger_level_from_string failed with return:\""<<level<<"\"";     
+    EXPECT_EQ(level, RDK_LOG_NONE)<<"rdk_logger_level_from_string failed with return:\""<<level<<"\"";
+   
+     rdk_err = rdk_logger_deinit();
+  ASSERT_EQ(rdk_err,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";    
 }
