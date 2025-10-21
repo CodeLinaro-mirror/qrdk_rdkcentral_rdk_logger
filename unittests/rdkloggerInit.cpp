@@ -27,7 +27,8 @@ Test Case : Testing rdk_logger function rdk_logger_msg_printf
 
 /*DIABLED some test cases as there's a bug "https://bugzilla.redhat.com/show_bug.cgi?id=1901955" in log4c library, calling log4c_init twice causing segmentation fault, hence keeping rdk_logger_deinit()'s default changes which does not allow calling rdk_logger_init twice*/
 
-TEST(rdkloggerInit, DISABLED_rdkLoggerInit_with_DebugConfFile)
+
+TEST(rdkloggerInit, rdkLoggerInit_with_DebugConfFile)
 {
   rdk_Error ret = RDK_SUCCESS;
   char *conf_file = NULL;
