@@ -126,5 +126,5 @@ TEST(rdkLogLevelFromString, ONLYNONE_log_level_from_string)
     EXPECT_EQ(level, RDK_LOG_NONE)<<"rdk_logger_level_from_string failed with return:\""<<level<<"\"";
    
      rdk_err = rdk_logger_deinit();
-  ASSERT_EQ(rdk_err,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";    
+  ASSERT_EQ(rdk_err,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<rdk_err<<"\" "<<"DEBUG_CONF_FILE is not found";    
 }
