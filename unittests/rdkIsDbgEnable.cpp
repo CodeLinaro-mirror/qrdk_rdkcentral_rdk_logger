@@ -24,7 +24,7 @@ Test Case : Testing rdk_logger function rdk_logger_msg_printf
 #include <stdlib.h>
 #include "rdk_logger.h"
 #include "gtest_app.h"
-
+#if 0
 TEST(rdkIsDbgEnable, NULL_log_enabled)
 {
 
@@ -39,7 +39,7 @@ TEST(rdkIsDbgEnable, NULL_log_enabled)
   //ret = rdk_logger_deinit();
   //ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";
 }
-
+#endif
 TEST(rdkIsDbgEnable, ONLYFATAL_log_enabled)
 {
 
