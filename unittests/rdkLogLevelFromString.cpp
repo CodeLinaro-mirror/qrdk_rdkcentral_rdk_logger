@@ -25,6 +25,18 @@ Test Case : Testing rdk_logger function rdk_logger_msg_printf
 #include "rdk_logger.h"
 #include "gtest_app.h"
 
+TEST(rdkLogLevelFromString, NONE_log_level_from_string)
+{
+    rdk_LogLevel level = RDK_LOG_NONE;
+    rdk_Error rdk_err = RDK_SUCCESS;
+    char conf_file[] = GTEST_DEBUG_INI_FILE;
+
+    rdk_err = rdk_logger_init(conf_file);
+    ASSERT_EQ(rdk_err,RDK_SUCCESS)<<"rdk_logger_init failed with err:\""<<rdk_err<<"\", Could not open user configuration file:"<<conf_file;
+    level = rdk_logger_level_from_string(NULL);
+    EXPECT_EQ(level, RDK_LOG_FATAL)<<"rdk_logger_level_from_string failed with return:\""<<level<<"\"";
+}
+
 TEST(rdkLogLevelFromString, ONLYFATAL_log_level_from_string)
 {
     rdk_LogLevel level = RDK_LOG_NONE;
