@@ -156,7 +156,7 @@ void rdk_dyn_log_init()
         fprintf(stderr, "%s() Socket creation failed. %s\n",__func__,strerror(errno));
         return;
     }
-
+    printf("@@@@@@@@@@@@@@@@@@@ ROSE MARY BENNY gdl_socket : %d\n",gdl_socket);
     memset(&my_addr,0,sizeof(my_addr));
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(DL_PORT);
