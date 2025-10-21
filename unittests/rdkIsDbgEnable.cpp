@@ -40,6 +40,21 @@ TEST(rdkIsDbgEnable, NULL_log_enabled)
   //ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";
 }
 
+TEST(rdkIsDbgEnable, NULL_logname_log_enabled)
+{
+
+  rdk_logger_Bool ret =  TRUE;
+  rdk_Error rdk_err = RDK_SUCCESS;
+  char conf_file[] = GTEST_DEBUG_INI_FILE;
+
+  rdk_err = rdk_logger_init(conf_file);
+  ASSERT_EQ(rdk_err,RDK_SUCCESS)<<"rdk_logger_init failed with err:\""<<rdk_err<<"\", Could not open user configuration file:"<<conf_file;
+  ret = rdk_logger_enable_logLevel(NULL, 8, TRUE);
+  EXPECT_EQ(ret, FALSE)<<"rdk_logger_enabled_loglevel failed with return:\""<<ret<<"\"";
+  //ret = rdk_logger_deinit();
+  //ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";
+}
+
 TEST(rdkIsDbgEnable, ONLYFATAL_log_enabled)
 {
 
