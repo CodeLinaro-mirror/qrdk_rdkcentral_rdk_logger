@@ -24,7 +24,7 @@ Test Case : Testing rdk_logger function rdk_logger_msg_printf
 #include <stdlib.h>
 #include "rdk_logger.h"
 #include "gtest_app.h"
-#if 0
+#if 1
 TEST(rdkIsDbgEnable, NULL_log_enabled)
 {
 
