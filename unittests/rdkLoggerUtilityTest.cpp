@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <cstudio.h>
 #include "rdk_logger.h"
 #include "gtest_app.h"
 #include "rdk_logger_milestone.h"
@@ -26,7 +27,8 @@ TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Test onboard message");
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with format: %d", 123);
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with multiple args: %s %d %f", "test", 456, 3.14);
-    logMilestone("APPLICATION READY");
+    const char* testCode = "APPLICATION_READY";    
+    logMilestone(testCode);
 
     std::ifstream logFile(TEST_MILESTONE_LOG_FILE);
     ASSERT_TRUE(logFile.is_open()) << "Milestone log file not created";
