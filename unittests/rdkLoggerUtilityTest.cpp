@@ -16,12 +16,11 @@ TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
     char conf_file[] = GTEST_DEBUG_INI_FILE;	
     rdk_Error ret = rdk_logger_init(conf_file);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
-    getUptimeMS();
     // Test onboard logging
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Test onboard message");
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with format: %d", 123);
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with multiple args: %s %d %f", "test", 456, 3.14);
-
+    logMilestone("APPLICATION READY");
     // Should work correctly
 }
 
