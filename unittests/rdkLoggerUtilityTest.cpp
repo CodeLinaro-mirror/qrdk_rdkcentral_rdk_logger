@@ -39,7 +39,7 @@ TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
     EXPECT_NE(content.find(":"), std::string::npos) << "Timestamp separator missing";
 
     // Cleanup
-    remove(TEST_MILESTONE_LOG_FILE)
+    remove(TEST_MILESTONE_LOG_FILE);
  
     // Should work correctly
 }
