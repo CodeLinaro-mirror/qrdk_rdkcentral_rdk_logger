@@ -165,7 +165,6 @@ TEST(RDKLoggerDynamicTest, DynamicLogLevelChange) {
     close(sockfd);
     system("rm -f /tmp/rdk_logger_dynamic_test/test.ini");
 }
-#if 0
 // Test dynamic logger with invalid messages
 TEST(RDKLoggerDynamicTest, InvalidDynamicMessages) {
    system("mkdir -p /tmp/rdk_logger_dynamic_test");
@@ -254,6 +253,7 @@ TEST(RDKLoggerDynamicTest, DifferentModuleNames) {
     system("rm -f /tmp/rdk_logger_dynamic_test/test.ini");
 }
 
+#if 0
 // Test dynamic logger with different app names
 TEST(RDKLoggerDynamicTest, DifferentAppNames) {
    system("mkdir -p /tmp/rdk_logger_dynamic_test");
