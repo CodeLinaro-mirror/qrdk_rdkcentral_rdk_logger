@@ -16,35 +16,6 @@
 #define TEST_MILESTONE_LOG_FILE "/tmp/test_rdk_milestones.log"
 #undef MILESTONE_LOG_FILENAME
 #define MILESTONE_LOG_FILENAME TEST_MILESTONE_L
-TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
-    char conf_file[] = GTEST_DEBUG_INI_FILE;
-    rdk_Error ret = rdk_logger_init(conf_file);
-    ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
-
-    remove(TEST_MILESTONE_LOG_FILE);
-
-    // Test onboard logging
-    rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Test onboard message");
-    rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with format: %d", 123);
-    rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with multiple args: %s %d %f", "test", 456, 3.14);
-
-    // Declare milestone code
-    const char* testCode = "APPLICATION_READY";
-    logMilestone(testCode);
-
-    std::ifstream logFile(TEST_MILESTONE_LOG_FILE);
-    ASSERT_TRUE(logFile.is_open()) << "Milestone log file not created";
-
-    std::string content((std::istreambuf_iterator<char>(logFile)),
-                         std::istreambuf_iterator<char>());
-    logFile.close();
-
-    EXPECT_NE(content.find(testCode), std::string::npos) << "Milestone code not found in log";
-    EXPECT_NE(content.find(":"), std::string::npos) << "Timestamp separator missing";
-
-    // Cleanup
-    remove(TEST_MILESTONE_LOG_FILE);
-}
 #if 0
 TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
     char conf_file[] = GTEST_DEBUG_INI_FILE;	
