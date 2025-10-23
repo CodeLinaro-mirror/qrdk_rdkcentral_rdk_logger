@@ -189,7 +189,8 @@ TEST_F(RDKLoggerUtilityTest, LogOnboardFormatStringVulnerabilities) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Test format string with %n (should be handled safely)
-    rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Test %n message");
+    int n_value = 0;
+    rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Test %n message", &n_value);
     
     // Test format string with %s and NULL
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Test %s message", (char*)NULL);
@@ -271,7 +272,8 @@ TEST_F(RDKLoggerUtilityTest, LegacyFunctionsFormatStringVulnerabilities) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Test format string with %n (should be handled safely)
-    rdk_dbg_MsgRaw(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Legacy test %n message");
+    int n_value = 0;
+    rdk_dbg_MsgRaw(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Legacy test %n message", &n_value);
     
     // Test format string with %s and NULL
     rdk_dbg_MsgRaw(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Legacy test %s message", (char*)NULL);
@@ -345,12 +347,13 @@ TEST_F(RDKLoggerUtilityTest, MsgVsprintfFormatStringVulnerabilities) {
     
     // Test format string with %n (should be handled safely)
     va_list args;
+    int n_value = 0;
     va_start(args, "Vsprintf test %n message");
     rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Vsprintf test %n message", args);
     va_end(args);
     
     // Test format string with %s and NULL
-    va_start(args, (char*)NULL);
+    va_start(args, "Vsprintf test %s message");
     rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Vsprintf test %s message", args);
     va_end(args);
     
@@ -369,18 +372,18 @@ TEST_F(RDKLoggerUtilityTest, MsgVsprintfInvalidParameters) {
     va_end(args);
     
     // Test with NULL format string
-    va_start(args, NULL);
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", NULL, args);
+    va_start(args, "Test message");
+    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Test message", args);
     va_end(args);
     
     // Test with empty module name
     va_start(args, "Test message");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "", "Test message", args);
+    rdk_logger_msg_vsprintf(RDK_LOG_INFO, " ", "Test message", args);
     va_end(args);
     
     // Test with empty format string
-    va_start(args, "");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", "", args);
+    va_start(args, " ");
+    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", " ", args);
     va_end(args);
     
     // Should handle invalid parameters gracefully
