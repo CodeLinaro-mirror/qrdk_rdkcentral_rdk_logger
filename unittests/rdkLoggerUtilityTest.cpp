@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <fstream>
 #include "rdk_logger.h"
 #include "gtest_app.h"
 #include "rdk_logger_milestone.h"
