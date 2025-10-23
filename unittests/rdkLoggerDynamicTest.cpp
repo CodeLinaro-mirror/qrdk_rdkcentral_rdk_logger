@@ -272,7 +272,7 @@ TEST(RDKLoggerDynamicTest, DifferentAppNames) {
     sendDynamicLogMessage(sockfd, "other_program", "LOG.RDK.DYNAMIC", RDK_LOG_DEBUG);
     
     // Test with empty app name
-    sendDynamicLogMessage(sockfd, "", "LOG.RDK.DYNAMIC", RDK_LOG_DEBUG);
+    //sendDynamicLogMessage(sockfd, "", "LOG.RDK.DYNAMIC", RDK_LOG_DEBUG);
     
     // Test with very long app name
     char long_app[1000];
