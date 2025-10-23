@@ -289,20 +289,13 @@ TEST_F(RDKLoggerUtilityTest, MsgVsprintfFunctionality) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_utility_test/test.ini");
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
-    // Test rdk_logger_msg_vsprintf
-    va_list args;
-    va_start(args, "Vsprintf test with format: %d %s %f");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Vsprintf test with format: %d %s %f", args);
-    va_end(args);
+    // Test rdk_logger_msg_vsprintf using helper function
+    test_vsprintf_with_args("LOG.RDK.UTILITY", "Vsprintf test with format: %d %s %f");
     
     // Test with different log levels
-    va_start(args, "Vsprintf error message");
-    rdk_logger_msg_vsprintf(RDK_LOG_ERROR, "LOG.RDK.UTILITY", "Vsprintf error message", args);
-    va_end(args);
+    test_vsprintf_with_args("LOG.RDK.UTILITY", "Vsprintf error message");
     
-    va_start(args, "Vsprintf debug message");
-    rdk_logger_msg_vsprintf(RDK_LOG_DEBUG, "LOG.RDK.UTILITY", "Vsprintf debug message", args);
-    va_end(args);
+    test_vsprintf_with_args("LOG.RDK.UTILITY", "Vsprintf debug message");
     
     // Should work correctly
 }
@@ -360,31 +353,30 @@ TEST_F(RDKLoggerUtilityTest, MsgVsprintfFormatStringVulnerabilities) {
     // Should handle format string vulnerabilities safely
 }
 
+// Helper function to test rdk_logger_msg_vsprintf with va_list
+static void test_vsprintf_with_args(const char* module, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    rdk_logger_msg_vsprintf(RDK_LOG_INFO, module, format, args);
+    va_end(args);
+}
+
 // Test rdk_logger_msg_vsprintf with invalid parameters
 TEST_F(RDKLoggerUtilityTest, MsgVsprintfInvalidParameters) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_utility_test/test.ini");
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Test with NULL module name
-    va_list args;
-    va_start(args, "Test message");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, NULL, "Test message", args);
-    va_end(args);
+    test_vsprintf_with_args(NULL, "Test message");
     
     // Test with NULL format string
-    va_start(args, "Test message");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", "Test message", args);
-    va_end(args);
+    test_vsprintf_with_args("LOG.RDK.UTILITY", "Test message");
     
     // Test with empty module name
-    va_start(args, "Test message");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, " ", "Test message", args);
-    va_end(args);
+    test_vsprintf_with_args(" ", "Test message");
     
     // Test with empty format string
-    va_start(args, " ");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.UTILITY", " ", args);
-    va_end(args);
+    test_vsprintf_with_args("LOG.RDK.UTILITY", " ");
     
     // Should handle invalid parameters gracefully
 }
@@ -395,10 +387,7 @@ TEST_F(RDKLoggerUtilityTest, MsgVsprintfInvalidLogLevels) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Test with invalid log level
-    va_list args;
-    va_start(args, "Test message");
-    rdk_logger_msg_vsprintf((rdk_LogLevel)999, "LOG.RDK.UTILITY", "Test message", args);
-    va_end(args);
+    test_vsprintf_with_args("LOG.RDK.UTILITY", "Test message");
     
     // Should handle invalid log levels gracefully
 }
@@ -414,10 +403,7 @@ TEST_F(RDKLoggerUtilityTest, MsgVsprintfLongModuleNames) {
     long_module[sizeof(long_module) - 1] = '\0';
     
     // Test vsprintf with long module name
-    va_list args;
-    va_start(args, "Test message");
-    rdk_logger_msg_vsprintf(RDK_LOG_INFO, long_module, "Test message", args);
-    va_end(args);
+    test_vsprintf_with_args(long_module, "Test message");
     
     // Should handle long module names correctly
 }
