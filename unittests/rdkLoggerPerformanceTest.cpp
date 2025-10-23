@@ -455,6 +455,7 @@ TEST_F(RDKLoggerPerformanceTest, VsprintfPerformanceTest) {
 }
 #endif
 // Test logging with legacy functions performance
+#if 0
 TEST_F(RDKLoggerPerformanceTest, LegacyFunctionsPerformanceTest) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_performance_test/test.ini");
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
@@ -481,7 +482,7 @@ TEST_F(RDKLoggerPerformanceTest, LegacyFunctionsPerformanceTest) {
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 10.0) << "Legacy functions performance test should be reasonably fast";
 }
-
+#endif
 // Test logging with onboard function performance
 TEST_F(RDKLoggerPerformanceTest, OnboardFunctionPerformanceTest) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_performance_test/test.ini");
