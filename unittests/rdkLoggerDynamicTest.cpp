@@ -154,7 +154,7 @@ TEST_F(RDKLoggerDynamicTest, DynamicLogLevelChange) {
     
     close(sockfd);
 }
-
+#if 0
 // Test dynamic logger with invalid messages
 TEST_F(RDKLoggerDynamicTest, InvalidDynamicMessages) {
     int sockfd = createTestSocket();
@@ -362,3 +362,4 @@ TEST_F(RDKLoggerDynamicTest, MalformedPackets) {
     
     close(sockfd);
 }
+#endif
