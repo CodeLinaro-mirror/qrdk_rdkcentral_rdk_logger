@@ -47,8 +47,8 @@ protected:
         rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_dynamic_test/test.ini");
         ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
         
-        // Set program name for dynamic logger
-        __progname = "test_program";
+        // Note: __progname is not available on all systems, so we skip setting it
+        // The dynamic logger should work without it
     }
     
     void TearDown() override {

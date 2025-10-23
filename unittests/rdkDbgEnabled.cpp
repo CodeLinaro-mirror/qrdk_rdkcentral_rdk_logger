@@ -56,7 +56,7 @@ TEST(rdkDbgEnabled, ONLYFATAL_log_enabled)
   }
   ret = rdk_logger_enable_logLevel("LOG.RDK.ONLYFATAL", RDK_LOG_FATAL, TRUE);
   EXPECT_EQ(ret, TRUE)<<"rdk_logger_enabled_loglevel failed with return:\""<<ret<<"\"";
-  rdk_logger_msg_printf(RDK_LOG_FATAL, "LOG.RDK.ONLYFATAL", "gtest case \"%s\" %s\n",test_info_->name());
+  rdk_logger_msg_printf(RDK_LOG_FATAL, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n", test_info_->name());
   ret = rdk_logger_is_logLevel_enabled( "LOG.RDK.ONLYFATAL", RDK_LOG_FATAL);
   rdk_logger_msg_printf(RDK_LOG_FATAL, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
 #if 0
