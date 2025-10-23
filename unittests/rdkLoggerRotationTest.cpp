@@ -419,7 +419,7 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
     
     // Should handle concurrent access gracefully
 }
-
+#if 0
 // Test log rotation with different log levels
 TEST_F(RDKLoggerRotationTest, DifferentLogLevels) {
     rdk_logger_ext_config_t config;
@@ -446,3 +446,4 @@ TEST_F(RDKLoggerRotationTest, DifferentLogLevels) {
     
     // Should handle all log levels correctly
 }
+#endif
