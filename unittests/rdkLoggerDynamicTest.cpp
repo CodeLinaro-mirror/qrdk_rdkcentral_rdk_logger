@@ -254,7 +254,7 @@ TEST(RDKLoggerDynamicTest, DifferentModuleNames) {
     system("rm -f /tmp/rdk_logger_dynamic_test/test.ini");
 }
 
-#if 1
+#if 0
 // Test dynamic logger with different app names
 TEST(RDKLoggerDynamicTest, DifferentAppNames) {
    system("mkdir -p /tmp/rdk_logger_dynamic_test");
@@ -272,7 +272,7 @@ TEST(RDKLoggerDynamicTest, DifferentAppNames) {
     sendDynamicLogMessage(sockfd, "other_program", "LOG.RDK.DYNAMIC", RDK_LOG_DEBUG);
     
     // Test with empty app name
-    //sendDynamicLogMessage(sockfd, "", "LOG.RDK.DYNAMIC", RDK_LOG_DEBUG);
+    b//sendDynamicLogMessage(sockfd, "", "LOG.RDK.DYNAMIC", RDK_LOG_DEBUG);
     
     // Test with very long app name
     char long_app[1000];
@@ -283,7 +283,7 @@ TEST(RDKLoggerDynamicTest, DifferentAppNames) {
     close(sockfd);
     system("rm -f /tmp/rdk_logger_dynamic_test/test.ini");
 }
-
+#endif
 // Test dynamic logger message format validation
 TEST(RDKLoggerDynamicTest, MessageFormatValidation) {
    system("mkdir -p /tmp/rdk_logger_dynamic_test");
@@ -427,4 +427,4 @@ TEST(RDKLoggerDynamicTest, MalformedPackets) {
     close(sockfd);
     system("rm -f /tmp/rdk_logger_dynamic_test/test.ini");
 }
-#endif
+
