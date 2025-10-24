@@ -157,14 +157,14 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
     config.logdir[sizeof(config.logdir) - 1] = '\0';
     
-    config.maxSize = 256;   // 256 bytes max size
+    config.maxSize = 512;   // 256 bytes max size
     config.maxCount = 2;    // Keep only 2 files
     
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
     
     // Generate many log messages to trigger multiple rotations
-    char large_message[100];
+    char large_message[500];
     createLargeLogMessage(large_message, sizeof(large_message));
     
     for (int i = 0; i < 20; i++) {
