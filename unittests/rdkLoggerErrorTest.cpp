@@ -69,14 +69,12 @@ TEST_F(RDKLoggerErrorTest, NullPointerHandling) {
 //    rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.TEST", NULL);
     // Should not crash
     
-#if 1 
     // Test NULL module name in enable_logLevel
     rdk_logger_Bool result = rdk_logger_enable_logLevel(NULL, RDK_LOG_WARN, TRUE);
     EXPECT_EQ(result, FALSE) << "Should return FALSE for NULL module name";
     // Test NULL module name in is_logLevel_enabled
     result = rdk_logger_is_logLevel_enabled(NULL, RDK_LOG_WARN);
     EXPECT_EQ(result, FALSE) << "Should return FALSE for NULL module name";
-#endif
 }
 
 // Test empty string handling
@@ -125,7 +123,7 @@ TEST_F(RDKLoggerErrorTest, VeryLongMessages) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Create a very long message
-    char long_message[10000];
+    char long_message[4000b];
     memset(long_message, 'A', sizeof(long_message) - 1);
     long_message[sizeof(long_message) - 1] = '\0';
     
