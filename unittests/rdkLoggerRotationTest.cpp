@@ -148,20 +148,26 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     EXPECT_GT(file_count, 1) << "Rotation should have created multiple files";
 }
 #endif
+
 TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     system("rm -rf /tmp/rdk_logger_rotation_test");
     system("mkdir -p /tmp/rdk_logger_rotation_test");
 
-    createTestConfigFile("/tmp/rdk_logger_rotation_test/test.ini", 
-        "[LOG.RDK.ROTATION]\n"
-        "enabled=true\n"
-        "logfile=/tmp/rdk_logger_rotation_test/size_test.log\n"
-        "maxsize=512\n"
-        "maxfiles=5\n"
-        "level=DEBUG\n");
+    rdk_logger_ext_config_t config;
+    strncpy(config.fileName, "size_test.log", sizeof(config.fileName) - 1);
+    config.fileName[sizeof(config.fileName) - 1] = '\0';
 
-    rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_rotation_test/test.ini");
-    ASSERT_EQ(ret, RDK_SUCCESS) << "Logger initialization with INI should succeed";
+    strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
+    config.logdir[sizeof(config.logdir) - 1] = '\0';
+
+    config.maxSize = 512;
+    config.maxCount = 5;
+
+    rdk_Error ret = rdk_logger_ext_init(&config);
+    ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
+
+    // Enable the module
+    rdk_logger_enable_logLevel("LOG.RDK.ROTATION", RDK_LOG_DEBUG, TRUE);
 
     char large_message[480];
     createLargeLogMessage(large_message, sizeof(large_message));
@@ -176,7 +182,6 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     int file_count = countFilesInDirectory("/tmp/rdk_logger_rotation_test");
     EXPECT_GT(file_count, 1) << "Rotation should have created multiple files";
 }
-
 // Test log rotation with count limits
 TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     rdk_logger_ext_config_t config;
