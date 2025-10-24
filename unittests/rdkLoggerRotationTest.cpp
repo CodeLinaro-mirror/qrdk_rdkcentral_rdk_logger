@@ -137,7 +137,7 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     // Generate large messages
     char large_message[200];
     rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Starting log loop");
-    createLargeLogMessage(large_message, sizeof(large_message));
+    //createLargeLogMessage(large_message, sizeof(large_message));
 
     //for (int i = 0; i < 10; i++) {
       //  rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
