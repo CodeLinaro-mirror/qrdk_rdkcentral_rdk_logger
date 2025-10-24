@@ -242,7 +242,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     createLargeLogMessage(large_message, sizeof(large_message));
     
     for (int i = 0; i < 10; i++) {
-        rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
+        rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
     }
     
     // Check that only maxCount files exist
