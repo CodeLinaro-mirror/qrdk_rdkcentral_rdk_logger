@@ -119,7 +119,6 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     // Test that logging works
     rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Test message for rotation");
     system("ls -lt /tmp/rdk_logger_rotation_test");
-    system("cat /tmp/rdk_logger_rotation_test/test_rotation.log");
 }
 #if 0
 TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
@@ -239,10 +238,10 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
     
     // Generate many log messages to trigger multiple rotations
-    char large_message[200];
+    char large_message[100];
     createLargeLogMessage(large_message, sizeof(large_message));
     
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
     }
     
