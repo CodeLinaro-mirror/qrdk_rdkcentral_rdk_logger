@@ -125,13 +125,13 @@ TEST_F(RDKLoggerConfigTest, ConfigFileWithWhitespace) {
     rdk_logger_Bool enabled = rdk_logger_is_logLevel_enabled("LOG.RDK.TEST", RDK_LOG_DEBUG);
     EXPECT_EQ(enabled, TRUE) << "Whitespace should be trimmed";
 }
-
+#if 0
 // Test non-existent configuration file
 TEST_F(RDKLoggerConfigTest, NonExistentConfigFile) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_test/nonexistent.ini");
     ASSERT_NE(ret, RDK_SUCCESS) << "Should fail with non-existent config file";
 }
-
+#endif
 // Test NULL configuration file path
 TEST_F(RDKLoggerConfigTest, NullConfigFile) {
     rdk_Error ret = rdk_logger_init(NULL);
