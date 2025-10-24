@@ -118,7 +118,6 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     
     // Test that logging works
     rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Test message for rotation");
-    system("ls -lt /tmp/rdk_logger_rotation_test");
 }
 #if 0
 TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
@@ -224,6 +223,7 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
 #endif
 // Test log rotation with count limits
 TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
+    touch("/tmp/rdk_logger_rotation_test/count_test.log");	
     rdk_logger_ext_config_t config;
     strncpy(config.fileName, "count_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
@@ -248,7 +248,6 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     // Check that only maxCount files exist
     int file_count = countFilesInDirectory("/tmp/rdk_logger_rotation_test");
     printf("file_count : %d\n",file_count);
-    system("ls -lt /tmp/rdk_logger_rotation_test");
     EXPECT_LE(file_count, config.maxCount + 1) << "Should not exceed maxCount files";
 }
 #if 0
