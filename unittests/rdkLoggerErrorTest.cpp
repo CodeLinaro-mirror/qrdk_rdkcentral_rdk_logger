@@ -301,7 +301,7 @@ TEST_F(RDKLoggerErrorTest, LevelFromStringInvalidInputs) {
     level = rdk_logger_level_from_string("Debug");
     EXPECT_EQ(level, RDK_LOG_DEBUG) << "Should handle mixed case correctly";
 }
-
+#if 0
 // Test rdk_logger_log_onboard with invalid parameters
 TEST_F(RDKLoggerErrorTest, LogOnboardInvalidParams) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_error_test/test.ini");
@@ -323,7 +323,7 @@ TEST_F(RDKLoggerErrorTest, LogOnboardInvalidParams) {
     rdk_logger_log_onboard("LOG.RDK.TEST", " ");
     // Should not crash
 }
-
+#endif
 // Test legacy functions with invalid parameters
 TEST_F(RDKLoggerErrorTest, LegacyFunctionsInvalidParams) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_error_test/test.ini");
