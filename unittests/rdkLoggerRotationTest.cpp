@@ -40,7 +40,7 @@ protected:
         
         // Create test configuration file
         createTestConfigFile("/tmp/rdk_logger_rotation_test/test.ini", 
-            "LOG.RDK.DEFAULT=INFO\n"
+            "LOG.RDK.DEFAULT=WARN\n"
             "LOG.RDK.ROTATION=DEBUG\n");
     }
     
@@ -118,7 +118,7 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     // Test that logging works
     rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Test message for rotation");
 }
-#if 0
+#if 1
 // Test log rotation with size limits
 TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     system("mkdir -p /tmp/rdk_logger_rotation_test");	
@@ -140,14 +140,15 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     createLargeLogMessage(large_message, sizeof(large_message));
     
     for (int i = 0; i < 20; i++) {
-        rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
+        rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
     }
     
     // Check that rotation occurred
     int file_count = countFilesInDirectory("/tmp/rdk_logger_rotation_test");
     EXPECT_GT(file_count, 1) << "Rotation should have created multiple files";
 }
-
+#endif
+#if 0
 TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     system("rm -rf /tmp/rdk_logger_rotation_test");
     system("mkdir -p /tmp/rdk_logger_rotation_test");
