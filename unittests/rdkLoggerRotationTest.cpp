@@ -103,6 +103,7 @@ protected:
 // Test extended initialization with log rotation
 TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     rdk_logger_ext_config_t config;
+    system("touch /tmp/rdk_logger_rotation_test/test_rotation.log");
     strncpy(config.fileName, "test_rotation.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
