@@ -134,7 +134,6 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
 
     // Enable the module
     ASSERT_EQ(rdk_logger_enable_logLevel("LOG.RDK.ROTATION", RDK_LOG_WARN, TRUE), TRUE);
-#if 0
     // Generate large messages
     char large_message[200];
     createLargeLogMessage(large_message, sizeof(large_message));
@@ -143,6 +142,7 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
         rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
     }
 
+#if 0
     // Check that log file was created
     ASSERT_GT(getFileSize("/tmp/rdk_logger_rotation_test/size_test.log"), 0)
         << "Log file was not created or is empty";
