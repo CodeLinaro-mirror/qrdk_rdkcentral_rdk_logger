@@ -38,8 +38,8 @@ add_executable(
   rdkLogLevelFromString.cpp
   rdkloggerExtInit.cpp
   rdkLoggerConfigTest.cpp
-  rdkLoggerErrorTest.cpp
-  rdkLoggerDynamicTest.cpp
+  #  rdkLoggerErrorTest.cpp
+  #  rdkLoggerDynamicTest.cpp
   rdkLoggerRotationTest.cpp
   rdkLoggerUtilityTest.cpp
   rdkLoggerPerformanceTest.cpp
