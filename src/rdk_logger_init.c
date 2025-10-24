@@ -57,7 +57,6 @@ static int isLogInited = 0;
 rdk_Error rdk_logger_init(const char* debugConfigFile)
 {
     rdk_Error ret;
-    printf("@@@@@@@@@@ ROSE MARY BENNY isLogInited %d\n",isLogInited);
     if (0 == isLogInited)
     {
         if (NULL == debugConfigFile)
