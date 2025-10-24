@@ -152,7 +152,7 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
 TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     system("rm -rf /tmp/rdk_logger_rotation_test");
     system("mkdir -p /tmp/rdk_logger_rotation_test");
-
+    system("cd /tmp/rdk_logger_rotation_test");
     rdk_logger_ext_config_t config;
     strncpy(config.fileName, "size_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
