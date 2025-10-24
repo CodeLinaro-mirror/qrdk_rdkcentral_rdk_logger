@@ -76,6 +76,7 @@ protected:
         struct dirent* entry;
         while ((entry = readdir(dir)) != NULL) {
             if (entry->d_name[0] != '.') {
+	        printf("Found file: %s\n", entry->d_name);	    
                 count++;
             }
         }
@@ -135,10 +136,10 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
     
     // Generate enough log messages to trigger rotation
-    char large_message[200];
+    char large_message[480];
     createLargeLogMessage(large_message, sizeof(large_message));
     
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
     }
     
