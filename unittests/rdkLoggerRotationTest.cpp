@@ -118,6 +118,7 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     
     // Test that logging works
     rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Test message for rotation");
+    system("ls -lt /tmp/rdk_logger_rotation_test");
     system("cat /tmp/rdk_logger_rotation_test/test_rotation.log");
 }
 #if 0
