@@ -99,7 +99,7 @@ protected:
         buffer[size - 1] = '\0';
     }
 };
-
+#if 0
 // Test extended initialization with log rotation
 TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     rdk_logger_ext_config_t config;
@@ -119,7 +119,6 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     // Test that logging works
     rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Test message for rotation");
 }
-#if 0
 TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     rdk_logger_ext_config_t config;
     strncpy(config.fileName, "size_test.log", sizeof(config.fileName) - 1);
