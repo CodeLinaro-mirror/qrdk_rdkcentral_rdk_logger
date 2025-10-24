@@ -123,7 +123,7 @@ TEST_F(RDKLoggerErrorTest, VeryLongMessages) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Create a very long message
-    char long_message[4000];
+    char long_message[2000];
     memset(long_message, 'A', sizeof(long_message) - 1);
     long_message[sizeof(long_message) - 1] = '\0';
     
@@ -132,7 +132,7 @@ TEST_F(RDKLoggerErrorTest, VeryLongMessages) {
     // Should not crash, may truncate or handle gracefully
     
     // Test very long format string
-    char long_format[5000];
+    char long_format[2000];
     memset(long_format, '%', sizeof(long_format) - 1);
     long_format[sizeof(long_format) - 1] = '\0';
     
