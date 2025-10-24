@@ -138,12 +138,12 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     char large_message[200];
     createLargeLogMessage(large_message, sizeof(large_message));
 
-#if 0
     for (int i = 0; i < 10; i++) {
         rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
     }
 
     // Check that log file was created
+#if 0
     ASSERT_GT(getFileSize("/tmp/rdk_logger_rotation_test/size_test.log"), 0)
         << "Log file was not created or is empty";
 
