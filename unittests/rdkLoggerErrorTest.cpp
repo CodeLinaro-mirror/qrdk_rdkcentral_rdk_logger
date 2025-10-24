@@ -57,7 +57,8 @@ protected:
 
 // Test NULL pointer handling in logging functions
 TEST_F(RDKLoggerErrorTest, NullPointerHandling) {
-    rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_error_test/test.ini");
+    char conf_file[] = GTEST_DEBUG_INI_FILE;	
+    rdk_Error ret = rdk_logger_init(conf_file);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Test NULL module name
@@ -65,15 +66,15 @@ TEST_F(RDKLoggerErrorTest, NullPointerHandling) {
     // Should not crash, but may not log anything
     
     // Test NULL format string
-    rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.TEST", NULL);
+    rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.TEST", NULL);
     // Should not crash
     
     // Test NULL module name in enable_logLevel
-    rdk_logger_Bool result = rdk_logger_enable_logLevel(NULL, RDK_LOG_INFO, TRUE);
+    rdk_logger_Bool result = rdk_logger_enable_logLevel(NULL, RDK_LOG_WARN, TRUE);
     EXPECT_EQ(result, FALSE) << "Should return FALSE for NULL module name";
     
     // Test NULL module name in is_logLevel_enabled
-    result = rdk_logger_is_logLevel_enabled(NULL, RDK_LOG_INFO);
+    result = rdk_logger_is_logLevel_enabled(NULL, RDK_LOG_WARN);
     EXPECT_EQ(result, FALSE) << "Should return FALSE for NULL module name";
 }
 
@@ -83,11 +84,11 @@ TEST_F(RDKLoggerErrorTest, EmptyStringHandling) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
     // Test empty module name
-    rdk_logger_msg_printf(RDK_LOG_INFO, " ", "Test message");
+    rdk_logger_msg_printf(RDK_LOG_WARN, " ", "Test message");
     // Should not crash
     
     // Test empty format string
-    rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.TEST", " ");
+    rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.TEST", " ");
     // Should not crash
     
     // Test empty module name in enable_logLevel
