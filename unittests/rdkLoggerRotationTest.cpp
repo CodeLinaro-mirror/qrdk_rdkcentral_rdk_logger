@@ -223,7 +223,7 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
 #endif
 // Test log rotation with count limits
 TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
-    touch("/tmp/rdk_logger_rotation_test/count_test.log");	
+    system("touch /tmp/rdk_logger_rotation_test/count_test.log");	
     rdk_logger_ext_config_t config;
     strncpy(config.fileName, "count_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
