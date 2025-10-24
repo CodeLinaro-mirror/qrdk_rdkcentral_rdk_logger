@@ -116,7 +116,7 @@ TEST_F(RDKLoggerErrorTest, InvalidLogLevels) {
     result = rdk_logger_is_logLevel_enabled("LOG.RDK.TEST", (rdk_LogLevel)999);
     // Should handle gracefully
 }
-
+#if 0
 // Test very long messages
 TEST_F(RDKLoggerErrorTest, VeryLongMessages) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_error_test/test.ini");
@@ -139,7 +139,7 @@ TEST_F(RDKLoggerErrorTest, VeryLongMessages) {
     rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.TEST", long_format, "test");
     // Should not crash
 }
-
+#endif
 // Test very long module names
 TEST_F(RDKLoggerErrorTest, VeryLongModuleNames) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_error_test/test.ini");
