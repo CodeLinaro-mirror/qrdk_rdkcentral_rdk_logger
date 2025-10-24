@@ -239,7 +239,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     
     // Generate many log messages to trigger multiple rotations
     char large_message[100];
-   // createLargeLogMessage(large_message, sizeof(large_message));
+    createLargeLogMessage(large_message, sizeof(large_message));
     
     //for (int i = 0; i < 2; i++) {
       //  rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
