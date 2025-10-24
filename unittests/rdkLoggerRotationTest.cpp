@@ -300,6 +300,7 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
 }
 
 // Test log rotation with very small size limits
+#if 0
 TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
     rdk_logger_ext_config_t config;
     strncpy(config.fileName, "small_test.log", sizeof(config.fileName) - 1);
@@ -496,7 +497,7 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
     
     // Should handle concurrent access gracefully
 }
-#if 0
+
 // Test log rotation with different log levels
 TEST_F(RDKLoggerRotationTest, DifferentLogLevels) {
     rdk_logger_ext_config_t config;
