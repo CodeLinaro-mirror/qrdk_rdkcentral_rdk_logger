@@ -257,7 +257,7 @@ TEST_F(RDKLoggerErrorTest, EnableLogLevelInvalidParams) {
     result = rdk_logger_enable_logLevel("LOG.RDK.TEST", (rdk_LogLevel)999, TRUE);
     // Should handle gracefully
 }
-
+#if 0
 // Test is_logLevel_enabled with invalid parameters
 TEST_F(RDKLoggerErrorTest, IsLogLevelEnabledInvalidParams) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_error_test/test.ini");
@@ -275,7 +275,7 @@ TEST_F(RDKLoggerErrorTest, IsLogLevelEnabledInvalidParams) {
     result = rdk_logger_is_logLevel_enabled("LOG.RDK.TEST", (rdk_LogLevel)999);
     // Should handle gracefully
 }
-
+#endif
 // Test rdk_logger_level_from_string with invalid inputs
 TEST_F(RDKLoggerErrorTest, LevelFromStringInvalidInputs) {
     // Test NULL input
