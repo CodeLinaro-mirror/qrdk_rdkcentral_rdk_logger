@@ -3,8 +3,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <cstdlib>
-#include "rdk_dynamic_logger.h"
 #include "rdk_logger.h"
+#include "../include/rdk_dynamic_logger.h"
 #include "gtest_app.h"
 
 // Thread function to invoke rdklogctrl client via system command
