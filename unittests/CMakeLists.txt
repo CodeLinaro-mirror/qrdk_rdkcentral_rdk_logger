@@ -25,8 +25,8 @@ enable_testing()
 
 link_directories("${DEP_LIB_PATH}/")
 
-#set(RDKLOGCTRL_PATH "/usr/bin/install/rdklogctrl")
-#add_definitions(-DRDKLOGCTRL_PATH="${RDKLOGCTRL_PATH}")
+set(RDKLOGCTRL_PATH "/usr/bin/install/rdklogctrl")
+add_definitions(-DRDKLOGCTRL_PATH="${RDKLOGCTRL_PATH}")
 
 # Add the test executable
 add_executable(
