@@ -88,8 +88,8 @@ jobs:
           export ac_cv_func_memset=yes
            # Enable coverage flags if applicable
           if [ "${{matrix.coverage}}" = "with-coverage" ]; then
-            export CFLAGS="--coverage"
-            export CXXFLAGS="--coverage"
+            export CFLAGS="-DLOGMILESTONE=ON -DONBOARDING_FILE=ON  --coverage"
+            export CXXFLAGS="-DLOGMILESTONE=ON -DONBOARDING_FILE=ON --coverage"
             export LDFLAGS="--coverage"
           fi
           ./configure "--prefix=${{github.workspace}}/install"
@@ -98,11 +98,15 @@ jobs:
 
       - name: Build and execute L1 unittesting for rdk_logger
         run: |
+          mkdir -p /opt/logs
+          sudo touch /opt/logs/rdk_milestones.log
+          sudo chmod 666 /opt/logs/rdk_milestones.log
           mkdir -p ${{env.RDKLOGGER_ROOT}}/unittests
           UNITTESTS="${{env.RDKLOGGER_ROOT}}/unittests"
+          cp ${{github.workspace}}/install/bin/rdklogctrl ${UNITTESTS}/
           cd ${UNITTESTS}
           if [ "${{matrix.coverage}}" = "with-coverage" ]; then
-             cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr  -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage"
+             cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr  -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage -DLOGMILESTONE=ON"
           else
              cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON
           fi

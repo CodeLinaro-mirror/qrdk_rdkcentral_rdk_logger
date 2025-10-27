@@ -25,15 +25,28 @@ find_package(GTest REQUIRED)
 enable_testing()
 link_directories("${DEP_LIB_PATH}/")
 
+
 # Add the test executable
 add_executable(
   rdk_logger_gtest
   rdkloggerInit.cpp
   rdkloggerMsgPrintf.cpp
   rdkloggerMsgVsprintf.cpp
+  rdkloggerMsgRaw.cpp
+  rdkloggerMsgRaw1.cpp
   rdkIsDbgEnabled.cpp
+  rdkLoggerDynamic.cpp
+  rdkLoggerUtilityTest.cpp
+  rdkLoggerConfigTest.cpp
+  rdkEnableLogLevel.cpp
+  rdkLogLevelFromString.cpp
+  rdkLoggerRotationTest.cpp
+  rdkLoggerErrorTest.cpp
+  rdkLoggerPerformanceTest.cpp
+  rdkLoggerStreamEnvTest.cpp
   main.cpp
 )
+add_compile_definitions(LOGMILESTONE=ON)
 target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini")
 
 

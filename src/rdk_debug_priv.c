@@ -366,7 +366,6 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
 
     /* Handling process request here. This is not a blocking call and it shall return immediately */
     rdk_dyn_log_process_pending_request();
-
     cat = log4c_category_get(module_name);
     prio = log4c_category_get_priority(cat);
     if (cat && prio == LOG4C_PRIORITY_NOTSET && gRootCat) {

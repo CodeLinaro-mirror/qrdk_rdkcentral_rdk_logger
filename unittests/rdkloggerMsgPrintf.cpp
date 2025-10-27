@@ -129,6 +129,8 @@ TEST(rdkloggerMsgPrintf, logModule_ONLYNOTICE_output_to_file)
   rdk_logger_msg_printf (RDK_LOG_DEBUG, "LOG.RDK.ONLYNOTICE", "gtest case \"%s\"\n",test_info_->name());
   rdk_logger_msg_printf (RDK_LOG_INFO, "LOG.RDK.ONLYNOTICE", "gtest case \"%s\"\n",test_info_->name());
   rdk_logger_msg_printf (RDK_LOG_TRACE, "LOG.RDK.ONLYNOTICE", "gtest case \"%s\"\n",test_info_->name());
+  rdk_logger_msg_printf (RDK_LOG_NONE, "LOG.RDK.ONLYNOTICE", "gtest case \"%s\"\n",test_info_->name());
+  rdk_logger_msg_printf (RDK_LOG_NONE, NULL, "gtest case \"%s\"\n",test_info_->name());
   //ret = rdk_logger_deinit();
   //ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";
 }
