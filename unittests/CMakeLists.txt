@@ -31,6 +31,7 @@ add_executable(
   rdkloggerInit.cpp
   rdkloggerMsgPrintf.cpp
   rdkloggerMsgVsprintf.cpp
+  rdkloggerMsgRaw.cpp
   rdkIsDbgEnabled.cpp
   rdkLoggerDynamic.cpp
   rdkLoggerUtilityTest.cpp
