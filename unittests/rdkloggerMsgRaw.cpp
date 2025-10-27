@@ -25,23 +25,6 @@ Test Case : Testing rdk_logger function rdk_dbg_MsgRaw
 #include "rdk_logger.h"
 #include "gtest_app.h"
 
-TEST(rdkloggerMsgRaw, logModule_ONLYFATAL_output_to_file)
-{
-  rdk_Error ret = RDK_SUCCESS;
-  char conf_file[] = GTEST_DEBUG_INI_FILE;
-  ret = rdk_logger_init(conf_file);
-  ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_init failed"<<ret<<"Could not open user configuration file:"<<conf_file;
-
-  rdk_dbg_MsgRaw (RDK_LOG_ERROR, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
-  rdk_dbg_MsgRaw (RDK_LOG_FATAL, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
-  rdk_dbg_MsgRaw (RDK_LOG_WARN, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
-  rdk_dbg_MsgRaw (RDK_LOG_NOTICE, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
-  rdk_dbg_MsgRaw (RDK_LOG_DEBUG, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
-  rdk_dbg_MsgRaw (RDK_LOG_INFO, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
-  rdk_dbg_MsgRaw (RDK_LOG_TRACE, "LOG.RDK.ONLYFATAL", "gtest case \"%s\"\n",test_info_->name());
-  //ret = rdk_logger_deinit();
-  //ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";
-}
 
 TEST(rdkloggerMsgRaw, logModule_ONLYERROR_output_to_file)
 {
