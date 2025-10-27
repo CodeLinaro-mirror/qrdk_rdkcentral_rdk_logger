@@ -215,14 +215,6 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     {
         snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
     }
-    /*if (appender_type == Stdout &&
-        (strcmp(log_file_name, "stdout") == 0 || strcmp(log_file_name, "stderr") == 0)) 
-    {
-        strncpy(fullpath, log_file_name, sizeof(fullpath)-1);
-        fullpath[sizeof(fullpath)-1] = '\0';
-    } else {
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
-    }*/
 
     const char* cat_name = "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(cat_name);
@@ -271,47 +263,6 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
 
     set_default_log_level(cat_name, log_level);
     printf("Current priority: %d\n", log4c_category_get_priority(cat));
-}
-
-void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize)
-{
-    char fullpath[512];
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
-
-    const char* cat_name = "LOG.RDK";
-    log4c_category_t* cat = log4c_category_get(cat_name);
-    if (!cat) {
-        cat = log4c_category_new(cat_name);
-    }
-
-    log4c_appender_t* app = log4c_appender_get(fullpath);
-    if (!app) {
-        app = log4c_appender_new(fullpath);
-    }
-    log4c_appender_set_type(app, log4c_appender_type_get("rollingfile"));
-
-    rollingfile_udata_t *rudata = rollingfile_make_udata();
-    rollingfile_udata_set_logdir(rudata, logdir);
-    rollingfile_udata_set_files_prefix(rudata, log_file_name);
-
-    log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
-    if (!policy) {
-        policy = log4c_rollingpolicy_new(cat_name);
-    }
-    log4c_rollingpolicy_set_type(policy, log4c_rollingpolicy_type_get("sizewin"));
-
-    rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
-    sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
-    sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
-    log4c_rollingpolicy_set_udata(policy, sizewin_udata);
-
-    rollingfile_udata_set_policy(rudata, policy);
-    log4c_appender_set_udata(app, rudata);
-
-    log4c_layout_t* layout = log4c_layout_get("comcast_dated");
-    log4c_appender_set_layout(app, layout);
-
-    log4c_category_set_appender(cat, app);
 }
 
 void rdk_dbg_priv_deinit()
