@@ -22,14 +22,15 @@ project(rdk_logger_gtest)
 find_package(GTest REQUIRED)
 
 enable_testing()
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
 link_directories("${DEP_LIB_PATH}/")
+
+set(RDKLOGCTRL_PATH "/usr/bin/install/rdklogctrl")
+add_definitions(-DRDKLOGCTRL_PATH="${RDKLOGCTRL_PATH}")
 
 # Add the test executable
 add_executable(
   rdk_logger_gtest
-  ../utils/rdklogctrl.c
   rdkLoggerDynamic.cpp
   rdkloggerInit.cpp
   rdkloggerMsgPrintf.cpp
