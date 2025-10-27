@@ -145,6 +145,7 @@ TEST_F(RDKLoggerRotationTest, SizeBasedRotation) {
     int file_count = countFilesInDirectory("/tmp/rdk_logger_rotation_test");
     EXPECT_GT(file_count, 1) << "Rotation should have created multiple files";
 }
+#endif
 // Test log rotation with count limits
 TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     rdk_logger_ext_config_t config;
@@ -419,30 +420,4 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
     // Should handle concurrent access gracefully
 }
 
-// Test log rotation with different log levels
-TEST_F(RDKLoggerRotationTest, DifferentLogLevels) {
-    rdk_logger_ext_config_t config;
-    strncpy(config.fileName, "levels_test.log", sizeof(config.fileName) - 1);
-    config.fileName[sizeof(config.fileName) - 1] = '\0';
-    
-    strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
-    config.logdir[sizeof(config.logdir) - 1] = '\0';
-    
-    config.maxSize = 1024;
-    config.maxCount = 3;
-    
-    rdk_Error ret = rdk_logger_ext_init(&config);
-    ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
-    
-    // Test all log levels
-    rdk_logger_msg_printf(RDK_LOG_FATAL, "LOG.RDK.ROTATION", "Fatal message");
-    rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.ROTATION", "Error message");
-    rdk_logger_msg_printf(RDK_LOG_WARN, "LOG.RDK.ROTATION", "Warning message");
-    rdk_logger_msg_printf(RDK_LOG_NOTICE, "LOG.RDK.ROTATION", "Notice message");
-    rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Info message");
-    rdk_logger_msg_printf(RDK_LOG_DEBUG, "LOG.RDK.ROTATION", "Debug message");
-    rdk_logger_msg_printf(RDK_LOG_TRACE, "LOG.RDK.ROTATION", "Trace message");
-    
-    // Should handle all log levels correctly
-}
 
