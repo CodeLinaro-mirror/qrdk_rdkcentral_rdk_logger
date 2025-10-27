@@ -28,7 +28,7 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem) {
     usleep(500000); // 0.5 seconds
 
     // Log a message using the high-level API, which will exercise dynamic logger code
-    rdk_logger_msg_printf("LOG.RDK.TESTMOD", "ERROR", "Test message for dynamic logger\n");
+    rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.TESTMOD", "Test message for dynamic logger\n");
 
     // Clean up
     pthread_join(client_thread, nullptr);
