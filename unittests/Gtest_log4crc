@@ -1,170 +1,39 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!--
- If not stated otherwise in this file or this component's LICENSE file the
- following copyright and licenses apply:
-
- Copyright 2016 RDK Management
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
--->
-
-<!DOCTYPE log4c SYSTEM "">
-
 <log4c>
 
     <config>
+
         <bufsize>0</bufsize>
+
         <debug level="0"/>
+
         <nocleanup>0</nocleanup>
+
         <reread>0</reread>
+
     </config>
 
-    <!-- 
+    <!--
+
         Layouts
-         We have created custom layouts for both "basic" and "dated" formats 
-         that have no carriage returns.  All log statements must have their 
+
+         We have created custom layouts for both "basic" and "dated" formats
+
+         that have no carriage returns.  All log statements must have their
+
          own carriage returns, if desired.
+
          Listed below are the available layouts.
+
     -->
+
     <layout name="basic" type="basic_nocr"/>
+
     <layout name="dated" type="dated_nocr"/>
+
     <layout name="comcast_dated" type="comcast_dated_nocr"/>
 
-    <!-- 
-        Appenders
-         Only use the appenders explicitly listed below for our file/stdout/
-         stderr appenders.  This new appender has an explicit fflush() command 
-         for each log that will ensure that stdout/stderr messages are output 
-         to the screen immediately
-
-         stream_env - file or stdout/stderr with env var replacement
-
-         stream_env_append - same as stream_env, but appends to file instead
-                   of overwrite
-
-         stream_env_plus_stdout - same as stream_env, with all messages 
-                   written to stdout as well
-
-         stream_env_append_plus_stdout - save stream_env_plus_stdout, but 
-                   appends file instead of overwrite
-
-         socket_env - TCP/IP socket
-    -->
-
-  
-    <rollingpolicy name="Gtest_rollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYFATALrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYERRORrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYWARNINGrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYINFOrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYDEBUGrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYNOTICErollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYTRACErollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ONLYALLrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-
-    <rollingpolicy name="Gtest_NODEBUGrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_NOTRACErollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_NOERRORrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_NOWARNINGrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_NONOTICErollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_NOFATALrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_NOALLrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-    <rollingpolicy name="Gtest_ALLLOGLEVELSrollingpolicy" type="sizewin" maxsize="102400" maxnum="8"/>
-
-    <appender name="stderr" type="stream_env" layout="dated"/>
-    <appender name="syslog" type="syslog" layout="basic"/>
     <appender name="stdout" type="stream_env" layout="comcast_dated"/>
-    <appender name="RI_ONLYFATALrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYFATAL.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYFATALrollingpolicy"/> 
-    <appender name="RI_ONLYERRORrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYERROR.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYERRORrollingpolicy"/> 
-    <appender name="RI_ONLYWARNINGrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYWARNING.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYWARNINGrollingpolicy"/> 
-    <appender name="RI_ONLYINFOrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYINFO.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYINFOrollingpolicy"/> 
-    <appender name="RI_ONLYDEBUGrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYDEBUG.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYDEBUGrollingpolicy"/> 
-    <appender name="RI_ONLYNOTICErollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYNOTICE.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYNOTICErollingpolicy"/> 
-    <appender name="RI_ONLYTRACErollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYTRACE.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYTRACErollingpolicy"/> 
-    <appender name="RI_ONLYALLrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ONLYALL.txt" layout="comcast_dated" rollingpolicy="Gtest_ONLYALLrollingpolicy"/> 
-    <appender name="RI_NODEBUGrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_NODEBUG.txt" layout="comcast_dated" rollingpolicy="Gtest_NODEBUGrollingpolicy"/> 
-    <appender name="RI_NOTRACErollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_NOTRACE.txt" layout="comcast_dated" rollingpolicy="Gtest_NOTRACErollingpolicy"/> 
-    <appender name="RI_NOERRORrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_NOERROR.txt" layout="comcast_dated" rollingpolicy="Gtest_NOERRORrollingpolicy"/> 
-    <appender name="RI_NOWARNINGrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_NOWARNING.txt" layout="comcast_dated" rollingpolicy="Gtest_NOWARNINGrollingpolicy"/> 
-    <appender name="RI_NONOTICErollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_NONOTICE.txt" layout="comcast_dated" rollingpolicy="Gtest_NONOTICErollingpolicy"/> 
-    <appender name="RI_NOFATALrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_NOFATAL.txt" layout="comcast_dated" rollingpolicy="Gtest_NOFATALrollingpolicy"/> 
-    <appender name="RI_NOALLrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_NOALL.txt" layout="comcast_dated" rollingpolicy="Gtest_NOALLrollingpolicy"/> 
-    <appender name="RI_ALLLOGLEVELSrollingfileappender" type="rollingfile" logdir="/tmp/" prefix="Gtestlog_ALLLEVELS.txt" layout="comcast_dated" rollingpolicy="Gtest_ALLLOGLEVELSrollingpolicy"/> 
 
-    <!-- 
-        Priorities (log levels)
-         Available priorities that can be applied to categories are listed 
-         below in order of decreasing priority:
+    <category name="LOG.RDK" priority="warning" appender="stdout"/>
 
-         fatal
-            Indicates error severe enough to prevent RI from continuing to execute.
-                     
-         error
-            A significant error has occurred, preventing normal operation of the RI. 
-              
-         warn 
-            Some problem has occurred, but application logic has been able to handle
-            it in a reasonable manner. 
-            
-         info 
-            Used to monitor major (domain-level) operational behavior of the system.
-             
-         debug
-            Mostly useful for developers to monitor internal logic and operational states. 
-            
-         trace
-            Only meaningful to developers, primarily for monitoring code execution paths.
-    -->
-
-    <!-- 
-        Top-most category for the RI Platform.
-         Declare the default logging configuration. This is done by declaring
-         the root category, associating it with a priority, and one of the 
-         appenders declared above.  
-         
-         More detailed component-level logging can be enabled by specifying 
-         lower levels for one or more of the categories listed below.
-    -->
-    
-    <!--<category name="RI" priority="info" appender="stdout"/>-->
-
-    <category name="RI.Stack.LOG.RDK.ALLLEVELS" priority="debug" appender="stdout"/>
-    <category name="RI.Stack.LOG.RDK.ONLYFATAL" priority="debug" appender="RI_ONLYFATALrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ONLYERROR" priority="debug" appender="RI_ONLYERRORrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ONLYWARNING" priority="debug" appender="RI_ONLYWARNINGrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ONLYINFO" priority="debug" appender="RI_ONLYINFOrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ONLYDEBUG" priority="debug" appender="RI_ONLYDEBUGrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ONLYNOTICE" priority="debug" appender="RI_ONLYNOTICErollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ONLYTRACE" priority="debug" appender="RI_ONLYTRACErollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ONLYALL" priority="debug" appender="RI_ONLYALLrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.NODEBUG" priority="debug" appender="RI_NODEBUGrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.NOTRACE" priority="debug" appender="RI_NOTRACErollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.NOERROR" priority="debug" appender="RI_NOERRORrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.NOWARNING" priority="debug" appender="RI_NOWARNINGrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.NONOTICE" priority="debug" appender="RI_NONOTICErollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.NOFATAL" priority="debug" appender="RI_NOFATALrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.NOALL" priority="debug" appender="RI_NOALLrollingfileappender"/>
-    <category name="RI.Stack.LOG.RDK.ALLLOGLEVELS" priority="debug" appender="RI_ALLLOGLEVELSrollingfileappender"/>
-
-    <!-- <category name="RI" priority="error" appender="syslog"/> -->
-    <!-- <category name="RI" priority="error" appender="socket"/> -->
-
-    <!--  
-        Logging categories available to the Platform are listed below
-        
-         To enable additional logging add a 'priority' attribute for 1 or more 
-         categories.  For example, to enable INFO logging on the pipeline 
-         category, the updated line would look like:
-            category name="RI.Pipeline" priority="info"
-    -->
 </log4c>
