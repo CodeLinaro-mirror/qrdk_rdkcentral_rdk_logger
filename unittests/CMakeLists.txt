@@ -52,6 +52,9 @@ add_executable(
 )
 target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini")
 
+install(TARGETS gtest gtest_main
+    RUNTIME DESTINATION bin
+)
 
 install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy Gtest_log4crc ${CMAKE_INSTALL_PREFIX}/log4crc)")
 
