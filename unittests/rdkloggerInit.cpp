@@ -27,7 +27,7 @@ Test Case : Testing rdk_logger function rdk_logger_msg_printf
 
 /*DIABLED some test cases as there's a bug "https://bugzilla.redhat.com/show_bug.cgi?id=1901955" in log4c library, calling log4c_init twice causing segmentation fault, hence keeping rdk_logger_deinit()'s default changes which does not allow calling rdk_logger_init twice*/
 
-
+#if 0
 TEST(rdkloggerInit, rdkLoggerInit_with_DebugConfFile)
 {
   rdk_Error ret = -1;
@@ -35,7 +35,7 @@ TEST(rdkloggerInit, rdkLoggerInit_with_DebugConfFile)
   ret = rdk_logger_init(conf_file);
   ASSERT_EQ(ret,-1)<<"rdk_logger_init failed with return:\""<<ret<<"\" "<<"config_file ini is not found";
 }
-
+#endif
 TEST(rdkloggerInit, DISABLED_rdkLoggerInitDeinit_with_DebugConfFile)
 {
   rdk_Error ret = RDK_SUCCESS;
