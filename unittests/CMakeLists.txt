@@ -40,8 +40,6 @@ add_executable(
   rdkLoggerRotationTest.cpp
   rdkLoggerErrorTest.cpp
   rdkLoggerPerformanceTest.cpp
-  rdkloggerMsgRaw.cpp
-  rdkloggerMsgRaw1.cpp
   main.cpp
 )
 target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini")
