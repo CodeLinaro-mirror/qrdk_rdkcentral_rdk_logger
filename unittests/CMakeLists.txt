@@ -27,7 +27,7 @@ link_directories("${DEP_LIB_PATH}/")
 # Add the test executable
 add_executable(
   rdk_logger_gtest
-  rdklogctrl utils/rdklogctrl.c
+  ../utils/rdklogctrl.c
   rdkLoggerDynamic.cpp
   rdkloggerInit.cpp
   rdkloggerMsgPrintf.cpp
