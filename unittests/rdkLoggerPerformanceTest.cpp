@@ -426,63 +426,6 @@ TEST_F(RDKLoggerPerformanceTest, FormatStringPerformanceTest) {
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 10.0) << "Format string performance test should be reasonably fast";
 }
-#if 0
-// Test logging with vsprintf performance
-TEST_F(RDKLoggerPerformanceTest, VsprintfPerformanceTest) {
-    rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_performance_test/test.ini");
-    ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
-    
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-    
-    // Log messages using vsprintf
-    for (int i = 0; i < 1000; i++) {
-        va_list args;
-        va_start(args, i);
-        rdk_logger_msg_vsprintf(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", 
-            "Vsprintf test %d: %s %d %f", args);
-        va_end(args);
-    }
-    
-    gettimeofday(&end, NULL);
-    double elapsed = getTimeDifference(&start, &end);
-    
-    printf("Logged 1000 messages with vsprintf in %.3f seconds (%.0f messages/sec)\n", 
-           elapsed, 1000.0 / elapsed);
-    
-    // Should complete in reasonable time
-    EXPECT_LT(elapsed, 10.0) << "Vsprintf performance test should be reasonably fast";
-}
-#endif
-// Test logging with legacy functions performance
-#if 0
-TEST_F(RDKLoggerPerformanceTest, LegacyFunctionsPerformanceTest) {
-    rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_performance_test/test.ini");
-    ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
-    
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-    
-    // Log messages using legacy functions
-    for (int i = 0; i < 1000; i++) {
-        rdk_dbg_MsgRaw(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", "Legacy MsgRaw test %d", i);
-        
-        va_list args;
-        va_start(args, i);
-        rdk_dbg_MsgRaw1(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", "Legacy MsgRaw1 test %d", args);
-        va_end(args);
-    }
-    
-    gettimeofday(&end, NULL);
-    double elapsed = getTimeDifference(&start, &end);
-    
-    printf("Logged 2000 messages with legacy functions in %.3f seconds (%.0f messages/sec)\n", 
-           elapsed, 2000.0 / elapsed);
-    
-    // Should complete in reasonable time
-    EXPECT_LT(elapsed, 10.0) << "Legacy functions performance test should be reasonably fast";
-}
-#endif
 // Test logging with onboard function performance
 TEST_F(RDKLoggerPerformanceTest, OnboardFunctionPerformanceTest) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_performance_test/test.ini");
