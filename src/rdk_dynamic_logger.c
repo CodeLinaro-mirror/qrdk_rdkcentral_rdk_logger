@@ -119,7 +119,6 @@ void rdk_dyn_log_process_pending_request()
         tv.tv_sec = 0;
         tv.tv_usec = 0;
         ret = select(g_dl_socket+1,&rfds,NULL,NULL,&tv);
-	printf("###################### ROSE MARY , return value from select ret = %d\n",ret);
         if(ret <= 0)
             break;
 
@@ -157,7 +156,6 @@ void rdk_dyn_log_init()
         fprintf(stderr, "%s() Socket creation failed. %s\n",__func__,strerror(errno));
         return;
     }
-    printf("@@@@@@@@@@@@@@@@@@@ ROSE MARY BENNY gdl_socket : %d\n",g_dl_socket);
     memset(&my_addr,0,sizeof(my_addr));
     my_addr.sin_family = AF_INET;
     my_addr.sin_port = htons(DL_PORT);
