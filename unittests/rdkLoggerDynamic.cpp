@@ -9,9 +9,9 @@
 // Thread function to invoke rdklogctrl client via system command
 void* run_rdklogctrl(void* arg) {
     // You may need to adjust the path if rdklogctrl isn't in $PATH
-    const char* cmd = "rdklogctrl Receiver LOG.RDK.TESTMOD ERROR";
+        // Use relative path if rdklogctrl is in the current directory
+    const char* cmd = "./rdklogctrl Receiver LOG.RDK.TESTMOD ERROR";
     int ret = system(cmd);
-    // Optionally check ret for success/failure
     return nullptr;
 }
 
