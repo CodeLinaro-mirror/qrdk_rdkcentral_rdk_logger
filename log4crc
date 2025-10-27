@@ -33,6 +33,7 @@
     <layout name="comcast_dated" type="comcast_dated_nocr"/>
 
     <appender name="stdout" type="stream_env" layout="comcast_dated"/>
+    <appender name="RI_rollingfileappender" type="rollingfile" logdir="/tmp" prefix="ocapri_log.txt" layout="comcast_dated" rollingpolicy="RI_rollingpolicy"/>
 
     <category name="LOG.RDK" priority="warning" appender="stdout"/>
 

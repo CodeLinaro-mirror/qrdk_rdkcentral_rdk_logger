@@ -22,7 +22,7 @@
 #include "rdk_logger.h"
 
 #define MAX_BUF_SIZE 1024
-
+#if 0
 int main( int argc, char **argv)
 {
     char msg[MAX_BUF_SIZE];
@@ -39,3 +39,41 @@ int main( int argc, char **argv)
 
     return 0;
 }
+#endif
+
+int main ()
+ {
+     /*rdklogger_config config;
+     strncpy(config.fileName, "test.txt", sizeof(config.fileName));
+     strncpy(config.location, "/tmp/", sizeof(config.location));
+     strncpy(config.module, "TEST", sizeof(config.module));
+     config.maxSize = 2024;  // 1 MB
+     config.maxCount = 2;
+     config.loglevel = RDK_LOG_INFO;*/
+     //rdk_logger_init("/home/deepthi/dev-rdklogger/rdk_logger/debug.ini");
+     rdk_logger_ext_config_t config;
+     strncpy(config.fileName, "test.txt", sizeof(config.fileName));
+     strncpy(config.logdir, "/tmp/", sizeof(config.logdir));
+     config.maxSize = 2024;  // 1 MB
+     config.maxCount = 2;
+     config.appender_type= FileOutput;
+     //strncpy(config.appender_type, "stream_env", sizeof(config.appender_type));
+     config.loglevel = RDK_LOG_INFO;
+     config.layout = LAYOUT_COMCAST_DATED;
+     printf("LINE:%d\n",__LINE__);
+     rdk_logger_ext_init(&config);
+     for (int i =0; i < 5000; i++)
+     //while(1)
+     {
+         //RDK_LOG(RDK_LOG_INFO, "LOG.RDK.DEEP", "DEEPLOG\n");
+         //RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.DEEP", "DEBUGLOG\n");
+         //RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.SAMPLE", "SAMPLE_LOG\n");
+         RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
+         RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
+         RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
+         RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
+         sleep(1);
+     }
+     return 0;
+ }
+

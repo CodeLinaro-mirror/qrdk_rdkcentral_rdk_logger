@@ -200,12 +200,30 @@ typedef enum
     RDK_LOG_NONE
 } rdk_LogLevel;
 
+typedef enum
+{
+    Stdout = 0,
+    FileOutput,
+    Journald,
+    Syslog
+} rdk_LogAppenderType;
+
+typedef enum
+{
+    LAYOUT_BASIC = 0,
+    LAYOUT_DATED,
+    LAYOUT_COMCAST_DATED
+} rdk_LogLayout;
+
 typedef struct rdk_logger_ext_config_t
  {
      char fileName[RDK_LOGGER_EXT_FILENAME_SIZE];
      char logdir[RDK_LOGGER_EXT_LOGDIR_SIZE];
      long maxSize;
      long maxCount;
+     rdk_LogAppenderType appender_type;
+     rdk_LogLevel loglevel;
+     rdk_LogLayout layout;
  }rdk_logger_ext_config_t;
 
 /**
