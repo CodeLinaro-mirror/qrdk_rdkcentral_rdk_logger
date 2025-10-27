@@ -52,7 +52,7 @@ add_executable(
 )
 target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini")
 
-install(TARGETS gtest gtest_main
+install(TARGETS rdk_logger_gtest
     RUNTIME DESTINATION bin
 )
 
