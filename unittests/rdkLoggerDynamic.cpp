@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include <cstdlib>
 #include "rdk_logger.h"
-#include "../include/rdk_dynamic_logger.h"
 #include "gtest_app.h"
 
 // Thread function to invoke rdklogctrl client via system command
@@ -17,8 +16,9 @@ void* run_rdklogctrl(void* arg) {
 }
 
 TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem) {
-    // Initialize the dynamic logger (server)
-    rdk_dyn_log_init();
+    rdk_Error ret = RDK_SUCCESS;
+    char conf_file[] = GTEST_DEBUG_INI_FILE;	
+    EXPECT_EQ(rdk_logger_init(conf_file), 0);
 
     // Spawn a thread to run rdklogctrl (client)
     pthread_t client_thread;
@@ -27,14 +27,10 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem) {
     // Wait briefly to allow message to be sent
     usleep(500000); // 0.5 seconds
 
-    // Process any pending requests
-    rdk_dyn_log_process_pending_request();
+    // Log a message using the high-level API, which will exercise dynamic logger code
+    rdk_logger_msg_printf("LOG.RDK.TESTMOD", "ERROR", "Test message for dynamic logger\n");
 
     // Clean up
     pthread_join(client_thread, nullptr);
-    rdk_dyn_log_deinit();
-
-    // Successful execution means code coverage hit
-    SUCCEED();
 }
 
