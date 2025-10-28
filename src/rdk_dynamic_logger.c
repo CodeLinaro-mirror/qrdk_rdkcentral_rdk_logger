@@ -85,19 +85,19 @@ static void rdk_dyn_log_validate_component_name(const unsigned char *buf)
     printf("buf + (++i): %s\n", buf + (++i));    
     printf("__progname: %s\n", __progname);    
     printf("app_len: %zu\n", app_len);
-#if 0
+    #if 1
+for (size_t j = 0; j < app_len; ++j) {
+    printf("buf[%zu + %d] = %c, __progname[%zu] = %c\n", j, i, buf[i + j], j, __progname[j]);
+}
+#endif
+#if 1
     if(0 != memcmp(buf+(++i),__progname,app_len)) {
         /* The received msg is not intended for this process */
         return;
     }
 #endif
 
-if (memcmp(buf + (++i), __progname, app_len) == 0) {
-    printf("Match successful!\n");
-} else {
-    printf("Match failed.\n");
-}
-#if 0
+#if 1
 for (size_t j = 0; j < app_len; ++j) {
     printf("buf[%zu + %d] = %c, __progname[%zu] = %c\n", j, i, buf[i + j], j, __progname[j]);
 }
