@@ -74,7 +74,6 @@ void rdk_logger_msg_printf(rdk_LogLevel level, const char *module, const char *f
     va_list args;
 
     va_start(args, format);
-    printf("####### ROSE MAERY LEVEL : %d\n",level);
     rdk_dbg_priv_log_msg(level, module, format, args);
     va_end(args);
 }
