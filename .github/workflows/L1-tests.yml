@@ -110,9 +110,9 @@ jobs:
           else
              cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON
           fi
-          make  -C build
-          cmake --install build
-          ./build/rdk_logger_gtest
+          sudo make  -C build
+          sudo cmake --install build
+          sudo ./build/rdk_logger_gtest
       - name: Collect coverage report
         if: ${{ matrix.coverage == 'with-coverage' }}
         run: |
