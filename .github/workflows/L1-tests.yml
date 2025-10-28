@@ -98,12 +98,14 @@ jobs:
 
       - name: Build and execute L1 unittesting for rdk_logger
         run: |
+          sudo touch /opt/logs/rdk_milestones.log
+          sudo chmod 666 /opt/logs/rdk_milestones.log
           mkdir -p ${{env.RDKLOGGER_ROOT}}/unittests
           UNITTESTS="${{env.RDKLOGGER_ROOT}}/unittests"
           cp ${{github.workspace}}/install/bin/rdklogctrl ${UNITTESTS}/
           cd ${UNITTESTS}
           if [ "${{matrix.coverage}}" = "with-coverage" ]; then
-             cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr  -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage"
+             cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr  -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage -DLOGMILESTONE=/opt/logs/rdk_milestones.log"
           else
              cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON
           fi

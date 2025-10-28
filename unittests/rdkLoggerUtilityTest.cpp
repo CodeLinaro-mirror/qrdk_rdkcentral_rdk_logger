@@ -11,6 +11,7 @@
 #include "rdk_logger_milestone.h"
 
 
+
 TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
     char conf_file[] = GTEST_DEBUG_INI_FILE;	
     rdk_Error ret = rdk_logger_init(conf_file);
@@ -19,7 +20,6 @@ TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Test onboard message");
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with format: %d", 123);
     rdk_logger_log_onboard("LOG.RDK.ONBOARD", "Onboard message with multiple args: %s %d %f", "test", 456, 3.14);
-    system("touch /opt/logs/rdk_milestones.log");
     logMilestone("APPLICATION_READY");
 
     // Should work correctly
