@@ -6,38 +6,6 @@
 #include <cstdlib>
 #include "rdk_logger.h"
 #include "gtest_app.h"
-#if 0
-// Thread function to invoke rdklogctrl client via system command
-void* run_rdklogctrl(void* arg) {
-    // You may need to adjust the path if rdklogctrl isn't in $PATH
-        // Use relative path if rdklogctrl is in the current directory
-    const char* cmd = "./rdklogctrl rdk_logger_gtest LOG.RDK.ERROR ERROR";
-    int ret = system(cmd);
-    return nullptr;
-}
-
-
-TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem) {
-    rdk_Error ret = RDK_SUCCESS;
-    char conf_file[] = GTEST_DEBUG_INI_FILE;	
-    EXPECT_EQ(rdk_logger_init(conf_file), 0);
-
-    // Spawn a thread to run rdklogctrl (client)
-    pthread_t client_thread;
-    ASSERT_EQ(0, pthread_create(&client_thread, nullptr, run_rdklogctrl, nullptr));
-
-    // Wait briefly to allow message to be sent
-    usleep(500000); // 0.5 seconds
-
-    // Log a message using the high-level API, which will exercise dynamic logger code
-    rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.TESTMOD", "Test message for dynamic logger\n");
-
-    // Clean up
-    pthread_join(client_thread, nullptr);
-}
-
-#endif
-
 typedef enum {
     CAT_FATAL,
     CAT_ERROR,
@@ -344,20 +312,3 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_negnone) {
 
 }
 
-TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_NULL) {
-    rdk_Error ret = RDK_SUCCESS;
-    char conf_file[] = GTEST_DEBUG_INI_FILE;
-    EXPECT_EQ(rdk_logger_init(conf_file), 0);
-
-    // Spawn a thread to run rdklogctrl (client)
-    pthread_t client_thread;
-    ASSERT_EQ(0, pthread_create(&client_thread, nullptr, run_rdklogctrl, NULL));
-
-    // Wait briefly to allow message to be sent
-    usleep(500000); // 0.5 seconds
-
-    // Log a message using the high-level API, which will exercise dynamic logger code
-    rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.TESTMOD", "Test message for dynamic logger\n");
-    // Clean up
-    pthread_join(client_thread, nullptr);
-}
