@@ -1,4 +1,3 @@
-#define LOGMILESTONE
 
 #include <gtest/gtest.h>
 #include <cstdio>
@@ -6,7 +5,7 @@
 #include <string>
 #include <fstream>
 #include "rdk_logger_milestone.h"
-
+#define LOGMILESTONE 1
 #ifdef LOGMILESTONE
 #define MILESTONE_LOG_FILENAME "/opt/logs/rdk_milestones.log"
 #else
