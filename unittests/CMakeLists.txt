@@ -46,9 +46,9 @@ add_executable(
   rdkLoggerMilestone.cpp
   main.cpp
 )
-add_compile_definitions(LOGMILESTONE)
+#add_compile_definitions(LOGMILESTONE)
 
-target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini")
+target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini" LOGMILESTONE)
 
 
 install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy Gtest_log4crc ${CMAKE_INSTALL_PREFIX}/log4crc)")
