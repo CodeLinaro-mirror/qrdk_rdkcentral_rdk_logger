@@ -6,9 +6,6 @@
 #include <fstream>
 #include "rdk_logger_milestone.h"
 
-#ifdef LOGMILESTONE
-printf("LOGMILESTONE is defined.\n");
-#endif
 
 #ifdef LOGMILESTONE
 #define MILESTONE_LOG_FILENAME "/opt/logs/rdk_milestones.log"
@@ -21,6 +18,13 @@ void RemoveMilestoneLog() {
     std::remove(MILESTONE_LOG_FILENAME);
 }
 
+TEST(rdkLoggerMilestone, PrintLogMilestoneDefined) {
+#ifdef LOGMILESTONE
+    printf("LOGMILESTONE is defined.\n");
+#else
+    printf("LOGMILESTONE is NOT defined.\n");
+#endif
+}
 
 TEST(RdkLoggerMilestoneTest, LogMilestoneWritesToFile) {
     RemoveMilestoneLog();
