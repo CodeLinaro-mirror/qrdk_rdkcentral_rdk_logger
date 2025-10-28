@@ -5,6 +5,11 @@
 #include <string>
 #include <fstream>
 #include "rdk_logger_milestone.h"
+
+#if LOGMILESTONE == ON
+printf("LOGMILESTONE value is ON.\n");
+#endif
+
 #ifdef LOGMILESTONE
 #define MILESTONE_LOG_FILENAME "/opt/logs/rdk_milestones.log"
 #else
