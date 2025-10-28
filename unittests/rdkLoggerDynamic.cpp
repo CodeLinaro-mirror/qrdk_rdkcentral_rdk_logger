@@ -68,8 +68,8 @@ typedef struct {
 
 void* run_rdklogctrl(void* arg) {
     rdklogctrl_args_t* args = (rdklogctrl_args_t*)arg;
-    char category_str[32];
-    char level_str[16];
+    char category_str[32] = "";
+    char level_str[16] = "";
 
     // Switch-case for category
     switch (args->category) {
@@ -343,20 +343,15 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_negnone) {
     pthread_join(client_thread, nullptr);
 
 }
-#if 0
+
 TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_NULL) {
     rdk_Error ret = RDK_SUCCESS;
     char conf_file[] = GTEST_DEBUG_INI_FILE;
     EXPECT_EQ(rdk_logger_init(conf_file), 0);
 
-    // Prepare arguments for thread
-    rdklogctrl_args_t args;
-    args.category = 8;
-    args.level = 8;
-
     // Spawn a thread to run rdklogctrl (client)
     pthread_t client_thread;
-    ASSERT_EQ(0, pthread_create(&client_thread, nullptr, run_rdklogctrl, &args));
+    ASSERT_EQ(0, pthread_create(&client_thread, nullptr, run_rdklogctrl, NULL));
 
     // Wait briefly to allow message to be sent
     usleep(500000); // 0.5 seconds
@@ -366,4 +361,3 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_NULL) {
     // Clean up
     pthread_join(client_thread, nullptr);
 }
-#endif
