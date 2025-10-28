@@ -481,7 +481,7 @@ static int initLogger(char *category)
             &log4c_appender_type_stream_env_append_plus_stdout);
     (void) log4c_layout_type_set(&log4c_layout_type_dated_nocr);
     (void) log4c_layout_type_set(&log4c_layout_type_basic_nocr);
-    //(void) log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);
+    (void) log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);
 
     if (log4c_init())
     {
