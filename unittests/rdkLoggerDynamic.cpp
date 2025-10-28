@@ -57,7 +57,8 @@ typedef enum {
     LVL_INFO,
     LVL_DEBUG,
     LVL_TRACE,
-    LVL_NONE
+    LVL_NONE,
+    LVL_TEST	    
 } LogLevel;
 
 typedef struct {
@@ -126,6 +127,9 @@ void* run_rdklogctrl(void* arg) {
             break;
         case LVL_NONE:
             strcpy(level_str, "NONE");
+            break;
+        case LVL_TEST:
+            strcpy(level_str, "~NONE");
             break;
         default:
             strcpy(level_str, "UNKNOWN");
@@ -304,6 +308,29 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_none) {
     rdklogctrl_args_t args;
     args.category = CAT_NONE;
     args.level = LVL_NONE;
+
+    // Spawn a thread to run rdklogctrl (client)
+    pthread_t client_thread;
+    ASSERT_EQ(0, pthread_create(&client_thread, nullptr, run_rdklogctrl, &args));
+
+    // Wait briefly to allow message to be sent
+    usleep(500000); // 0.5 seconds
+
+    // Log a message using the high-level API, which will exercise dynamic logger code
+    rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.TESTMOD", "Test message for dynamic logger\n");
+    // Clean up
+    pthread_join(client_thread, nullptr);
+}
+
+TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_none) {
+    rdk_Error ret = RDK_SUCCESS;
+    char conf_file[] = GTEST_DEBUG_INI_FILE;
+    EXPECT_EQ(rdk_logger_init(conf_file), 0);
+
+    // Prepare arguments for thread
+    rdklogctrl_args_t args;
+    args.category = CAT_NONE;
+    args.level = LVL_TEST;
 
     // Spawn a thread to run rdklogctrl (client)
     pthread_t client_thread;
