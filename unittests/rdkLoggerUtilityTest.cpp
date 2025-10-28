@@ -10,7 +10,7 @@
 #include "gtest_app.h"
 #include "rdk_logger_milestone.h"
 
-
+#define LOGMILESTONE
 
 TEST(RDKLoggerUtilityTest, LogOnboardFunctionality) {
     char conf_file[] = GTEST_DEBUG_INI_FILE;	
