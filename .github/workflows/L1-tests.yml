@@ -89,7 +89,7 @@ jobs:
            # Enable coverage flags if applicable
           if [ "${{matrix.coverage}}" = "with-coverage" ]; then
             export CFLAGS="-DLOGMILESTONE=ON -DONBOARDING_FILE=ON  --coverage"
-            export CXXFLAGS="-DLOGMILESTONE=ON ONBOARDING_FILE=ON --coverage"
+            export CXXFLAGS="-DLOGMILESTONE=ON -DONBOARDING_FILE=ON --coverage"
             export LDFLAGS="--coverage"
           fi
           ./configure "--prefix=${{github.workspace}}/install"
