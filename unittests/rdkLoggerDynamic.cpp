@@ -11,7 +11,7 @@
 void* run_rdklogctrl(void* arg) {
     // You may need to adjust the path if rdklogctrl isn't in $PATH
         // Use relative path if rdklogctrl is in the current directory
-    const char* cmd = "./rdklogctrl Receiver LOG.RDK.TESTMOD ERROR";
+    const char* cmd = "./rdklogctrl rdk_logger_gtest LOG.RDK.TESTMOD ERROR";
     int ret = system(cmd);
     return nullptr;
 }
