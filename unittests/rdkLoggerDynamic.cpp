@@ -54,8 +54,8 @@ typedef enum {
     LVL_WARN,
     LVL_NOTICE,
     LVL_INFO,
-    LVL_DEBUG
-    LVL_TRACE
+    LVL_DEBUG,
+    LVL_TRACE,
     LVL_NONE
 } LogLevel;
 
