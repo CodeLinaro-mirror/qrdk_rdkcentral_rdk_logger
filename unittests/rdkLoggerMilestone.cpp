@@ -6,8 +6,8 @@
 #include <fstream>
 #include "rdk_logger_milestone.h"
 
-#if LOGMILESTONE == ON
-printf("LOGMILESTONE value is ON.\n");
+#ifdef LOGMILESTONE
+printf("LOGMILESTONE is defined.\n");
 #endif
 
 #ifdef LOGMILESTONE
