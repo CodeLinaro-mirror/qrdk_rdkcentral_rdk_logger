@@ -353,8 +353,8 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_NULL) {
 
     // Prepare arguments for thread
     rdklogctrl_args_t args;
-    args.category = NULL;
-    args.level = NULL;
+    args.category = 8;
+    args.level = 8;
 
     // Spawn a thread to run rdklogctrl (client)
     pthread_t client_thread;
