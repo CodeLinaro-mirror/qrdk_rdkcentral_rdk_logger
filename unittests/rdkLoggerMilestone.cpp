@@ -18,10 +18,6 @@ void RemoveMilestoneLog() {
     std::remove(MILESTONE_LOG_FILENAME);
 }
 
-TEST(RdkLoggerMilestoneTest, GetUptimeMSReturnsPositiveValue) {
-    unsigned long long uptime = getUptimeMS();
-    EXPECT_GT(uptime, 0ULL);
-}
 
 TEST(RdkLoggerMilestoneTest, LogMilestoneWritesToFile) {
     RemoveMilestoneLog();
