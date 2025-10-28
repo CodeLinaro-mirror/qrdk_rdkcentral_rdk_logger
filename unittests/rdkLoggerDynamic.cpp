@@ -68,8 +68,8 @@ typedef struct {
 
 void* run_rdklogctrl(void* arg) {
     rdklogctrl_args_t* args = (rdklogctrl_args_t*)arg;
-    char category_str[32];
-    char level_str[16];
+    char category_str[32] = NULL;
+    char level_str[16] = NULL;
 
     // Switch-case for category
     switch (args->category) {
@@ -98,7 +98,6 @@ void* run_rdklogctrl(void* arg) {
             strcpy(category_str, "LOG.RDK.NONE");
 	    break;
         default:
-            strcpy(category_str, NULL);
             break;
     }
 
@@ -132,7 +131,6 @@ void* run_rdklogctrl(void* arg) {
             strcpy(level_str, "~NONE");
             break;
         default:
-            strcpy(level_str, NULL);
             break;
     }
 
