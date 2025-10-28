@@ -97,10 +97,11 @@ if (memcmp(buf + (++i), __progname, app_len) == 0) {
 } else {
     printf("Match failed.\n");
 }
-
+#if 0
 for (size_t j = 0; j < app_len; ++j) {
     printf("buf[%zu + %d] = %c, __progname[%zu] = %c\n", j, i, buf[i + j], j, __progname[j]);
 }
+#endif
 
     i += app_len;
     comp_len = buf[i];
