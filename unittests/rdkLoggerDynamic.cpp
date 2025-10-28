@@ -98,7 +98,7 @@ void* run_rdklogctrl(void* arg) {
             strcpy(category_str, "LOG.RDK.NONE");
 	    break;
         default:
-            strcpy(category_str, "LOG.RDK.UNKNOWN");
+            strcpy(category_str, NULL);
             break;
     }
 
@@ -132,7 +132,7 @@ void* run_rdklogctrl(void* arg) {
             strcpy(level_str, "~NONE");
             break;
         default:
-            strcpy(level_str, "UNKNOWN");
+            strcpy(level_str, NULL);
             break;
     }
 
@@ -322,7 +322,7 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_none) {
     pthread_join(client_thread, nullptr);
 }
 
-TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_none) {
+TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_negnone) {
     rdk_Error ret = RDK_SUCCESS;
     char conf_file[] = GTEST_DEBUG_INI_FILE;
     EXPECT_EQ(rdk_logger_init(conf_file), 0);
@@ -331,6 +331,30 @@ TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_none) {
     rdklogctrl_args_t args;
     args.category = CAT_NONE;
     args.level = LVL_TEST;
+
+    // Spawn a thread to run rdklogctrl (client)
+    pthread_t client_thread;
+    ASSERT_EQ(0, pthread_create(&client_thread, nullptr, run_rdklogctrl, &args));
+
+    // Wait briefly to allow message to be sent
+    usleep(500000); // 0.5 seconds
+
+    // Log a message using the high-level API, which will exercise dynamic logger code
+    rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.TESTMOD", "Test message for dynamic logger\n");
+    // Clean up
+    pthread_join(client_thread, nullptr);
+
+}
+
+TEST(RdkDynamicLoggerTest, MessageProcessingViaSystem_NULL) {
+    rdk_Error ret = RDK_SUCCESS;
+    char conf_file[] = GTEST_DEBUG_INI_FILE;
+    EXPECT_EQ(rdk_logger_init(conf_file), 0);
+
+    // Prepare arguments for thread
+    rdklogctrl_args_t args;
+    args.category = NULL;
+    args.level = NULL;
 
     // Spawn a thread to run rdklogctrl (client)
     pthread_t client_thread;
