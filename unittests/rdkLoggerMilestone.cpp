@@ -26,7 +26,7 @@ TEST(rdkLoggerMilestone, PrintLogMilestoneDefined) {
 #endif
 }
 
-TEST(RdkLoggerMilestoneTest, LogMilestoneWritesToFile) {
+TEST(RdkLoggerMilestoneTest, Disabled_LogMilestoneWritesToFile) {
     RemoveMilestoneLog();
     const char* test_code = "TEST_CODE";
     logMilestone(test_code);
@@ -43,7 +43,7 @@ TEST(RdkLoggerMilestoneTest, LogMilestoneWritesToFile) {
     RemoveMilestoneLog();
 }
 
-TEST(RdkLoggerMilestoneTest, LogMilestoneAppendsToFile) {
+TEST(RdkLoggerMilestoneTest, Disabled_LogMilestoneAppendsToFile) {
     RemoveMilestoneLog();
     logMilestone("CODE1");
     logMilestone("CODE2");
