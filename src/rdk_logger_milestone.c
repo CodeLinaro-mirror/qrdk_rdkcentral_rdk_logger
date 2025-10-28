@@ -46,7 +46,7 @@ unsigned long long getUptimeMS(void)
 void logMilestone(const char *msg_code)
 {
     FILE *fp = NULL;
-    fp = fopen(MILESTONE_LOG_FILENAME, "a+");
+    fp = fopen("/opt/logs/rdk_milestones.log", "a+");
     if (fp != NULL)
     {
       fprintf(fp, "%s:%llu\n", msg_code, getUptimeMS());
