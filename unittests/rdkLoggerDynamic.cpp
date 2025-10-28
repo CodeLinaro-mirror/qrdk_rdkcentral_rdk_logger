@@ -42,6 +42,7 @@ typedef enum {
     CAT_FATAL,
     CAT_ERROR,
     CAT_WARN,
+    CAT_NOTICE,
     CAT_INFO,
     CAT_DEBUG,
     CAT_TRACE,
