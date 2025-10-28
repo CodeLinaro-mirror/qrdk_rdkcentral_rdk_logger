@@ -24,6 +24,7 @@ find_package(GTest REQUIRED)
 
 enable_testing()
 link_directories("${DEP_LIB_PATH}/")
+target_compile_definitions(rdk_logger_gtest PRIVATE LOGMILESTONE)
 
 # Add the test executable
 add_executable(
