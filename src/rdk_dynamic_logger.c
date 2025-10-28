@@ -91,7 +91,7 @@ for (size_t j = 0; j < app_len; ++j) {
 }
 #endif
 #if 1
-    if(0 != memcmp(buf+(++i),__progname,app_len)) {
+    if(0 != memcmp(buf+(++i),__progname,(app_len+1))) {
         /* The received msg is not intended for this process */
         return;
     }
