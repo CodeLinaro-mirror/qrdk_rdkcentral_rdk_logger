@@ -24,7 +24,7 @@ find_package(GTest REQUIRED)
 
 enable_testing()
 link_directories("${DEP_LIB_PATH}/")
-target_compile_definitions(rdk_logger_gtest PRIVATE LOGMILESTONE)
+
 
 # Add the test executable
 add_executable(
@@ -46,6 +46,8 @@ add_executable(
   rdkLoggerMilestone.cpp
   main.cpp
 )
+add_compile_definitions(LOGMILESTONE)
+
 target_compile_definitions(rdk_logger_gtest PRIVATE GTEST_DEBUG_INI_FILE="sample_gtest_debug.ini")
 
 
