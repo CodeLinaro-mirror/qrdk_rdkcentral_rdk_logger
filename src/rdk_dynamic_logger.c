@@ -81,11 +81,13 @@ static void rdk_dyn_log_validate_component_name(const unsigned char *buf)
     }
 
     log_level = buf[++i];
-    //app_len = buf[++i];
-    app_len = strlen(__progname) + 1;
+    app_len = buf[++i];
     printf("buf + (++i): %s\n", buf + (++i));    
     printf("__progname: %s\n", __progname);    
     printf("app_len: %zu\n", app_len);
+
+    fprintf(stderr, "Comparing: '%s' with '%s'\n", buf + i, __progname);
+    fprintf(stderr, "memcmp result: %d\n", memcmp(buf + i, __progname, app_len + 1));
 #if 1
     if(0 != memcmp(buf+(++i),__progname,(app_len+1))) {
         /* The received msg is not intended for this process */
