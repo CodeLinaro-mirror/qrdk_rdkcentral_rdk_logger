@@ -106,7 +106,7 @@ jobs:
           cp ${{github.workspace}}/install/bin/rdklogctrl ${UNITTESTS}/
           cd ${UNITTESTS}
           if [ "${{matrix.coverage}}" = "with-coverage" ]; then
-             cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr  -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage -DLOGMILESTONE=/opt/logs/rdk_milestones.log"
+             cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr  -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_C_FLAGS="--coverage -DLOGMILESTONE=ON"
           else
              cmake -B build -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/install/usr -DDEP_LIB_PATH=${{env.LD_LIBRARY_PATH}} -DCMAKE_VERBOSE_MAKEFILE=ON
           fi
