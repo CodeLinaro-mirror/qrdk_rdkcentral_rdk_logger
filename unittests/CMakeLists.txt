@@ -34,11 +34,11 @@ add_executable(
   rdkloggerMsgVsprintf.cpp
   rdkloggerMsgRaw.cpp
   rdkloggerMsgRaw1.cpp
-  #rdkIsDbgEnabled.cpp
+  rdkIsDbgEnabled.cpp
   rdkLoggerDynamic.cpp
   rdkLoggerUtilityTest.cpp
   rdkLoggerConfigTest.cpp
-  rdkEnableLogLevel.cpp
+  #rdkEnableLogLevel.cpp
   rdkLogLevelFromString.cpp
   rdkLoggerRotationTest.cpp
   rdkLoggerErrorTest.cpp
