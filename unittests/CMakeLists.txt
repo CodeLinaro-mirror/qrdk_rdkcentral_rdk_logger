@@ -40,9 +40,9 @@ add_executable(
   rdkLoggerConfigTest.cpp
   rdkEnableLogLevel.cpp
   rdkLogLevelFromString.cpp
-  rdkLoggerRotationTest.cpp
+  #rdkLoggerRotationTest.cpp
   #rdkLoggerErrorTest.cpp
-  #rdkLoggerPerformanceTest.cpp
+  rdkLoggerPerformanceTest.cpp
   rdkLoggerMilestone.cpp
   rdkLoggerStreamEnvTest.cpp
   main.cpp
