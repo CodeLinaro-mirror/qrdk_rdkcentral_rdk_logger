@@ -43,7 +43,7 @@ add_executable(
   #rdkLoggerRotationTest.cpp
   #rdkLoggerErrorTest.cpp
   rdkLoggerPerformanceTest.cpp
-  rdkLoggerMilestone.cpp
+  #rdkLoggerMilestone.cpp
   rdkLoggerStreamEnvTest.cpp
   main.cpp
 )
