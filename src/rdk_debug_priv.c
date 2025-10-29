@@ -188,18 +188,15 @@ void set_default_layout(log4c_appender_t* app, rdk_LogLayout layout)
 
 void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
 {
-    /*log4c_category_t* cat = log4c_category_get(category_name);
+    log4c_category_t* cat = log4c_category_get(category_name);
     if (!cat) {
         cat = log4c_category_new(category_name);
     }
     if (cat) {
         int log4c_prio = rdk_logLevel_to_log4c_priority(log_level);
         log4c_category_set_priority(cat, log4c_prio);
-        printf("log4cr_prio:%d\n", log4c_prio);
-        //log4c_category_set_priority(cat, log_level);
-    }*/
-    rdk_logger_Bool ret = rdk_logger_enable_logLevel(category_name, log_level, 1);
-    printf("cat:%s,ret:%d\n", category_name,ret);
+        printf("cat:%s, log4c_prio:%d\n", category_name, log4c_prio);
+    }
 }
 
 void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
@@ -438,8 +435,9 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
 
     cat = log4c_category_get(module_name);
     prio = log4c_category_get_priority(cat);
+    printf("Module_name:%s,Current priority:%d\n", module_name,prio);
     if (cat && prio == LOG4C_PRIORITY_NOTSET && gRootCat) {
-        log4c_category_set_priority(cat, gRootPriority);
+        log4c_category_set_priority(cat, log4c_category_get_priority(gRootCat));
         prio = gRootPriority;
     }
  
