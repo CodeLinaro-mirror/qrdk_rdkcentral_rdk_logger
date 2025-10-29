@@ -112,7 +112,7 @@ jobs:
           fi
           make  -C build
           cmake --install build
-          ./build/rdk_logger_gtest
+          ./build/rdk_logger_gtest -ex "run" -ex "bt" -ex "quit" --batch
       - name: Collect coverage report
         if: ${{ matrix.coverage == 'with-coverage' }}
         run: |
