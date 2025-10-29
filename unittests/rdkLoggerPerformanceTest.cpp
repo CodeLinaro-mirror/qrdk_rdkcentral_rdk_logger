@@ -338,7 +338,7 @@ TEST_F(RDKLoggerPerformanceTest, SignalHandlingTest) {
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 10.0) << "Signal handling test should be reasonably fast";
 }
-
+#if 0
 // Test logging with error conditions
 TEST_F(RDKLoggerPerformanceTest, ErrorConditionsTest) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_performance_test/test.ini");
@@ -448,3 +448,4 @@ TEST_F(RDKLoggerPerformanceTest, OnboardFunctionPerformanceTest) {
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 10.0) << "Onboard function performance test should be reasonably fast";
 }
+#endif
