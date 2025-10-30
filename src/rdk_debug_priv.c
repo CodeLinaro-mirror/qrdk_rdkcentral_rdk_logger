@@ -203,14 +203,14 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
                            rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
     char fullpath[512];
-    if (appender_type == Stdout)
+    if (appender_type == FileOutput)
     {
-        strncpy(fullpath, "stdout", sizeof(fullpath)-1);
-        fullpath[sizeof(fullpath)-1] = '\0';
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
     }
     else
     {
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
+        strncpy(fullpath, "stdout", sizeof(fullpath)-1);
+        fullpath[sizeof(fullpath)-1] = '\0';
     }
 
     const char* cat_name = "LOG.RDK";
@@ -435,7 +435,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
 
     cat = log4c_category_get(module_name);
     prio = log4c_category_get_priority(cat);
-    printf("Module_name:%s,Current priority:%d\n", module_name,prio);
+    //printf("Module_name:%s,Current priority:%d\n", module_name,prio);
     if (cat && prio == LOG4C_PRIORITY_NOTSET && gRootCat) {
         log4c_category_set_priority(cat, log4c_category_get_priority(gRootCat));
         prio = gRootPriority;
