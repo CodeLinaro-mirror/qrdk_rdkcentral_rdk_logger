@@ -29,6 +29,7 @@ link_directories("${DEP_LIB_PATH}/")
 add_executable(
   rdk_logger_gtest
   rdkloggerInit.cpp
+  test_rdkloggerExtInit.cpp
   rdkloggerMsgPrintf.cpp
   rdkloggerMsgVsprintf.cpp
   rdkIsDbgEnabled.cpp
