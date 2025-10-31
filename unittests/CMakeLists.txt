@@ -53,6 +53,7 @@ target_link_libraries(
 )
 
 include_directories(${DEP_LIB_PATH}/../include)
+include_directories(${DEP_LIB_PATH}/../src/include)
 include(GoogleTest)
 gtest_discover_tests(rdk_logger_gtest)
 find_package(Threads)
