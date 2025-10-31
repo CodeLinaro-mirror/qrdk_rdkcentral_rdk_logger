@@ -20,7 +20,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include "rdk_logger.h"
-#include "log4c.h"
 #define MAX_BUF_SIZE 1024
 int main( int argc, char **argv)
 {
