@@ -23,6 +23,7 @@
 #include <rdk_logger_types.h>
 #include <rdk_logger.h>
 #include <rdk_error.h>
+#include <log4c/appender_type_rollingfile.h>
 
 #ifdef __cplusplus
 extern "C"
