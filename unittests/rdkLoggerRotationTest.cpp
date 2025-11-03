@@ -110,7 +110,9 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     
     config.maxSize = 1024;  // 1KB max size
     config.maxCount = 3;    // Keep 3 files
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_TRACE;
+    cfg.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
     
@@ -128,7 +130,9 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     
     config.maxSize = 256;   // 256 bytes max size
     config.maxCount = 2;    // Keep only 2 files
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_ERROR;
+    cfg.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
     
@@ -190,7 +194,9 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
     
     config.maxSize = 1024;
     config.maxCount = 3;
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_NONE;
+    cfg.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     // Should handle gracefully (may fail or create directory)
 }
@@ -206,7 +212,9 @@ TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
     
     config.maxSize = 10;    // Very small size
     config.maxCount = 2;
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_INFO;
+    cfg.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle very small size limits";
     
@@ -229,7 +237,9 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
     
     config.maxSize = 1024 * 1024 * 100;  // 100MB
     config.maxCount = 10;
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_WARN;
+    cfg.layout = LAYOUT_COMCAST_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle very large size limits";
     
@@ -252,7 +262,10 @@ TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
     
     config.maxSize = 1024;
     config.maxCount = 0;    // Zero count
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_FATAL;
+    cfg.layout = LAYOUT_BASIC;
+
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle zero count limits";
     
@@ -275,7 +288,9 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
     
     config.maxSize = -1;    // Negative size
     config.maxCount = -1;   // Negative count
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_TRACE;
+    cfg.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle negative values";
     
@@ -305,7 +320,9 @@ TEST_F(RDKLoggerRotationTest, LongFileNames) {
     
     config.maxSize = 1024;
     config.maxCount = 3;
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_TRACE;
+    cfg.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle long file names";
     
@@ -333,7 +350,9 @@ TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
     
     config.maxSize = 1024;
     config.maxCount = 3;
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_TRACE;
+    cfg.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     // Should handle gracefully (may fail due to path length)
     
@@ -356,7 +375,9 @@ TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
     
     config.maxSize = 1024;
     config.maxCount = 3;
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_TRACE;
+    cfg.layout = LAYOUT_BASIC;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle special characters in file names";
     
@@ -379,7 +400,10 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
     
     config.maxSize = 512;
     config.maxCount = 3;
-    
+    cfg.appender_type = FileOutput;
+    cfg.loglevel = RDK_LOG_DEBUG;
+    cfg.layout = LAYOUT_DATED;
+
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
     
