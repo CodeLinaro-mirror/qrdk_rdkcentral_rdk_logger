@@ -263,6 +263,7 @@ rdk_Error rdk_logger_ext_init(const rdk_logger_ext_config_t* config);
  */
 rdk_Error rdk_logger_deinit(void);
 
+rdk_Error rdk_log_exit();
 /**
  * @brief Log a message with printf-style formatting.
  * @param level Log level.

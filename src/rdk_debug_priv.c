@@ -285,9 +285,31 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     set_default_log_level(cat_name, log_level);
 }
 
-void rdk_dbg_priv_deinit()
-{
-  gRootCat = NULL;
+void rdk_dbg_priv_deinit() {
+    gRootCat = NULL;
+
+    // Free rolling policy data
+    log4c_rollingpolicy_t* policy = log4c_rollingpolicy_get("LOG.RDK");
+    if (policy) {
+        void* udata = log4c_rollingpolicy_get_udata(policy);
+        if (udata) {
+            free(udata);  // Free the user data
+            log4c_rollingpolicy_set_udata(policy, NULL);  // Clear the user data pointer
+        }
+    }
+
+    // Free rollingfile_udata
+    log4c_appender_t* app = log4c_appender_get("LOG.RDK");
+    if (app) {
+        rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
+        if (rudata) {
+            free(rudata);  // Free the rollingfile user data
+            log4c_appender_set_udata(app, NULL);  // Clear the user data pointer
+        }
+    }
+
+    // Deinitialize log4c
+    log4c_fini();
 }
 
 /**

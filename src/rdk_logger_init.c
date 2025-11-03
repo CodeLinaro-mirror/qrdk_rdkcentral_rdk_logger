@@ -116,3 +116,8 @@ rdk_Error rdk_logger_deinit()
 
     return RDK_SUCCESS;
 }
+
+rdk_Error rdk_log_exit()
+{
+    rdk_dbg_priv_deinit();
+}
