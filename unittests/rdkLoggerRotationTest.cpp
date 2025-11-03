@@ -144,6 +144,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     
     for (int i = 0; i < 20; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d: %s", i, large_message);
+        sleep(1);
     }
     
     // Check that only maxCount files exist
@@ -225,6 +226,7 @@ TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
     // Generate log messages
     for (int i = 0; i < 5; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
+        sleep(1);
     }
     
     // Should handle gracefully
@@ -251,6 +253,7 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
     // Generate some log messages
     for (int i = 0; i < 10; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
+        sleep(1);
     }
     
     // Should handle gracefully
@@ -278,6 +281,7 @@ TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
     // Generate log messages
     for (int i = 0; i < 5; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
+        sleep(1);
     }
     
     // Should handle gracefully
@@ -304,6 +308,7 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
     // Generate log messages
     for (int i = 0; i < 5; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
+        sleep(1);
     }
     
     // Should handle gracefully
@@ -336,6 +341,7 @@ TEST_F(RDKLoggerRotationTest, LongFileNames) {
     // Generate log messages
     for (int i = 0; i < 5; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
+        sleep(1);
     }
     
     // Should handle gracefully
@@ -367,6 +373,7 @@ TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
     // Generate log messages
     for (int i = 0; i < 5; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
+        sleep(1);
     }
     
     // Should handle gracefully
@@ -393,6 +400,7 @@ TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
     // Generate log messages
     for (int i = 0; i < 5; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
+        sleep(1);
     }
     
     // Should handle gracefully
@@ -422,6 +430,7 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Concurrent message %d", i);
         rdk_logger_msg_printf(RDK_LOG_DEBUG, "LOG.RDK.ROTATION", "Debug message %d", i);
         rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.ROTATION", "Error message %d", i);
+        sleep(1);
     }
     
     // Should handle concurrent access gracefully
