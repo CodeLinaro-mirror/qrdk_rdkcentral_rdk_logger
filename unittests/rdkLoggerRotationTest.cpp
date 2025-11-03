@@ -102,6 +102,7 @@ protected:
 // Test extended initialization with log rotation
 TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test_rotation.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -120,8 +121,9 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Test message for rotation");
 }
 // Test log rotation with count limits
-TEST_F(RDKLoggerRotationTest, DISABLED_CountBasedRotation) {
+TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "count_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -186,6 +188,7 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration) {
 // Test log rotation with invalid directory
 TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -204,6 +207,7 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
 // Test log rotation with very small size limits
 TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "small_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -229,6 +233,7 @@ TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
 // Test log rotation with very large size limits
 TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "large_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -254,6 +259,7 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
 // Test log rotation with zero count limits
 TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "zero_count_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -280,6 +286,7 @@ TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
 // Test log rotation with negative values
 TEST_F(RDKLoggerRotationTest, NegativeValues) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "negative_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -305,7 +312,7 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
 // Test log rotation with long file names
 TEST_F(RDKLoggerRotationTest, LongFileNames) {
     rdk_logger_ext_config_t config;
-    
+    memset(&config, 0, sizeof(config)); 
     // Create a very long file name
     char long_filename[RDK_LOGGER_EXT_FILENAME_SIZE];
     memset(long_filename, 'A', sizeof(long_filename) - 5);
@@ -337,6 +344,7 @@ TEST_F(RDKLoggerRotationTest, LongFileNames) {
 // Test log rotation with long directory paths
 TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -367,6 +375,7 @@ TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
 // Test log rotation with special characters in file names
 TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test_file_with_special_chars.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
@@ -392,6 +401,7 @@ TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
 // Test log rotation with concurrent access
 TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "concurrent_test.log", sizeof(config.fileName) - 1);
     config.fileName[sizeof(config.fileName) - 1] = '\0';
     
