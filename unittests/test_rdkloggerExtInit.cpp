@@ -40,7 +40,6 @@ TEST(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
          RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
          RDK_LOG(RDK_LOG_WARN, "LOG.RDK.TEST", "test_LOGGING\n");
          RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "DEBUG\n");
-         sleep(1);
     }
 }
 
@@ -74,7 +73,6 @@ TEST(RdkLoggerExtInit, StdoutAppenderAndLayout) {
          RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
          RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
          RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
-         sleep(1);
     }
 }
 
@@ -108,6 +106,5 @@ TEST(RdkLoggerExtInit, ComcastDatedViaExtInit) {
          RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
          RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
          RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
-         sleep(1);
     }
 }
