@@ -47,6 +47,30 @@ protected:
         // Cleanup
         system("rm -rf /tmp/rdk_logger_performance_test");
         rdk_logger_deinit();
+        void rdk_dbg_priv_deinit() {
+
+        log4c_rollingpolicy_t* policy = log4c_rollingpolicy_get("LOG.RDK");
+        if (policy) {
+           void* udata = log4c_rollingpolicy_get_udata(policy);
+           if (udata) {
+               sizewin_free_udata(udata);  // Free the user data
+               log4c_rollingpolicy_set_udata(policy, NULL);  // Clear the user data pointer
+           }
+        }
+
+    // Free rollingfile_udata
+    log4c_appender_t* app = log4c_appender_get("LOG.RDK");
+    if (app) {
+        rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
+        if (rudata) {
+            free(rudata);  // Free the rollingfile user data
+            log4c_appender_set_udata(app, NULL);  // Clear the user data pointer
+        }
+    }
+
+    // Deinitialize log4c
+    log4c_fini();
+}
     }
     
     void createTestConfigFile(const char* filename, const char* content) {
