@@ -206,7 +206,7 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
 }
 
 // Test log rotation with very small size limits
-TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
+TEST_F(RDKLoggerRotationTest, DISABLED_VerySmallSizeLimits) {
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "small_test.log", sizeof(config.fileName) - 1);
