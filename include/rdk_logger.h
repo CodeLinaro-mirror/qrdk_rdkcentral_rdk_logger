@@ -200,12 +200,47 @@ typedef enum
     RDK_LOG_NONE
 } rdk_LogLevel;
 
+/**
+ * @enum rdk_LogAppenderType
+ * @brief Defines the destination type where log events are written.
+ *
+ * - Stdout:     Write logs to the process stdout/stderr stream (typically mapped via stream_env).
+ * - FileOutput: Write logs to rolling files on disk (uses rollingfile appender).
+ * - Journald:   Send logs to systemd's journal (if SYSTEMD_JOURNAL is enabled).
+ * - Syslog:     Forward logs to the local syslog daemon.
+ */
+typedef enum
+{
+    Stdout = 0,
+    FileOutput,
+    Journald,
+    Syslog
+} rdk_LogAppenderType;
+
+/**
+ * @enum rdk_LogLayout
+ * @brief Defines the layout/format used to render log messages.
+ *
+ * - LAYOUT_BASIC:          Simple layout (priority, category, message).
+ * - LAYOUT_DATED:          Timestamped layout including date/time and milliseconds.
+ * - LAYOUT_COMCAST_DATED:  Comcast-specific dated layout with module, level and thread id info.
+ */
+typedef enum
+{
+    LAYOUT_BASIC = 0,
+    LAYOUT_DATED,
+    LAYOUT_COMCAST_DATED
+} rdk_LogLayout;
+
 typedef struct rdk_logger_ext_config_t
  {
      char fileName[RDK_LOGGER_EXT_FILENAME_SIZE];
      char logdir[RDK_LOGGER_EXT_LOGDIR_SIZE];
      long maxSize;
      long maxCount;
+     rdk_LogAppenderType appender_type;
+     rdk_LogLevel loglevel;
+     rdk_LogLayout layout;
  }rdk_logger_ext_config_t;
 
 /**
