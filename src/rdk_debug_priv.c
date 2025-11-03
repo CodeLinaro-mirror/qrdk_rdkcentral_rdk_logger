@@ -307,9 +307,9 @@ void rdk_dbg_priv_deinit() {
             if (strcmp(appender_names[i], "rollingfile") == 0) {
                 rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
                 if (rudata) {
-                    if (rudata->file) {
+                    /*if (rudata->file) {
                         fclose(rudata->file);  // Close the log file
-                    }
+                    }*/
                     free(rudata);  // Free the rollingfile user data
                 }
             }
@@ -324,7 +324,7 @@ void rdk_dbg_priv_deinit() {
     if (policy) {
         void* udata = log4c_rollingpolicy_get_udata(policy);
         if (udata) {
-            sizewin_free_udata(udata);  // Free the rolling policy user data
+            free(udata);  // Free the rolling policy user data
             log4c_rollingpolicy_set_udata(policy, NULL);  // Clear the user data pointer
         }
     }
