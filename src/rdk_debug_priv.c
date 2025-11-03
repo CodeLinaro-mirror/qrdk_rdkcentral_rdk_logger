@@ -288,23 +288,44 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
 void rdk_dbg_priv_deinit() {
     gRootCat = NULL;
 
+    // Iterate through all appenders and clean up resources
+    const char* appender_names[] = {"stdout", "rollingfile", "stream_env"};
+    size_t num_appenders = sizeof(appender_names) / sizeof(appender_names[0]);
+
+    for (size_t i = 0; i < num_appenders; i++) {
+        log4c_appender_t* app = log4c_appender_get(appender_names[i]);
+        if (app) {
+            // Handle stdout appender
+            if (strcmp(appender_names[i], "stdout") == 0) {
+                FILE* stream = (FILE*)log4c_appender_get_udata(app);
+                if (stream && stream != stdout) {
+                    fclose(stream);  // Close the stream if it's not stdout
+                }
+            }
+
+            // Handle rollingfile appender
+            if (strcmp(appender_names[i], "rollingfile") == 0) {
+                rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
+                if (rudata) {
+                    if (rudata->file) {
+                        fclose(rudata->file);  // Close the log file
+                    }
+                    free(rudata);  // Free the rollingfile user data
+                }
+            }
+
+            // Clear the appender's user data
+            log4c_appender_set_udata(app, NULL);
+        }
+    }
+
     // Free rolling policy data
     log4c_rollingpolicy_t* policy = log4c_rollingpolicy_get("LOG.RDK");
     if (policy) {
         void* udata = log4c_rollingpolicy_get_udata(policy);
         if (udata) {
-            free(udata);  // Free the user data
+            sizewin_free_udata(udata);  // Free the rolling policy user data
             log4c_rollingpolicy_set_udata(policy, NULL);  // Clear the user data pointer
-        }
-    }
-
-    // Free rollingfile_udata
-    log4c_appender_t* app = log4c_appender_get("LOG.RDK");
-    if (app) {
-        rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
-        if (rudata) {
-            free(rudata);  // Free the rollingfile user data
-            log4c_appender_set_udata(app, NULL);  // Clear the user data pointer
         }
     }
 
