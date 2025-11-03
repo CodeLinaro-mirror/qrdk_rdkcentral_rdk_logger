@@ -312,17 +312,26 @@ void rdk_dbg_priv_deinit() {
                     fclose(stream);  // Close the stream if it's not stdout
                 }
             }
+           if (strcmp(appender_names[i], "rollingfile") == 0) 
+		   {
+               rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
+               if (rudata) 
+			   {
+                  log4c_rollingpolicy_t* policy = rollingfile_udata_get_policy(rudata);
+                if (policy) 
+				{
+                  void* policy_udata = log4c_rollingpolicy_get_udata(policy);
+                  if (policy_udata) 
+				  {
+                    free(policy_udata);  // Free the rolling policy user data
+                    log4c_rollingpolicy_set_udata(policy, NULL);  // Clear the user data pointer
+                  }
+                } 
+                free(rudata);  // Free the rollingfile user data
+                //log4c_appender_set_udata(app, NULL);  // Clear the appender's user data
+              }
+          }
 
-            // Handle rollingfile appender
-            if (strcmp(appender_names[i], "rollingfile") == 0) {
-                rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
-                if (rudata) {
-                    /*if (rudata->file) {
-                        fclose(rudata->file);  // Close the log file
-                    }*/
-                    free(rudata);  // Free the rollingfile user data
-                }
-            }
 
             // Clear the appender's user data
             log4c_appender_set_udata(app, NULL);
