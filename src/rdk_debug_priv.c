@@ -57,6 +57,7 @@
 #include <log4c/appender_type_rollingfile.h>
 #include <log4c/rollingpolicy.h>
 #include <log4c/rollingpolicy_type_sizewin.h>
+#include <log4c/rollingpolicy.h>
 
 #ifdef SYSTEMD_JOURNAL
 #include <systemd/sd-journal.h>
