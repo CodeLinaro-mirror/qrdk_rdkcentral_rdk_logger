@@ -240,7 +240,7 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
     
     strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
     config.logdir[sizeof(config.logdir) - 1] = '\0';
-    
+    printf("strcpy success\n"); 
     config.maxSize = 1024 * 1024 * 100;  // 100MB
     config.maxCount = 10;
     config.appender_type = FileOutput;
@@ -248,11 +248,12 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
     config.layout = LAYOUT_COMCAST_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle very large size limits";
-    
+    printf("ext_init succes\n"); 
     // Generate some log messages
     for (int i = 0; i < 10; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
         sleep(1);
+        printf("Iteration:%d",i);
     }
     
     // Should handle gracefully
