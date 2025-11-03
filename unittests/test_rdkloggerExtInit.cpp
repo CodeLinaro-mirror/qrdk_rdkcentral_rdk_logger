@@ -34,6 +34,14 @@ TEST(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
     ASSERT_NE(rootCat, nullptr) << "Failed to obtain LOG.RDK category";
     EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_TRACE) << "LOG.RDK priority not TRACE";
+     for (int i =0; i < 50; i++)
+    {
+         RDK_LOG(RDK_LOG_TRACE, "LOG.RDK.RTMESSAGE", "errorloh\n");
+         RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
+         RDK_LOG(RDK_LOG_WARN, "LOG.RDK.TEST", "test_LOGGING\n");
+         RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "DEBUG\n");
+         sleep(1);
+    }
 }
 
 TEST(RdkLoggerExtInit, StdoutAppenderAndLayout) {
@@ -60,6 +68,14 @@ TEST(RdkLoggerExtInit, StdoutAppenderAndLayout) {
     EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_DEBUG) << "LOG.RDK priority not DEBUG";
 
     EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("basic")) << "Stdout appender layout mismatch";
+     for (int i =0; i < 50; i++)
+    {
+         RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
+         RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
+         RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
+         RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
+         sleep(1);
+    }
 }
 
 TEST(RdkLoggerExtInit, ComcastDatedViaExtInit) {
