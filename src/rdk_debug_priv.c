@@ -328,7 +328,7 @@ void rdk_dbg_priv_deinit() {
     }
 
     // Deinitialize log4c
-    log4c_fini();
+    //log4c_fini();
 }
 
 /**
