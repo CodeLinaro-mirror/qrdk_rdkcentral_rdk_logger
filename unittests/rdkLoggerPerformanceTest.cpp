@@ -285,9 +285,9 @@ TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
     
     config.maxSize = 1024;  // 1KB max size to trigger rotation
     config.maxCount = 5;    // Keep 5 files
-    cfg.appender_type = FileOutput;
-    cfg.loglevel = RDK_LOG_DEBUG;
-    cfg.layout = LAYOUT_DATED; 
+    config.appender_type = FileOutput;
+    config.loglevel = RDK_LOG_DEBUG;
+    config.layout = LAYOUT_DATED; 
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
     
