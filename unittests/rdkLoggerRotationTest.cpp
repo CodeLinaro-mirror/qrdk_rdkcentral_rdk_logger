@@ -39,8 +39,7 @@ protected:
         
         // Create test configuration file
         createTestConfigFile("/tmp/rdk_logger_rotation_test/test.ini", 
-            "LOG.RDK.DEFAULT=WARN\n"
-            "LOG.RDK.ROTATION=DEBUG\n");
+            "LOG.RDK.DEFAULT=WARN\n");
     }
     
     void TearDown() override {
