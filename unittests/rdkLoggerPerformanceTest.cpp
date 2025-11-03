@@ -39,8 +39,7 @@ protected:
         // Create test configuration file
         createTestConfigFile("/tmp/rdk_logger_performance_test/test.ini", 
             "LOG.RDK.DEFAULT=INFO\n"
-            "LOG.RDK.PERFORMANCE=DEBUG\n"
-            "LOG.RDK.STRESS=TRACE\n");
+           );
     }
     
     void TearDown() override {
