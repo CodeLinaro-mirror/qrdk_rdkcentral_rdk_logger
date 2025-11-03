@@ -86,4 +86,12 @@ TEST(RdkLoggerExtInit, ComcastDatedViaExtInit) {
     ASSERT_NE(app, nullptr) << "Appender not created by rdk_logger_ext_init: " << fullpath;
     EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_ERROR) << "LOG.RDK priority not ERROR";
     EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("comcast_dated")) << "Appender layout is not comcast_dated as requested";
+    for (int i =0; i < 5000; i++)
+    {
+         RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
+         RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
+         RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
+         RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
+         sleep(1);
+    }
 }
