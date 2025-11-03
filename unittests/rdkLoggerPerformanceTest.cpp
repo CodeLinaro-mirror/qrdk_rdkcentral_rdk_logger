@@ -401,7 +401,7 @@ TEST_F(RDKLoggerPerformanceTest, DifferentOutputDestinationsTest) {
     
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 10.0) << "Different output destinations test should be reasonably fast";
-    rdk_Log_exit();
+    rdk_log_exit();
 }
 
 // Test logging with format string performance
