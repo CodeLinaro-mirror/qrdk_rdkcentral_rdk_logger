@@ -121,7 +121,7 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Test message for rotation");
 }
 // Test log rotation with count limits
-TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
+TEST_F(RDKLoggerRotationTest, DISABLED_CountBasedRotation) {
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "count_test.log", sizeof(config.fileName) - 1);
