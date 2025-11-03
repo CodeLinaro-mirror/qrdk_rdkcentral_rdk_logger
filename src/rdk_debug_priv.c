@@ -275,7 +275,17 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     } 
 	else 
 	{
-        log4c_appender_set_udata(app, NULL);
+		if (strcmp(fullpath, "stdout") == 0) 
+		{
+            log4c_appender_set_udata(app, stdout);
+        } 
+		else if (strcmp(fullpath, "stderr") == 0) {
+            log4c_appender_set_udata(app, stderr);
+        } 
+		else 
+		{
+            log4c_appender_set_udata(app, NULL); // Default to NULL if not stdout/stderr
+        }
     }
 
     set_default_layout(app, layout);
