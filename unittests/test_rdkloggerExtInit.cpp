@@ -55,6 +55,7 @@ TEST(RdkLoggerExtInit, StdoutAppenderAndLayout) {
     log4c_appender_t* app = log4c_appender_get("stdout");
     ASSERT_NE(app, nullptr) << "Stdout appender not found";
 
+    log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
     EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("stream_env")) << "Stdout appender type mismatch";
     EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_DEBUG) << "LOG.RDK priority not DEBUG";
 
@@ -79,7 +80,8 @@ TEST(RdkLoggerExtInit, ComcastDatedViaExtInit) {
 
     char fullpath[512];
     snprintf(fullpath, sizeof(fullpath), "%s/%s", cfg.logdir, cfg.fileName);
-
+    log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
+    
     log4c_appender_t* app = log4c_appender_get(fullpath);
     ASSERT_NE(app, nullptr) << "Appender not created by rdk_logger_ext_init: " << fullpath;
     EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_ERROR) << "LOG.RDK priority not ERROR";
