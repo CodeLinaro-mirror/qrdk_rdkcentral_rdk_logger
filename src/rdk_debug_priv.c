@@ -241,7 +241,13 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
 
         rollingfile_udata_set_policy(rudata, policy);
         log4c_appender_set_udata(app, rudata);
-    } else {
+    }
+    else if (appender_type == Stdout) 
+	{
+        log4c_appender_set_udata(app, stdout);
+    }
+	else 
+	{
         log4c_appender_set_udata(app, NULL);
     }
 
