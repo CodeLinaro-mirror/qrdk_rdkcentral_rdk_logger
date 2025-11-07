@@ -6,6 +6,27 @@
 #include "rdk_error.h"
 #include "log4c.h"
 
+class RdkLoggerExtInit : public ::testing::Test {
+protected:
+    void SetUp() override {
+        log4c_init();
+    }
+
+    void TearDown() override {
+        // Clean shutdown between tests
+        const char* cat_name = "LOG.RDK";
+        log4c_category_t* cat = log4c_category_get(cat_name);
+        if (cat) {
+            log4c_appender_t* app = log4c_category_get_appender(cat);
+            if (app) {
+                log4c_appender_close(app);
+                log4c_appender_set_udata(app, NULL);
+            }
+        }
+        rdk_logger_deinit();
+    }
+};
+    
 TEST(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     rdk_logger_ext_config_t cfg;
     memset(&cfg, 0, sizeof(cfg));
