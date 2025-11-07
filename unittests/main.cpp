@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 #include "gtest/gtest.h"
+#include "log4c.h" 
 
 char gtestReportPath[] = "xml:/tmp/Gtest_Report/rdklogger_gtest_report.xml";
 
