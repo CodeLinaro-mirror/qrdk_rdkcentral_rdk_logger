@@ -41,7 +41,7 @@ TEST(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
          RDK_LOG(RDK_LOG_WARN, "LOG.RDK.TEST", "test_LOGGING\n");
          RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "DEBUG\n");
     }
-    rdk_log_exit();
+    //rdk_log_exit();
     rdk_logger_deinit();
 }
 
@@ -76,7 +76,7 @@ TEST(RdkLoggerExtInit, StdoutAppenderAndLayout) {
          RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
          RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
     }
-    rdk_log_exit();
+    //rdk_log_exit();
     rdk_logger_deinit();
 }
 
@@ -111,6 +111,6 @@ TEST(RdkLoggerExtInit, ComcastDatedViaExtInit) {
          RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
          RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
     }
-    rdk_log_exit();
+    //rdk_log_exit();
     rdk_logger_deinit();
 }
