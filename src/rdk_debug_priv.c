@@ -286,36 +286,53 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
 void rdk_dbg_priv_deinit() {
     gRootCat = NULL;
 
-    // Iterate through all appenders and clean up resources
-    const char* appender_names[] = {"stdout", "rollingfile", "stream_env"};
-    size_t num_appenders = sizeof(appender_names) / sizeof(appender_names[0]);
-
-    for (size_t i = 0; i < num_appenders; i++) {
-        log4c_appender_t* app = log4c_appender_get(appender_names[i]);
-        if (app) {
-            // Handle stdout appender
-            if (strcmp(appender_names[i], "stdout") == 0) {
-                FILE* stream = (FILE*)log4c_appender_get_udata(app);
-                if (stream && stream != stdout) {
-                    fclose(stream);  // Close the stream if it's not stdout
+    // Clean up all rollingfile appenders
+    log4c_appender_t* app = log4c_appender_get("rollingfile");
+    if (app) {
+        rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
+        if (rudata) {
+            // Close the file pointer if open
+            if (rudata->fp && rudata->fp != stdout && rudata->fp != stderr) {
+                fclose(rudata->fp);
+            }
+            // Free rollingpolicy udata if present
+            log4c_rollingpolicy_t* policy = rollingfile_udata_get_policy(rudata);
+            if (policy) {
+                void* swin = log4c_rollingpolicy_get_udata(policy);
+                if (swin) {
+                    free(swin);
+                    log4c_rollingpolicy_set_udata(policy, NULL);
                 }
             }
-			if (strcmp(appender_names[i], "rollingfile") == 0) {
-             rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
-               if (rudata) {
-                  printf("Cleaning up rollingfile_udata: %p\n", rudata);
-                  free(rudata);  // Free the rollingfile user data
-                   //log4c_appender_set_udata(app, NULL);  // Clear the appender's user data
-               }
-          }
-
-            // Clear the appender's user data
+            free(rudata);
             log4c_appender_set_udata(app, NULL);
         }
+        log4c_appender_close(app);
     }
 
-    // Deinitialize log4c
-    //log4c_fini();
+    // Clean up stdout appender if needed
+    app = log4c_appender_get("stdout");
+    if (app) {
+        FILE* stream = (FILE*)log4c_appender_get_udata(app);
+        if (stream && stream != stdout && stream != stderr) {
+            fclose(stream);
+        }
+        log4c_appender_set_udata(app, NULL);
+        log4c_appender_close(app);
+    }
+
+    // Clean up stream_env appender if needed
+    app = log4c_appender_get("stream_env");
+    if (app) {
+        FILE* stream = (FILE*)log4c_appender_get_udata(app);
+        if (stream && stream != stdout && stream != stderr) {
+            fclose(stream);
+        }
+        log4c_appender_set_udata(app, NULL);
+        log4c_appender_close(app);
+    }
+
+    // Optionally: log4c_fini(); // Only at process exit, not per test
 }
 
 /**
