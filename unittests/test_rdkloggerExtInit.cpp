@@ -11,16 +11,23 @@ protected:
     void SetUp() override {
         log4c_init();
     }
-
     void TearDown() override {
         // Clean shutdown between tests
         const char* cat_name = "LOG.RDK";
         log4c_category_t* cat = log4c_category_get(cat_name);
         if (cat) {
-            log4c_appender_t* app = log4c_category_get_appender(cat);
-            if (app) {
-                log4c_appender_close(app);
-                log4c_appender_set_udata(app, NULL);
+            // Get const appender from category
+            const log4c_appender_t* const_app = log4c_category_get_appender(cat);
+            if (const_app) {
+                // Get mutable appender using the name
+                const char* app_name = log4c_appender_get_name(const_app);
+                if (app_name) {
+                    log4c_appender_t* app = log4c_appender_get(app_name);
+                    if (app) {
+                        log4c_appender_close(app);
+                        log4c_appender_set_udata(app, NULL);
+                    }
+                }
             }
         }
         rdk_logger_deinit();
