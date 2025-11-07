@@ -198,7 +198,6 @@ void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
     }
 }
 
-// ...existing code...
 void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
                            rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
@@ -219,17 +218,17 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     log4c_appender_t* app = log4c_appender_get(fullpath);
     if (!app) {
         app = log4c_appender_new(fullpath);
-    } else {
-        /* If reusing an existing appender, close it and reset udata to avoid stale FILE* */
-        log4c_appender_close(app);
-        log4c_appender_set_udata(app, NULL);
     }
+    
+    /* Always close and reset existing appender to avoid stale handles */
+    log4c_appender_close(app);
+    log4c_appender_set_udata(app, NULL);
 
-    /* ensure appender type is set (stream_env / rollingfile etc.) */
+    /* Set appender type first */
     set_default_appender_type(app, appender_type);
 
     if (appender_type == FileOutput) {
-        /* prepare rollingfile user data and policy */
+        /* Configure rollingfile appender */
         rollingfile_udata_t *rudata = rollingfile_make_udata();
         if (rudata) {
             rollingfile_udata_set_logdir(rudata, logdir);
@@ -253,26 +252,21 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
             }
 
             log4c_appender_set_udata(app, rudata);
-        }
 
-        /* open the appender so internal FILE* and state are initialized */
-        (void)log4c_appender_open(app);
+            /* Open the appender to initialize FILE* */
+            if (log4c_appender_open(app) < 0) {
+                fprintf(stderr, "Failed to open rollingfile appender for %s\n", fullpath);
+            }
+        }
     }
     else if (appender_type == Stdout) {
-        /*
-         * For stdout, leave udata NULL and let the appender open routine
-         * (stream_env_open) set the FILE* based on the appender name "stdout".
-         */
         log4c_appender_set_udata(app, NULL);
-        (void)log4c_appender_open(app);
-    }
-    else {
-        /* other types: ensure no stale udata and attempt open */
-        log4c_appender_set_udata(app, NULL);
-        (void)log4c_appender_open(app);
+        if (log4c_appender_open(app) < 0) {
+            fprintf(stderr, "Failed to open stdout appender\n"); 
+        }
     }
 
-    /* layout, attach to category and set level */
+    /* Set layout and category settings */
     set_default_layout(app, layout);
     log4c_category_set_appender(cat, app);
     set_default_log_level(cat_name, log_level);
