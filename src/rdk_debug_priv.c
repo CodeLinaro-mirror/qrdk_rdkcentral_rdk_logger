@@ -286,50 +286,25 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
 void rdk_dbg_priv_deinit() {
     gRootCat = NULL;
 
-    // Clean up all rollingfile appenders
+    // Clean up rollingfile appender
     log4c_appender_t* app = log4c_appender_get("rollingfile");
     if (app) {
-        rollingfile_udata_t* rudata = (rollingfile_udata_t*)log4c_appender_get_udata(app);
-        if (rudata) {
-            // Close the file pointer if open
-            if (rudata->fp && rudata->fp != stdout && rudata->fp != stderr) {
-                fclose(rudata->fp);
-            }
-            // Free rollingpolicy udata if present
-            log4c_rollingpolicy_t* policy = rollingfile_udata_get_policy(rudata);
-            if (policy) {
-                void* swin = log4c_rollingpolicy_get_udata(policy);
-                if (swin) {
-                    free(swin);
-                    log4c_rollingpolicy_set_udata(policy, NULL);
-                }
-            }
-            free(rudata);
-            log4c_appender_set_udata(app, NULL);
-        }
         log4c_appender_close(app);
+        log4c_appender_set_udata(app, NULL);
     }
 
-    // Clean up stdout appender if needed
+    // Clean up stdout appender
     app = log4c_appender_get("stdout");
     if (app) {
-        FILE* stream = (FILE*)log4c_appender_get_udata(app);
-        if (stream && stream != stdout && stream != stderr) {
-            fclose(stream);
-        }
-        log4c_appender_set_udata(app, NULL);
         log4c_appender_close(app);
+        log4c_appender_set_udata(app, NULL);
     }
 
-    // Clean up stream_env appender if needed
+    // Clean up stream_env appender
     app = log4c_appender_get("stream_env");
     if (app) {
-        FILE* stream = (FILE*)log4c_appender_get_udata(app);
-        if (stream && stream != stdout && stream != stderr) {
-            fclose(stream);
-        }
-        log4c_appender_set_udata(app, NULL);
         log4c_appender_close(app);
+        log4c_appender_set_udata(app, NULL);
     }
 
     // Optionally: log4c_fini(); // Only at process exit, not per test
