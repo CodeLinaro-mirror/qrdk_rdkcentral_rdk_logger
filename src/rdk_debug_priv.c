@@ -198,6 +198,7 @@ void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
     }
 }
 
+// ...existing code...
 void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
                            rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
@@ -214,49 +215,68 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     if (!cat)
         cat = log4c_category_new(cat_name);
 
+    /* get or create the appender */
     log4c_appender_t* app = log4c_appender_get(fullpath);
-    if (!app)
+    if (!app) {
         app = log4c_appender_new(fullpath);
-
-    // Reset appender udata before assigning new one
-    log4c_appender_set_udata(app, NULL);
-
-    set_default_appender_type(app, appender_type);
-
-    if (appender_type == FileOutput) {
-        rollingfile_udata_t *rudata = rollingfile_make_udata();
-        rollingfile_udata_set_logdir(rudata, logdir);
-        rollingfile_udata_set_files_prefix(rudata, log_file_name);
-
-        log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
-        if (!policy)
-            policy = log4c_rollingpolicy_new(cat_name);
-
-        log4c_rollingpolicy_set_type(policy, log4c_rollingpolicy_type_get("sizewin"));
-
-        rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
-        sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
-        sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
-        log4c_rollingpolicy_set_udata(policy, sizewin_udata);
-
-        rollingfile_udata_set_policy(rudata, policy);
-        log4c_appender_set_udata(app, rudata);
-		log4c_appender_open(app);
-    }
-    else if (appender_type == Stdout) 
-	{
-        log4c_appender_set_udata(app, stdout);
-    }
-	else 
-	{
+    } else {
+        /* If reusing an existing appender, close it and reset udata to avoid stale FILE* */
+        log4c_appender_close(app);
         log4c_appender_set_udata(app, NULL);
     }
 
+    /* ensure appender type is set (stream_env / rollingfile etc.) */
+    set_default_appender_type(app, appender_type);
+
+    if (appender_type == FileOutput) {
+        /* prepare rollingfile user data and policy */
+        rollingfile_udata_t *rudata = rollingfile_make_udata();
+        if (rudata) {
+            rollingfile_udata_set_logdir(rudata, logdir);
+            rollingfile_udata_set_files_prefix(rudata, log_file_name);
+
+            log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
+            if (!policy)
+                policy = log4c_rollingpolicy_new(cat_name);
+
+            if (policy) {
+                log4c_rollingpolicy_set_type(policy, log4c_rollingpolicy_type_get("sizewin"));
+
+                rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
+                if (sizewin_udata) {
+                    sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
+                    sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
+                    log4c_rollingpolicy_set_udata(policy, sizewin_udata);
+                }
+
+                rollingfile_udata_set_policy(rudata, policy);
+            }
+
+            log4c_appender_set_udata(app, rudata);
+        }
+
+        /* open the appender so internal FILE* and state are initialized */
+        (void)log4c_appender_open(app);
+    }
+    else if (appender_type == Stdout) {
+        /*
+         * For stdout, leave udata NULL and let the appender open routine
+         * (stream_env_open) set the FILE* based on the appender name "stdout".
+         */
+        log4c_appender_set_udata(app, NULL);
+        (void)log4c_appender_open(app);
+    }
+    else {
+        /* other types: ensure no stale udata and attempt open */
+        log4c_appender_set_udata(app, NULL);
+        (void)log4c_appender_open(app);
+    }
+
+    /* layout, attach to category and set level */
     set_default_layout(app, layout);
-
     log4c_category_set_appender(cat, app);
-
     set_default_log_level(cat_name, log_level);
+
     printf("Current priority: %d\n", log4c_category_get_priority(cat));
 }
 
