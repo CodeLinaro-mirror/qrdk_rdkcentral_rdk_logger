@@ -200,93 +200,104 @@ void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
 }
 
 void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
-                           rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout) 
+                           rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
     char fullpath[512];
-    if (appender_type == FileOutput) 
-	{
+    if (appender_type == FileOutput)
+    {
         snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
-    } 
-	else 
-	{
-        strncpy(fullpath, "stdout", sizeof(fullpath) - 1);
-        fullpath[sizeof(fullpath) - 1] = '\0';
+    }
+    else
+    {
+        strncpy(fullpath, "stdout", sizeof(fullpath)-1);
+        fullpath[sizeof(fullpath)-1] = '\0';
     }
 
     const char* cat_name = "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(cat_name);
-    if (!cat) 
-	{
+    if (!cat)
+    {
         cat = log4c_category_new(cat_name);
-        if (!cat) 
-		{
-            fprintf(stderr, "Error: Failed to create log category\n");
-            return;
-        }
     }
 
     log4c_appender_t* app = log4c_appender_get(fullpath);
-    if (!app) {
+    if (!app)
+    {
         app = log4c_appender_new(fullpath);
-        if (!app) {
-            fprintf(stderr, "Error: Failed to create appender\n");
-            return;
+    }
+    else
+    {
+        // Clean up previous rollingfile udata if present
+        void* old_udata = log4c_appender_get_udata(app);
+        if (old_udata && appender_type == FileOutput)
+        {
+            rollingfile_udata_t* rudata = (rollingfile_udata_t*)old_udata;
+            log4c_rollingpolicy_t* old_policy = rollingfile_udata_get_policy(rudata);
+            if (old_policy)
+            {
+                // Free sizewin udata if present
+                rollingpolicy_sizewin_udata_t* swup = log4c_rollingpolicy_get_udata(old_policy);
+                if (swup)
+                {
+                    for (int i = 0; i < swup->sw_conf.swc_file_max_num_files; i++)
+                    {
+                        if (swup->sw_filenames[i])
+                            free(swup->sw_filenames[i]);
+                    }
+                    free(swup->sw_filenames);
+                    free(swup);
+                    log4c_rollingpolicy_set_udata(old_policy, NULL);
+                }
+                // Optionally free old_policy itself if you own it
+            }
+            // Free rollingfile udata
+            free(rudata);
         }
+        log4c_appender_set_udata(app, NULL);
     }
 
     set_default_appender_type(app, appender_type);
 
-    if (appender_type == FileOutput) 
-	{
-        rollingfile_udata_t* rudata = rollingfile_make_udata();
-        if (!rudata) 
-		{
-            fprintf(stderr, "Error: Failed to allocate rollingfile_udata\n");
-            return;
-        }
+    if (appender_type == FileOutput)
+    {
+        rollingfile_udata_t *rudata = rollingfile_make_udata();
         rollingfile_udata_set_logdir(rudata, logdir);
         rollingfile_udata_set_files_prefix(rudata, log_file_name);
 
-        log4c_rollingpolicy_t* policy = log4c_rollingpolicy_get(cat_name);
-        if (!policy) 
-		{
+        log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
+        if (!policy)
+        {
             policy = log4c_rollingpolicy_new(cat_name);
-            if (!policy) 
-			{
-                fprintf(stderr, "Error: Failed to create rolling policy\n");
-                free(rudata);
-                return;
+        }
+        else
+        {
+            // Clean up previous sizewin udata if present
+            rollingpolicy_sizewin_udata_t* swup = log4c_rollingpolicy_get_udata(policy);
+            if (swup)
+            {
+                for (int i = 0; i < swup->sw_conf.swc_file_max_num_files; i++)
+                {
+                    if (swup->sw_filenames[i])
+                        free(swup->sw_filenames[i]);
+                }
+                free(swup->sw_filenames);
+                free(swup);
+                log4c_rollingpolicy_set_udata(policy, NULL);
             }
         }
         log4c_rollingpolicy_set_type(policy, log4c_rollingpolicy_type_get("sizewin"));
 
-        rollingpolicy_sizewin_udata_t* sizewin_udata = sizewin_make_udata();
-        if (!sizewin_udata) 
-		{
-            fprintf(stderr, "Error: Failed to allocate sizewin_udata\n");
-            free(rudata);
-            return;
-        }
+        rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
         sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
         sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
         log4c_rollingpolicy_set_udata(policy, sizewin_udata);
 
         rollingfile_udata_set_policy(rudata, policy);
         log4c_appender_set_udata(app, rudata);
-    } 
-	else 
-	{
-		if (strcmp(fullpath, "stdout") == 0) 
-		{
-            log4c_appender_set_udata(app, stdout);
-        } 
-		else if (strcmp(fullpath, "stderr") == 0) {
-            log4c_appender_set_udata(app, stderr);
-        } 
-		else 
-		{
-            log4c_appender_set_udata(app, NULL); // Default to NULL if not stdout/stderr
-        }
+    }
+    else
+    {
+        log4c_appender_set_udata(app, NULL);
     }
 
     set_default_layout(app, layout);
@@ -294,6 +305,7 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     log4c_category_set_appender(cat, app);
 
     set_default_log_level(cat_name, log_level);
+    printf("Current priority: %d\n", log4c_category_get_priority(cat));
 }
 
 void rdk_dbg_priv_deinit() {
