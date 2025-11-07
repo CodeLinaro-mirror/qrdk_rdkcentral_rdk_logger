@@ -42,7 +42,7 @@
 #include <sys/syscall.h>   /* For SYS_xxx definitions */
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
+#include <sys/ioctl.h>ex
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -201,45 +201,62 @@ void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
 void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
                            rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
+    /* Register types first - safe to call multiple times */
+    (void)log4c_appender_type_set(&log4c_appender_type_rollingfile);
+    (void)log4c_rollingpolicy_type_set(&log4c_rollingpolicy_type_sizewin);
+    (void)log4c_layout_type_set(&log4c_layout_type_dated_nocr);
+    (void)log4c_layout_type_set(&log4c_layout_type_basic_nocr);
+    (void)log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);
+
     char fullpath[512];
-    if (appender_type == FileOutput)
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
-    else {
+    if (appender_type == FileOutput) {
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir ? logdir : ".", log_file_name ? log_file_name : "rdk.log");
+    } else {
         strncpy(fullpath, "stdout", sizeof(fullpath)-1);
         fullpath[sizeof(fullpath)-1] = '\0';
     }
 
     const char* cat_name = "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(cat_name);
-    if (!cat)
+    if (!cat) {
         cat = log4c_category_new(cat_name);
+    }
 
-    /* get or create the appender */
+    /* Get or create appender */
     log4c_appender_t* app = log4c_appender_get(fullpath);
     if (!app) {
         app = log4c_appender_new(fullpath);
     }
-    
-    /* Always close and reset existing appender to avoid stale handles */
+
+    /* Clean up any existing state */
     log4c_appender_close(app);
     log4c_appender_set_udata(app, NULL);
 
-    /* Set appender type first */
-    set_default_appender_type(app, appender_type);
+    /* Set layout and type before configuring udata */
+    set_default_layout(app, layout);
 
     if (appender_type == FileOutput) {
-        /* Configure rollingfile appender */
+        /* Explicitly set rollingfile type */
+        const log4c_appender_type_t* atype = log4c_appender_type_get("rollingfile");
+        if (atype) {
+            log4c_appender_set_type(app, atype);
+        }
+
         rollingfile_udata_t *rudata = rollingfile_make_udata();
         if (rudata) {
             rollingfile_udata_set_logdir(rudata, logdir);
             rollingfile_udata_set_files_prefix(rudata, log_file_name);
 
             log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
-            if (!policy)
+            if (!policy) {
                 policy = log4c_rollingpolicy_new(cat_name);
-
+            }
+            
             if (policy) {
-                log4c_rollingpolicy_set_type(policy, log4c_rollingpolicy_type_get("sizewin"));
+                const log4c_rollingpolicy_type_t* rtype = log4c_rollingpolicy_type_get("sizewin");
+                if (rtype) {
+                    log4c_rollingpolicy_set_type(policy, rtype);
+                }
 
                 rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
                 if (sizewin_udata) {
@@ -252,22 +269,21 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
             }
 
             log4c_appender_set_udata(app, rudata);
-
-            /* Open the appender to initialize FILE* */
-            if (log4c_appender_open(app) < 0) {
-                fprintf(stderr, "Failed to open rollingfile appender for %s\n", fullpath);
-            }
         }
-    }
-    else if (appender_type == Stdout) {
-        log4c_appender_set_udata(app, NULL);
-        if (log4c_appender_open(app) < 0) {
-            fprintf(stderr, "Failed to open stdout appender\n"); 
+    } else {
+        /* Set stream_env type for stdout */
+        const log4c_appender_type_t* atype = log4c_appender_type_get("stream_env");
+        if (atype) {
+            log4c_appender_set_type(app, atype);
         }
     }
 
-    /* Set layout and category settings */
-    set_default_layout(app, layout);
+    /* Open after setting type and udata */
+    if (log4c_appender_open(app) < 0) {
+        fprintf(stderr, "Failed to open appender %s\n", fullpath);
+    }
+
+    /* Set category configuration */
     log4c_category_set_appender(cat, app);
     set_default_log_level(cat_name, log_level);
 
