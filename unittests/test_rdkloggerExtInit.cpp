@@ -34,7 +34,7 @@ protected:
     }
 };
     
-TEST(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
+TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     rdk_logger_ext_config_t cfg;
     memset(&cfg, 0, sizeof(cfg));
     strncpy(cfg.fileName, "gtest_rdk_unittest.log", sizeof(cfg.fileName)-1);
@@ -73,7 +73,7 @@ TEST(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     //rdk_logger_deinit();
 }
 
-TEST(RdkLoggerExtInit, StdoutAppenderAndLayout) {
+TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
     rdk_logger_ext_config_t cfg;
     memset(&cfg, 0, sizeof(cfg));
     strncpy(cfg.fileName, "unused.txt", sizeof(cfg.fileName)-1);
@@ -108,7 +108,7 @@ TEST(RdkLoggerExtInit, StdoutAppenderAndLayout) {
     //rdk_logger_deinit();
 }
 
-TEST(RdkLoggerExtInit, ComcastDatedViaExtInit) {
+TEST_F(RdkLoggerExtInit, ComcastDatedViaExtInit) {
     rdk_logger_ext_config_t cfg;
     memset(&cfg, 0, sizeof(cfg));
     strncpy(cfg.fileName, "gtest_comcast_unittest.log", sizeof(cfg.fileName)-1);
