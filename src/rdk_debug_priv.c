@@ -42,7 +42,7 @@
 #include <sys/syscall.h>   /* For SYS_xxx definitions */
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>ex
+#include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
