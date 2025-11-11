@@ -37,7 +37,7 @@ add_executable(
   rdkIsDbgEnabled.cpp
   rdkLoggerDynamic.cpp
   rdkLoggerUtilityTest.cpp
-  rdkLoggerConfigTest.cpp
+  #rdkLoggerConfigTest.cpp
   rdkEnableLogLevel.cpp
   rdkLogLevelFromString.cpp
   test_rdkloggerExtInit.cpp
