@@ -13,7 +13,7 @@ protected:
     }
     void TearDown() override {
         // Clean shutdown between tests
-        /*const char* cat_name = "LOG.RDK";
+        const char* cat_name = "LOG.RDK";
         log4c_category_t* cat = log4c_category_get(cat_name);
         if (cat) {
             // Get const appender from category
@@ -29,8 +29,8 @@ protected:
                     }
                 }
             }
-        }*/
-        rdk_log_exit();
+        }
+        //rdk_log_exit();
         rdk_logger_deinit();
     }
 };
