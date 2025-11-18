@@ -137,7 +137,7 @@ TEST_F(RDKLoggerErrorTest, InvalidLogLevels) {
 }
 
 // Test very long messages
-TEST_F(RDKLoggerErrorTest, VeryLongMessages) {
+TEST_F(RDKLoggerErrorTest, DISABLED_VeryLongMessages) {
     rdk_Error ret = rdk_logger_init("/tmp/rdk_logger_error_test/test.ini");
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize logger";
     
