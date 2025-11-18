@@ -30,6 +30,7 @@ Test Case : Testing RDK Logger Log Rotation Functionality
 #include <dirent.h>
 #include "rdk_logger.h"
 #include "gtest_app.h"
+#include "log4c.h"
 
 class RDKLoggerRotationTest : public ::testing::Test {
 protected:
