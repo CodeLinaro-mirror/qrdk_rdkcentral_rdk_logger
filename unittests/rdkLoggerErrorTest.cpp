@@ -28,6 +28,7 @@ Test Case : Testing RDK Logger Error Handling and Edge Cases
 #include <errno.h>
 #include "rdk_logger.h"
 #include "gtest_app.h"
+#include <log4c.h>
 
 class RDKLoggerErrorTest : public ::testing::Test {
 protected:
