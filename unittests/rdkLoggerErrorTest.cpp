@@ -44,7 +44,7 @@ protected:
         // Cleanup
         system("rm -rf /tmp/rdk_logger_error_test");
         rdk_logger_deinit();
-        log4c_fini();
+        //log4c_fini();
     }
     
     void createTestConfigFile(const char* filename, const char* content) {
