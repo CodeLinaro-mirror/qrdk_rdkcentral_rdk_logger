@@ -522,6 +522,9 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         return;
     }
 
+	log4c_appender_t *app = log4c_category_get_appender(cat);
+    if (!app) return;
+
     if (!IS_LOGGING_ENABLED_FOR_LEVEL(module_name, level))
     {
         return;
