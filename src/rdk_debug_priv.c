@@ -485,6 +485,11 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     log4c_category_t* cat = NULL;
     int prio = 0;
 
+	if (!module_name) 
+	{
+        return;
+    }
+
     /* Handling process request here. This is not a blocking call and it shall return immediately */
     rdk_dyn_log_process_pending_request();
 
