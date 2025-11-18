@@ -485,9 +485,21 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     log4c_category_t* cat = NULL;
     int prio = 0;
 
-	if (module_name == NULL|| module_name[0] == '\0'||  format == NULL|| format[0] == '\0') 
+	if (module_name == NULL|| format == NULL) 
 	{
         return;
+    }
+	const char *m = module_name;
+    while (*m && isspace((unsigned char)*m)) ++m;
+    if (*m == '\0') {
+        return;
+    }
+
+	if (format) {
+        const char *f = format;
+        while (*f && isspace((unsigned char)*f)) ++f;
+        if (*f == '\0')
+			return;
     }
 	
     /* Handling process request here. This is not a blocking call and it shall return immediately */
