@@ -482,68 +482,75 @@ rdk_logger_Bool rdk_logger_is_logLevel_enabled(const char *module, rdk_LogLevel 
 
 void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const char* format, va_list args)
 {
-    log4c_category_t* cat = NULL;
-    int prio = 0;
-
-	if (!module_name) 
-	{
+    /* Require non-NULL module (per your choice) */
+    if (!module_name) {
         return;
     }
 
-    /* Handling process request here. This is not a blocking call and it shall return immediately */
+    /* Guard against NULL format to avoid sd_vsprintf receiving NULL */
+    const char *safe_format = format ? format : "(null)";
+
+    /* Handling process request */
     rdk_dyn_log_process_pending_request();
 
-    cat = log4c_category_get(module_name);
-    prio = log4c_category_get_priority(cat);
-    if (cat && prio == LOG4C_PRIORITY_NOTSET && gRootCat) {
-        log4c_category_set_priority(cat, log4c_category_get_priority(gRootCat));
+    /* Obtain category safely */
+    log4c_category_t* cat = log4c_category_get(module_name);
+    int prio = LOG4C_PRIORITY_NONE;
+    if (cat) {
+        prio = log4c_category_get_priority(cat);
+        if (prio == LOG4C_PRIORITY_NOTSET && gRootCat) {
+            log4c_category_set_priority(cat, log4c_category_get_priority(gRootCat));
+            prio = gRootPriority;
+        }
+    } else {
+        /* fallback to root category if available */
+        cat = gRootCat;
         prio = gRootPriority;
     }
- 
-    if(!cat)
-    {
-        cat = gRootCat;
-    }
 
-    if(!cat)
-    {
+    if (!cat) {
         return;
     }
 
-    if (!IS_LOGGING_ENABLED_FOR_LEVEL(module_name, level))
-    {
+    /* Check enabled using the module name (macro short-circuits if category is missing) */
+    if (!IS_LOGGING_ENABLED_FOR_LEVEL(module_name, level)) {
         return;
     }
+
+    /* Use a copy of va_list when passing to log4c to avoid UB */
+    va_list ap_copy;
+    va_copy(ap_copy, args);
 
     switch (level)
     {
         case RDK_LOG_FATAL:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_FATAL, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_FATAL, safe_format, ap_copy);
             break;
         case RDK_LOG_ERROR:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_ERROR, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_ERROR, safe_format, ap_copy);
             break;
         case RDK_LOG_WARN:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_WARN, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_WARN, safe_format, ap_copy);
             break;
         case RDK_LOG_NOTICE:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_NOTICE, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_NOTICE, safe_format, ap_copy);
             break;
         case RDK_LOG_INFO:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_INFO, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_INFO, safe_format, ap_copy);
             break;
         case RDK_LOG_DEBUG:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_DEBUG, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_DEBUG, safe_format, ap_copy);
             break;
         case RDK_LOG_TRACE:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_TRACE, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_TRACE, safe_format, ap_copy);
             break;
         default:
-            log4c_category_vlog(cat, LOG4C_PRIORITY_DEBUG, format, args);
+            log4c_category_vlog(cat, LOG4C_PRIORITY_DEBUG, safe_format, ap_copy);
             break;
     }
-}
 
+    va_end(ap_copy);
+}
 
 void rdk_dbg_priv_reconfig(const char *pModuleName, const char *pLogLevel)
 {
