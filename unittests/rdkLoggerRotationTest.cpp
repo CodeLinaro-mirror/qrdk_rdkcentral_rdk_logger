@@ -42,7 +42,7 @@ protected:
     void TearDown() override {
         // Cleanup
         system("rm -rf /tmp/rdk_logger_rotation_test");
-		const char* cat_name = "LOG.RDK";
+		/*const char* cat_name = "LOG.RDK";
         log4c_category_t* cat = log4c_category_get(cat_name);
         if (cat) {
             // Get const appender from category
@@ -58,7 +58,7 @@ protected:
                     }
                 }
             }
-        }
+        }*/
         rdk_logger_deinit();
     }
     
