@@ -43,6 +43,7 @@ protected:
     void TearDown() override {
         // Cleanup
         system("rm -rf /tmp/rdk_logger_error_test");
+        rdk_log_exit();
         rdk_logger_deinit();
         //log4c_fini();
     }
