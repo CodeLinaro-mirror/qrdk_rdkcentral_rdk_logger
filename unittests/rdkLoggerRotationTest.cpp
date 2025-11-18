@@ -134,7 +134,7 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Test message for rotation");
 }
 // Test log rotation with count limits
-TEST_F(RDKLoggerRotationTest, DISABLED_CountBasedRotation) {
+TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "count_test.log", sizeof(config.fileName) - 1);
@@ -219,7 +219,7 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
 }
 
 // Test log rotation with very small size limits
-TEST_F(RDKLoggerRotationTest, DISABLED_VerySmallSizeLimits) {
+TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "small_test.log", sizeof(config.fileName) - 1);
