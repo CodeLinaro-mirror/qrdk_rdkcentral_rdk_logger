@@ -201,6 +201,7 @@ void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
 void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
                            rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
+    // Register log4c types and layouts (safe to call multiple times)
     (void)log4c_appender_type_set(&log4c_appender_type_rollingfile);
     (void)log4c_rollingpolicy_type_set(&log4c_rollingpolicy_type_sizewin);
     (void)log4c_layout_type_set(&log4c_layout_type_dated_nocr);
@@ -208,66 +209,76 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     (void)log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);
 
     char fullpath[512];
-    if (appender_type == FileOutput) 
-	{
-        if (!logdir || !log_file_name) 
-		{
+    if (appender_type == FileOutput) {
+        // Require both logdir and log_file_name for FileOutput
+        if (!logdir || !log_file_name) {
             fprintf(stderr, "Error: logdir and log_file_name required for FileOutput\n");
             return;
         }
         snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
-    } 
-	else 
-	{
+    } else {
         strncpy(fullpath, "stdout", sizeof(fullpath)-1);
         fullpath[sizeof(fullpath)-1] = '\0';
     }
 
     const char* cat_name = "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(cat_name);
-    if (!cat) 
-	{
+    if (!cat) {
         cat = log4c_category_new(cat_name);
     }
 
+    // Get or create appender
     log4c_appender_t* app = log4c_appender_get(fullpath);
-    if (!app) 
-	{
+    if (!app) {
         app = log4c_appender_new(fullpath);
     }
 
+    // Always close and reset appender before reconfiguring
     log4c_appender_close(app);
     log4c_appender_set_udata(app, NULL);
 
+    // Set appender type first
     set_default_appender_type(app, appender_type);
 
+    // Set layout next
     set_default_layout(app, layout);
 
-    if (appender_type == FileOutput) 
-	{
+    // Normalize rotation parameters to avoid zero-sized allocations in sizewin
+    long effectiveMaxCount = maxCount;
+    long effectiveMaxSize = maxSize;
+    if (effectiveMaxCount <= 0) {
+        // sizewin implementation cannot handle zero; use 1 to avoid zero-allocation crash.
+        // A count of 0 is interpreted here as "no rotation by count" — treating as 1 file.
+        effectiveMaxCount = 1;
+        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxCount from %ld to %ld to avoid sizewin zero-allocation\n", maxCount, effectiveMaxCount);
+    }
+    if (effectiveMaxSize <= 0) {
+        // Non-positive maxSize -> treat as very large (disable size-based rotation)
+        effectiveMaxSize = LONG_MAX;
+        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxSize from %ld to %ld (disable size rotation)\n", maxSize, effectiveMaxSize);
+    }
+
+    // Configure rollingfile udata if needed
+    if (appender_type == FileOutput) {
         rollingfile_udata_t *rudata = rollingfile_make_udata();
-        if (rudata) 
-		{
+        if (rudata) {
             rollingfile_udata_set_logdir(rudata, logdir);
             rollingfile_udata_set_files_prefix(rudata, log_file_name);
 
             log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
-            if (!policy) 
-			{
+            if (!policy) {
                 policy = log4c_rollingpolicy_new(cat_name);
             }
-            if (policy) 
-			{
+            if (policy) {
                 const log4c_rollingpolicy_type_t* rtype = log4c_rollingpolicy_type_get("sizewin");
-                if (rtype) 
-				{
+                if (rtype) {
                     log4c_rollingpolicy_set_type(policy, rtype);
                 }
                 rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
-                if (sizewin_udata) 
-				{
-                    sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
-                    sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
+                if (sizewin_udata) {
+                    // Use normalized values to configure the policy
+                    sizewin_udata_set_file_maxsize(sizewin_udata, effectiveMaxSize);
+                    sizewin_udata_set_max_num_files(sizewin_udata, effectiveMaxCount);
                     log4c_rollingpolicy_set_udata(policy, sizewin_udata);
                 }
                 rollingfile_udata_set_policy(rudata, policy);
@@ -276,10 +287,12 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
         }
     }
 
+    // Open appender after all configuration
     if (log4c_appender_open(app) < 0) {
         fprintf(stderr, "Failed to open appender %s\n", fullpath);
     }
 
+    // Attach appender to category and set log level
     log4c_category_set_appender(cat, app);
     set_default_log_level(cat_name, log_level);
 
