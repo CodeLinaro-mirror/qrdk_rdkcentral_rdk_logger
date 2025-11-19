@@ -10,10 +10,8 @@
 class RdkLoggerExtInit : public ::testing::Test {
 protected:
     void SetUp() override {
-        // No log4c_init() here; do it in child process
     }
     void TearDown() override {
-        // No cleanup here; do it in child process
     }
 };
 
@@ -21,7 +19,6 @@ protected:
     pid_t pid = fork(); \
     ASSERT_NE(pid, -1) << "fork failed"; \
     if (pid == 0) { \
-        log4c_init(); \
         test_body; \
         rdk_logger_deinit(); \
         exit(0); \

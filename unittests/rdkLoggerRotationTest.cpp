@@ -104,9 +104,7 @@ protected:
     pid_t pid = fork(); \
     ASSERT_NE(pid, -1) << "fork failed"; \
     if (pid == 0) { \
-        log4c_init(); \
         test_body; \
-        rdk_log_exit(); \
         rdk_logger_deinit(); \
         exit(0); \
     } else { \
