@@ -61,7 +61,7 @@ protected:
             }
         }
 		rdk_log_exit();
-        rdk_logger_deinit();/*
+        rdk_logger_deinit();*/
     }
     #define RUN_IN_FORK(test_body) \
     pid_t pid = fork(); \
