@@ -105,7 +105,6 @@ protected:
     ASSERT_NE(pid, -1) << "fork failed"; \
     if (pid == 0) { \
         test_body; \
-        rdk_log_exit(); \
         rdk_logger_deinit(); \
         exit(0); \
     } else { \
