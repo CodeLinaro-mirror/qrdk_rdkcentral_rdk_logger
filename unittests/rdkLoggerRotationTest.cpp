@@ -31,6 +31,7 @@ Test Case : Testing RDK Logger Log Rotation Functionality
 #include <dirent.h>
 #include "rdk_logger.h"
 #include "gtest_app.h"
+#include <log4c.h>
 
 class RDKLoggerRotationTest : public ::testing::Test {
 protected:
@@ -47,7 +48,6 @@ protected:
     void TearDown() override {
         // Cleanup
         system("rm -rf /tmp/rdk_logger_rotation_test");
-        rdk_logger_deinit();
     }
     
     void createTestConfigFile(const char* filename, const char* content) {
