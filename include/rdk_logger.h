@@ -329,7 +329,7 @@ void rdk_dbg_MsgRaw1(rdk_LogLevel level, const char *module, const char *format,
 rdk_LogLevel rdk_logger_level_from_string(const char* level);
 
 /** @} */ //end of Doxygen tag RDKLOGGER_UTILS_API
-
+rdk_Error rdk_log_exit();
 #ifdef __cplusplus
 }
 #endif

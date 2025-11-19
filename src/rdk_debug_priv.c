@@ -286,11 +286,29 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
 
 }
 
-void rdk_dbg_priv_deinit()
+void rdk_dbg_priv_deinit() 
 {
-  gRootCat = NULL;
-}
+    gRootCat = NULL;
 
+    //log4c_appender_t* app = log4c_appender_get("rollingfile");
+    /*if (app) {
+        log4c_appender_close(app);
+        //log4c_appender_set_udata(app, NULL);
+    }*/
+
+    log4c_appender_t* app = log4c_appender_get("stdout");
+    if (app) {
+        log4c_appender_close(app);
+        log4c_appender_set_udata(app, NULL);
+    }
+
+    app = log4c_appender_get("stream_env");
+    if (app) {
+        log4c_appender_close(app);
+        log4c_appender_set_udata(app, NULL);
+    }
+
+}
 /**
  * Safely force a string to uppercase. I hate this mundane rubbish.
  *
