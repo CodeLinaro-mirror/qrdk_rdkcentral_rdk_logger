@@ -302,16 +302,17 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     printf("Current priority: %d\n", log4c_category_get_priority(cat));
 }
 
+
 void rdk_dbg_priv_deinit() {
     gRootCat = NULL;
 
-    log4c_appender_t* app = log4c_appender_get("rollingfile");
-    if (app) {
+    //log4c_appender_t* app = log4c_appender_get("rollingfile");
+    /*if (app) {
         log4c_appender_close(app);
         //log4c_appender_set_udata(app, NULL);
-    }
+    }*/
 
-    app = log4c_appender_get("stdout");
+    log4c_appender_t* app = log4c_appender_get("stdout");
     if (app) {
         log4c_appender_close(app);
         log4c_appender_set_udata(app, NULL);
