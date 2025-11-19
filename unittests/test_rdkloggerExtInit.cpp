@@ -23,7 +23,7 @@ protected:
     if (pid == 0) { \
         log4c_init(); \
         test_body; \
-        rdk_log_exit(); \
+        //rdk_log_exit(); \
         rdk_logger_deinit(); \
         exit(0); \
     } else { \
