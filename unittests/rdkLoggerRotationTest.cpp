@@ -59,6 +59,7 @@ protected:
                 }
             }
         }*/
+		rdk_log_exit();
         rdk_logger_deinit();
     }
     
