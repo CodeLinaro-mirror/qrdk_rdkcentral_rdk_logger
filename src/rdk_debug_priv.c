@@ -232,16 +232,12 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     if (!app) {
         app = log4c_appender_new(fullpath);
     }
-	if (!app) 
+
+    if (app && log4c_appender_get_udata(app)) 
 	{
-        fprintf(stderr, "rdk_dbg_priv_ext_init: failed to create or get appender '%s'\n", fullpath);
-        return;
+        log4c_appender_close(app);
+        log4c_appender_set_udata(app, NULL);
     }
-
-
-    // Always close and reset appender before reconfiguring
-    log4c_appender_close(app);
-    log4c_appender_set_udata(app, NULL);
 
     // Set appender type first
     set_default_appender_type(app, appender_type);
@@ -297,8 +293,6 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     // Open appender after all configuration
     if (log4c_appender_open(app) < 0) {
         fprintf(stderr, "Failed to open appender %s\n", fullpath);
-		log4c_appender_set_udata(app, NULL);
-		return;
     }
 
     // Attach appender to category and set log level
