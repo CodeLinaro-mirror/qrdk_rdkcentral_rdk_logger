@@ -202,11 +202,11 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
                            rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
     // Register log4c types and layouts (safe to call multiple times)
-    (void)log4c_appender_type_set(&log4c_appender_type_rollingfile);
+    /*(void)log4c_appender_type_set(&log4c_appender_type_rollingfile);
     (void)log4c_rollingpolicy_type_set(&log4c_rollingpolicy_type_sizewin);
     (void)log4c_layout_type_set(&log4c_layout_type_dated_nocr);
     (void)log4c_layout_type_set(&log4c_layout_type_basic_nocr);
-    (void)log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);
+    (void)log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);*/
 
     char fullpath[512];
     if (appender_type == FileOutput) {
@@ -245,20 +245,19 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     // Set layout next
     set_default_layout(app, layout);
 
-    /*// Normalize rotation parameters to avoid zero-sized allocations in sizewin
+    // Normalize rotation parameters to avoid zero-sized allocations in sizewin
     long effectiveMaxCount = maxCount;
     long effectiveMaxSize = maxSize;
-    if (effectiveMaxCount <= 0) {
-        // sizewin implementation cannot handle zero; use 1 to avoid zero-allocation crash.
-        // A count of 0 is interpreted here as "no rotation by count" — treating as 1 file.
+    if (effectiveMaxCount <= 0) 
+	{
         effectiveMaxCount = 1;
         fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxCount from %ld to %ld to avoid sizewin zero-allocation\n", maxCount, effectiveMaxCount);
     }
-    if (effectiveMaxSize <= 0) {
-        // Non-positive maxSize -> treat as very large (disable size-based rotation)
+    if (effectiveMaxSize <= 0) 
+	{
         effectiveMaxSize = LONG_MAX;
         fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxSize from %ld to %ld (disable size rotation)\n", maxSize, effectiveMaxSize);
-    }*/
+    }
 
 
     // Configure rollingfile udata if needed
@@ -280,8 +279,8 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
                 rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
                 if (sizewin_udata) {
                     // Use normalized values to configure the policy
-                    sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
-                    sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
+                    sizewin_udata_set_file_maxsize(sizewin_udata, effectiveMaxSize);
+                    sizewin_udata_set_max_num_files(sizewin_udata, effectiveMaxCount);
                     log4c_rollingpolicy_set_udata(policy, sizewin_udata);
                 }
                 rollingfile_udata_set_policy(rudata, policy);
