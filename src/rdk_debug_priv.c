@@ -488,7 +488,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     log4c_category_t* cat = NULL;
     int prio = 0;
 
-	if (module_name == NULL|| format == NULL) 
+	/*if (module_name == NULL|| format == NULL) 
 	{
         return;
     }
@@ -503,7 +503,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         while (*f && isspace((unsigned char)*f)) ++f;
         if (*f == '\0')
 			return;
-    }
+    }*/
 	
     /* Handling process request here. This is not a blocking call and it shall return immediately */
     rdk_dyn_log_process_pending_request();
@@ -524,14 +524,14 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     {
         return;
     }
-	log4c_appender_t *app = log4c_category_get_appender(cat);
+	/*log4c_appender_t *app = log4c_category_get_appender(cat);
     if (app) 
 	{
         if (log4c_appender_open(app) != 0) 
 		{
             return;
         }
-    }
+    }*/
 
     if (!IS_LOGGING_ENABLED_FOR_LEVEL(module_name, level))
     {
