@@ -63,23 +63,6 @@ protected:
 		rdk_log_exit();
         rdk_logger_deinit();*/
     }
-
-    #define RUN_IN_FORK(test_body) \
-    pid_t pid = fork(); \
-    ASSERT_NE(pid, -1) << "fork failed"; \
-    if (pid == 0) { \
-        log4c_init(); \
-        test_body; \
-        rdk_log_exit(); \
-        rdk_logger_deinit(); \
-        exit(0); \
-    } else { \
-        int status = 0; \
-        waitpid(pid, &status, 0); \
-        ASSERT_TRUE(WIFEXITED(status)); \
-        ASSERT_EQ(WEXITSTATUS(status), 0); \
-    }
-
     
     void createTestConfigFile(const char* filename, const char* content) {
         FILE* file = fopen(filename, "w");
@@ -131,7 +114,7 @@ protected:
     }
 };
 
- #define RUN_IN_FORK(test_body) \
+#define RUN_IN_FORK(test_body) \
     pid_t pid = fork(); \
     ASSERT_NE(pid, -1) << "fork failed"; \
     if (pid == 0) { \
@@ -146,6 +129,7 @@ protected:
         ASSERT_TRUE(WIFEXITED(status)); \
         ASSERT_EQ(WEXITSTATUS(status), 0); \
     }
+
 // Test extended initialization with log rotation
 TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
   RUN_IN_FORK({
