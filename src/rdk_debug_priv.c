@@ -308,7 +308,7 @@ void rdk_dbg_priv_deinit() {
     log4c_appender_t* app = log4c_appender_get("rollingfile");
     if (app) {
         log4c_appender_close(app);
-        log4c_appender_set_udata(app, NULL);
+        //log4c_appender_set_udata(app, NULL);
     }
 
     app = log4c_appender_get("stdout");
