@@ -233,11 +233,11 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
         app = log4c_appender_new(fullpath);
     }
 
-	
-    if (app) 
+	  printf("appender_close:\n");
+    /*if (app) 
 	{
         log4c_appender_close(app);
-    }
+    }*/
 
     // Set appender type first
     set_default_appender_type(app, appender_type);
@@ -245,7 +245,7 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
     // Set layout next
     set_default_layout(app, layout);
 
-    // Normalize rotation parameters to avoid zero-sized allocations in sizewin
+    /*// Normalize rotation parameters to avoid zero-sized allocations in sizewin
     long effectiveMaxCount = maxCount;
     long effectiveMaxSize = maxSize;
     if (effectiveMaxCount <= 0) {
@@ -258,7 +258,7 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
         // Non-positive maxSize -> treat as very large (disable size-based rotation)
         effectiveMaxSize = LONG_MAX;
         fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxSize from %ld to %ld (disable size rotation)\n", maxSize, effectiveMaxSize);
-    }
+    }*/
 
 
     // Configure rollingfile udata if needed
@@ -289,11 +289,11 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
             log4c_appender_set_udata(app, rudata);
         }
     }
-
+    printf("appender_open:\n");
     // Open appender after all configuration
-    if (log4c_appender_open(app) < 0) {
+    /*if (log4c_appender_open(app) < 0) {
         fprintf(stderr, "Failed to open appender %s\n", fullpath);
-    }
+    }*/
 
     // Attach appender to category and set log level
     log4c_category_set_appender(cat, app);
