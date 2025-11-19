@@ -24,6 +24,7 @@ Test Case : Testing RDK Logger Log Rotation Functionality
 #include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -58,10 +59,26 @@ protected:
                     }
                 }
             }
-        }*/
+        }
 		rdk_log_exit();
-        rdk_logger_deinit();
+        rdk_logger_deinit();/*
     }
+    #define RUN_IN_FORK(test_body) \
+    pid_t pid = fork(); \
+    ASSERT_NE(pid, -1) << "fork failed"; \
+    if (pid == 0) { \
+        log4c_init(); \
+        test_body; \
+        rdk_log_exit(); \
+        rdk_logger_deinit(); \
+        exit(0); \
+    } else { \
+        int status = 0; \
+        waitpid(pid, &status, 0); \
+        ASSERT_TRUE(WIFEXITED(status)); \
+        ASSERT_EQ(WEXITSTATUS(status), 0); \
+    }
+
     
     void createTestConfigFile(const char* filename, const char* content) {
         FILE* file = fopen(filename, "w");
@@ -115,6 +132,7 @@ protected:
 
 // Test extended initialization with log rotation
 TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
+  RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test_rotation.log", sizeof(config.fileName) - 1);
@@ -133,9 +151,11 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     
     // Test that logging works
     rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Test message for rotation");
+  );
 }
 // Test log rotation with count limits
 TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "count_test.log", sizeof(config.fileName) - 1);
@@ -166,6 +186,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     printf("file_count : %d\n",file_count);
     system("ls -lt /tmp/rdk_logger_rotation_test");
     EXPECT_LE(file_count, config.maxCount + 1) << "Should not exceed maxCount files";
+   });
 }
 #if 0
 // Test log rotation with invalid configuration
@@ -202,6 +223,7 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration) {
 #endif
 // Test log rotation with invalid directory
 TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
+  RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test.log", sizeof(config.fileName) - 1);
@@ -217,10 +239,12 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
     config.layout = LAYOUT_DATED;
     rdk_Error ret = rdk_logger_ext_init(&config);
     // Should handle gracefully (may fail or create directory)
+ });
 }
 
 // Test log rotation with very small size limits
 TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "small_test.log", sizeof(config.fileName) - 1);
@@ -242,12 +266,13 @@ TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
         sleep(1);
     }
-    
+});
     // Should handle gracefully
 }
 
 // Test log rotation with very large size limits
 TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "large_test.log", sizeof(config.fileName) - 1);
@@ -272,10 +297,12 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
     }
     
     // Should handle gracefully
+});
 }
 
 // Test log rotation with zero count limits
 TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "zero_count_test.log", sizeof(config.fileName) - 1);
@@ -300,10 +327,12 @@ TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
     }
     
     // Should handle gracefully
+  });
 }
 
 // Test log rotation with negative values
 TEST_F(RDKLoggerRotationTest, NegativeValues) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "negative_test.log", sizeof(config.fileName) - 1);
@@ -327,10 +356,12 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
     }
     
     // Should handle gracefully
+  });
 }
 
 // Test log rotation with long file names
 TEST_F(RDKLoggerRotationTest, LongFileNames) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config)); 
     // Create a very long file name
@@ -360,10 +391,12 @@ TEST_F(RDKLoggerRotationTest, LongFileNames) {
     }
     
     // Should handle gracefully
+  });
 }
 
 // Test log rotation with long directory paths
 TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test.log", sizeof(config.fileName) - 1);
@@ -390,12 +423,13 @@ TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
         sleep(1);
     }
-    
+});
     // Should handle gracefully
 }
 
 // Test log rotation with special characters in file names
 TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "test_file_with_special_chars.log", sizeof(config.fileName) - 1);
@@ -417,12 +451,13 @@ TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Message %d", i);
         sleep(1);
     }
-    
+}); 
     // Should handle gracefully
 }
 
 // Test log rotation with concurrent access
 TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
+   RUN_IN_FORK({
     rdk_logger_ext_config_t config;
     memset(&config, 0, sizeof(config));
     strncpy(config.fileName, "concurrent_test.log", sizeof(config.fileName) - 1);
@@ -449,6 +484,7 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
     }
     
     // Should handle concurrent access gracefully
+});
 }
 #if 0
 // Test log rotation with different log levels
