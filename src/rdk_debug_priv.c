@@ -523,8 +523,31 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     {
         return;
     }
-
 	log4c_appender_t *app = log4c_category_get_appender(cat);
+    if (app) 
+	{
+        /* Try to open the appender if it isn't already initialised. */
+        void *ud = log4c_appender_get_udata(app);
+        if (ud == NULL) {
+            /* Close then re-open to force the appender's open routine
+             * to allocate and initialize its udata (mutex, file handles, ...).
+             * If open fails, skip logging safely.
+             */
+            (void)log4c_appender_close(app);
+            if (log4c_appender_open(app) != 0) {
+                /* Could not initialize appender: skip logging safely. */
+                return;
+            }
+        }
+		else 
+		{
+            /* If udata exists, ensure the appender is open */
+            if (log4c_appender_open(app) != 0) 
+			{
+                return;
+            }
+        }
+	}
     if (app) 
 	{
         if (log4c_appender_open(app) != 0) 
