@@ -280,8 +280,8 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
                 rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
                 if (sizewin_udata) {
                     // Use normalized values to configure the policy
-                    sizewin_udata_set_file_maxsize(sizewin_udata, effectiveMaxSize);
-                    sizewin_udata_set_max_num_files(sizewin_udata, effectiveMaxCount);
+                    sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
+                    sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
                     log4c_rollingpolicy_set_udata(policy, sizewin_udata);
                 }
                 rollingfile_udata_set_policy(rudata, policy);
