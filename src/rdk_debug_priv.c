@@ -950,5 +950,8 @@ static int stream_env_close(log4c_appender_t* appender)
     if (!fp || fp == stdout || fp == stderr)
     return 0;
 
+	if (fileno(fp) == -1)
+        return 0;
+
     return fclose(fp);
 }
