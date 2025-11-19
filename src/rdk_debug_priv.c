@@ -233,10 +233,10 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
         app = log4c_appender_new(fullpath);
     }
 
-    if (app && log4c_appender_get_udata(app)) 
+	
+    if (app) 
 	{
         log4c_appender_close(app);
-        log4c_appender_set_udata(app, NULL);
     }
 
     // Set appender type first
