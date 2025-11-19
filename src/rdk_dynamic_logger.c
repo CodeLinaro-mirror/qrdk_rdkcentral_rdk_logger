@@ -181,7 +181,10 @@ void rdk_dyn_log_init()
 
 void rdk_dyn_log_deinit()
 {
-    close(g_dl_socket);
-    g_dl_socket = -1;
+    if (g_dl_socket != -1)
+    {
+        close(g_dl_socket);
+        g_dl_socket = -1;
+    }
 }
 

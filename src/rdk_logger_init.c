@@ -95,7 +95,7 @@ rdk_Error rdk_logger_ext_init(const rdk_logger_ext_config_t* config)
     ret = RDK_LOGGER_INIT();
     if (ret == RDK_SUCCESS)
     {
-        rdk_dbg_priv_ext_init(config->logdir, config->fileName, config->maxCount, config->maxSize);
+        rdk_dbg_priv_ext_init(config->logdir, config->fileName, config->maxCount, config->maxSize, config->appender_type, config->loglevel, config->layout);
     }
     return ret;
  }

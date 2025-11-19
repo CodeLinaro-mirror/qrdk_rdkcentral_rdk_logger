@@ -44,6 +44,7 @@ add_executable(
   rdkLoggerErrorTest.cpp
   rdkLoggerPerformanceTest.cpp
   rdkLoggerStreamEnvTest.cpp
+  test_rdkloggerExtInit.cpp
   main.cpp
 )
 add_compile_definitions(LOGMILESTONE=ON)
