@@ -151,7 +151,7 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
     
     // Test that logging works
     rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.ROTATION", "Test message for rotation");
-  );
+});
 }
 // Test log rotation with count limits
 TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
