@@ -155,45 +155,135 @@ void rdk_dbg_priv_init()
     gRootCat = log4c_category_get("LOG.RDK");
 }
 
-void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize)
+void set_default_appender_type(log4c_appender_t* app, rdk_LogAppenderType appender_type)
+{
+    const char* type_str = NULL;
+    switch(appender_type) {
+        case Stdout:    type_str = "stream_env"; break;
+        case FileOutput:type_str = "rollingfile"; break;
+        case Syslog:    type_str = "syslog"; break;
+        case Journald:  type_str = "journald"; break;
+        default:        type_str = "stream_env"; break;
+    }
+    const log4c_appender_type_t* type = log4c_appender_type_get(type_str);
+    if (app && type) {
+        log4c_appender_set_type(app, type);
+    }
+}
+
+void set_default_layout(log4c_appender_t* app, rdk_LogLayout layout)
+{
+    const char* layout_str = NULL;
+    switch(layout) {
+        case LAYOUT_BASIC:         layout_str = "basic"; break;
+        case LAYOUT_DATED:         layout_str = "dated"; break;
+        case LAYOUT_COMCAST_DATED: layout_str = "comcast_dated"; break;
+        default:                   layout_str = "basic"; break;
+    }
+    log4c_layout_t* layout_obj = log4c_layout_get(layout_str);
+    if (layout_obj && app) {
+        log4c_appender_set_layout(app, layout_obj);
+    }
+}
+
+void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
+{
+    log4c_category_t* cat = log4c_category_get(category_name);
+    if (!cat) {
+        cat = log4c_category_new(category_name);
+    }
+    if (cat) {
+        int log4c_prio = rdk_logLevel_to_log4c_priority(log_level);
+        log4c_category_set_priority(cat, log4c_prio);
+    }
+}
+
+void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
+                           rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
     char fullpath[512];
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
+    if (appender_type == FileOutput)
+    {
+        if (!logdir || !log_file_name)
+        {
+            fprintf(stderr, "Error: logdir and log_file_name required for FileOutput\n");
+            return;
+        }
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, log_file_name);
+    }
+    else
+    {
+        strncpy(fullpath, "stdout", sizeof(fullpath)-1);
+        fullpath[sizeof(fullpath)-1] = '\0';
+    }
 
     const char* cat_name = "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(cat_name);
-    if (!cat) {
+    if (!cat)
+    {
         cat = log4c_category_new(cat_name);
     }
 
     log4c_appender_t* app = log4c_appender_get(fullpath);
-    if (!app) {
+    if (!app)
+    {
         app = log4c_appender_new(fullpath);
     }
-    log4c_appender_set_type(app, log4c_appender_type_get("rollingfile"));
 
-    rollingfile_udata_t *rudata = rollingfile_make_udata();
-    rollingfile_udata_set_logdir(rudata, logdir);
-    rollingfile_udata_set_files_prefix(rudata, log_file_name);
 
-    log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
-    if (!policy) {
-        policy = log4c_rollingpolicy_new(cat_name);
+    set_default_appender_type(app, appender_type);
+
+    set_default_layout(app, layout);
+
+    long effectiveMaxCount = maxCount;
+    long effectiveMaxSize = maxSize;
+    if (effectiveMaxCount <= 0)
+	{
+        effectiveMaxCount = 1;
+        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxCount from %ld to %ld to avoid sizewin zero-allocation\n", maxCount, effectiveMaxCount);
     }
-    log4c_rollingpolicy_set_type(policy, log4c_rollingpolicy_type_get("sizewin"));
+    if (effectiveMaxSize <= 0)
+	{
+        effectiveMaxSize = LONG_MAX;
+        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxSize from %ld to %ld (disable size rotation)\n", maxSize, effectiveMaxSize);
+    }
 
-    rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
-    sizewin_udata_set_file_maxsize(sizewin_udata, maxSize);
-    sizewin_udata_set_max_num_files(sizewin_udata, maxCount);
-    log4c_rollingpolicy_set_udata(policy, sizewin_udata);
+    if (appender_type == FileOutput)
+    {
+        rollingfile_udata_t *rudata = rollingfile_make_udata();
+        if (rudata)
+        {
+            rollingfile_udata_set_logdir(rudata, logdir);
+            rollingfile_udata_set_files_prefix(rudata, log_file_name);
 
-    rollingfile_udata_set_policy(rudata, policy);
-    log4c_appender_set_udata(app, rudata);
-
-    log4c_layout_t* layout = log4c_layout_get("comcast_dated");
-    log4c_appender_set_layout(app, layout);
+            log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get(cat_name);
+            if (!policy)
+            {
+                policy = log4c_rollingpolicy_new(cat_name);
+            }
+            if (policy)
+            {
+                const log4c_rollingpolicy_type_t* rtype = log4c_rollingpolicy_type_get("sizewin");
+                if (rtype)
+                {
+                    log4c_rollingpolicy_set_type(policy, rtype);
+                }
+                rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
+                if (sizewin_udata)
+                {
+                    sizewin_udata_set_file_maxsize(sizewin_udata, effectiveMaxSize);
+                    sizewin_udata_set_max_num_files(sizewin_udata, effectiveMaxCount);
+                    log4c_rollingpolicy_set_udata(policy, sizewin_udata);
+                }
+                rollingfile_udata_set_policy(rudata, policy);
+            }
+            log4c_appender_set_udata(app, rudata);
+        }
+    }
 
     log4c_category_set_appender(cat, app);
+    set_default_log_level(cat_name, log_level);
+
 }
 
 void rdk_dbg_priv_deinit()
@@ -369,7 +459,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     cat = log4c_category_get(module_name);
     prio = log4c_category_get_priority(cat);
     if (cat && prio == LOG4C_PRIORITY_NOTSET && gRootCat) {
-        log4c_category_set_priority(cat, gRootPriority);
+        log4c_category_set_priority(cat, log4c_category_get_priority(gRootCat));
         prio = gRootPriority;
     }
  
