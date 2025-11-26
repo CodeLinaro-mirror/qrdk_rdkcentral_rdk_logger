@@ -125,11 +125,11 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 1024;  // 1KB max size
-            config.maxCount = 3;    // Keep 3 files
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 1024;  // 1KB max size
+            config.maxRotationCount = 3;    // Keep 3 files
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_TRACE;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
 
@@ -148,11 +148,11 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 256;   // 256 bytes max size
-            config.maxCount = 2;    // Keep only 2 files
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 256;   // 256 bytes max size
+            config.maxRotationCount = 2;    // Keep only 2 files
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_ERROR;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
 
@@ -169,7 +169,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
             int file_count = countFilesInDirectory("/tmp/rdk_logger_rotation_test");
             printf("file_count : %d\n",file_count);
             system("ls -lt /tmp/rdk_logger_rotation_test");
-            EXPECT_LE(file_count, config.maxCount + 1) << "Should not exceed maxCount files";
+            EXPECT_LE(file_count, config.maxRotationCount + 1) << "Should not exceed maxCount files";
     });
 }
 #if 0
@@ -188,8 +188,8 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration) {
     strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
     config.logdir[sizeof(config.logdir) - 1] = '\0';
     
-    config.maxSize = 1024;
-    config.maxCount = 3;
+    config.maxBytesPerFile = 1024;
+    config.maxRotationCount = 3;
     
     ret = rdk_logger_ext_init(&config);
     // Should handle gracefully
@@ -216,11 +216,11 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
             strncpy(config.logdir, "/nonexistent/directory", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 1024;
-            config.maxCount = 3;
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 1024;
+            config.maxRotationCount = 3;
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_NONE;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             rdk_Error ret = rdk_logger_ext_init(&config);
             // Should handle gracefully (may fail or create directory)
     });
@@ -237,11 +237,11 @@ TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 10;    // Very small size
-            config.maxCount = 2;
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 10;    // Very small size
+            config.maxRotationCount = 2;
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_INFO;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle very small size limits";
 
@@ -265,11 +265,11 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
             printf("strcpy success\n");
-            config.maxSize = 1024 * 1024 * 100;  // 100MB
-            config.maxCount = 10;
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 1024 * 1024 * 100;  // 100MB
+            config.maxRotationCount = 10;
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_WARN;
-            config.layout = LAYOUT_COMCAST_DATED;
+            config.layout = RDK_LOG_LAYOUT_COMCAST;
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle very large size limits";
             printf("ext_init succes\n");
@@ -295,11 +295,11 @@ TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 1024;
-            config.maxCount = 0;    // Zero count
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 1024;
+            config.maxRotationCount = 0;    // Zero count
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_FATAL;
-            config.layout = LAYOUT_BASIC;
+            config.layout = RDK_LOG_LAYOUT_PLAINTEXT;
 
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle zero count limits";
@@ -325,11 +325,11 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = -1;    // Negative size
-            config.maxCount = -1;   // Negative count
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = -1;    // Negative size
+            config.maxRotationCount = -1;   // Negative count
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_TRACE;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle negative values";
 
@@ -360,11 +360,11 @@ TEST_F(RDKLoggerRotationTest, LongFileNames) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 1024;
-            config.maxCount = 3;
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 1024;
+            config.maxRotationCount = 3;
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_TRACE;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle long file names";
 
@@ -394,11 +394,11 @@ TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
             strncpy(config.logdir, long_dir, sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 1024;
-            config.maxCount = 3;
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 1024;
+            config.maxRotationCount = 3;
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_TRACE;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             rdk_Error ret = rdk_logger_ext_init(&config);
             // Should handle gracefully (may fail due to path length)
 
@@ -422,11 +422,11 @@ TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 1024;
-            config.maxCount = 3;
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 1024;
+            config.maxRotationCount = 3;
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_TRACE;
-            config.layout = LAYOUT_BASIC;
+            config.layout = RDK_LOG_LAYOUT_PLAINTEXT;
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Should handle special characters in file names";
 
@@ -450,11 +450,11 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
             strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
             config.logdir[sizeof(config.logdir) - 1] = '\0';
 
-            config.maxSize = 512;
-            config.maxCount = 3;
-            config.appender_type = FileOutput;
+            config.maxBytesPerFile = 512;
+            config.maxRotationCount = 3;
+            config.appender_type = RDK_LOG_OUTPUT_FILE;
             config.loglevel = RDK_LOG_DEBUG;
-            config.layout = LAYOUT_DATED;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
 
             rdk_Error ret = rdk_logger_ext_init(&config);
             ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
@@ -480,8 +480,8 @@ TEST_F(RDKLoggerRotationTest, DifferentLogLevels) {
     strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
     config.logdir[sizeof(config.logdir) - 1] = '\0';
     
-    config.maxSize = 1024;
-    config.maxCount = 3;
+    config.maxBytesPerFile = 1024;
+    config.maxRotationCount = 3;
     
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";

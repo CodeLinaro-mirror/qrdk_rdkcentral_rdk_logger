@@ -41,11 +41,11 @@ TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
         cfg.fileName[sizeof(cfg.fileName)-1] = '\0';
         strncpy(cfg.logdir, "/tmp", sizeof(cfg.logdir)-1);
         cfg.logdir[sizeof(cfg.logdir)-1] = '\0';
-        cfg.maxCount = 3;
-        cfg.maxSize = 1024;
-        cfg.appender_type = FileOutput;
+        cfg.maxRotationCount = 3;
+        cfg.maxBytesPerFile = 1024;
+        cfg.appender_type = RDK_LOG_OUTPUT_FILE;
         cfg.loglevel = RDK_LOG_TRACE;
-        cfg.layout = LAYOUT_DATED;
+        cfg.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
 
 
         rdk_Error ret = rdk_logger_ext_init(&cfg);
@@ -86,11 +86,11 @@ TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
         cfg.fileName[sizeof(cfg.fileName)-1] = '\0';
         strncpy(cfg.logdir, "/tmp", sizeof(cfg.logdir)-1);
         cfg.logdir[sizeof(cfg.logdir)-1] = '\0';
-        cfg.maxCount = 1;
-        cfg.maxSize = 512;
+        cfg.maxRotationCount = 1;
+        cfg.maxBytesPerFile = 512;
         cfg.appender_type = Stdout;
         cfg.loglevel = RDK_LOG_DEBUG;
-        cfg.layout = LAYOUT_BASIC;
+        cfg.layout = RDK_LOG_LAYOUT_PLAINTEXT;
 
 
         rdk_Error ret = rdk_logger_ext_init(&cfg);
@@ -126,11 +126,11 @@ TEST_F(RdkLoggerExtInit, ComcastDatedViaExtInit) {
         cfg.fileName[sizeof(cfg.fileName)-1] = '\0';
         strncpy(cfg.logdir, "/tmp", sizeof(cfg.logdir)-1);
         cfg.logdir[sizeof(cfg.logdir)-1] = '\0';
-        cfg.maxCount = 2;
-        cfg.maxSize = 1024;
-        cfg.appender_type = FileOutput;
+        cfg.maxRotationCount = 2;
+        cfg.maxBytesPerFile = 1024;
+        cfg.appender_type = RDK_LOG_OUTPUT_FILE;
         cfg.loglevel = RDK_LOG_ERROR;
-        cfg.layout = LAYOUT_COMCAST_DATED;
+        cfg.layout = RDK_LOG_LAYOUT_COMCAST;
 
 
         rdk_Error ret = rdk_logger_ext_init(&cfg);

@@ -159,14 +159,15 @@ void set_default_appender_type(log4c_appender_t* app, rdk_LogAppenderType append
 {
     const char* type_str = NULL;
     switch(appender_type) {
-        case Stdout:    type_str = "stream_env"; break;
-        case FileOutput:type_str = "rollingfile"; break;
-        case Syslog:    type_str = "syslog"; break;
-        case Journald:  type_str = "journald"; break;
+        case RDK_LOG_OUTPUT_STDOUT:    type_str = "stream_env"; break;
+        case RDK_LOG_OUTPUT_FILE:type_str = "rollingfile"; break;
+        case RDK_LOG_OUTPUT_SYSLOG:    type_str = "syslog"; break;
+        case RDK_LOG_OUTPUT_SOCKET:  type_str = "socket"; break;
         default:        type_str = "stream_env"; break;
     }
     const log4c_appender_type_t* type = log4c_appender_type_get(type_str);
     if (app && type) {
+        printf("set appedertypr\n");
         log4c_appender_set_type(app, type);
     }
 }
@@ -175,13 +176,14 @@ void set_default_layout(log4c_appender_t* app, rdk_LogLayout layout)
 {
     const char* layout_str = NULL;
     switch(layout) {
-        case LAYOUT_BASIC:         layout_str = "basic"; break;
-        case LAYOUT_DATED:         layout_str = "dated"; break;
-        case LAYOUT_COMCAST_DATED: layout_str = "comcast_dated"; break;
+        case RDK_LOG_LAYOUT_PLAINTEXT:         layout_str = "basic"; break;
+        case RDK_LOG_LAYOUT_TIMESTAMPED:         layout_str = "dated"; break;
+        case RDK_LOG_LAYOUT_COMCAST: layout_str = "comcast_dated"; break;
         default:                   layout_str = "basic"; break;
     }
     log4c_layout_t* layout_obj = log4c_layout_get(layout_str);
     if (layout_obj && app) {
+        printf("set layout type\n");
         log4c_appender_set_layout(app, layout_obj);
     }
 }
@@ -198,11 +200,10 @@ void set_default_log_level(const char* category_name, rdk_LogLevel log_level)
     }
 }
 
-void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long maxCount, long maxSize,
-                           rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
+void rdk_dbg_priv_ext_init(const char* moduleName, const char* logdir, const char* log_file_name, long maxRotationCount, long maxBytesPerFile, rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout)
 {
     char fullpath[512];
-    if (appender_type == FileOutput)
+    if (appender_type == RDK_LOG_OUTPUT_FILE)
     {
         if (!logdir || !log_file_name)
         {
@@ -217,11 +218,17 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
         fullpath[sizeof(fullpath)-1] = '\0';
     }
 
-    const char* cat_name = "LOG.RDK";
+    const char* cat_name = moduleName ? moduleName : "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(cat_name);
-    if (!cat)
-    {
+    if (!cat) {
         cat = log4c_category_new(cat_name);
+    }
+    if (!cat) {
+        cat = gRootCat;
+    }
+    if (!cat) {
+        fprintf(stderr, "Failed to get or create log category\n");
+        return;
     }
 
     log4c_appender_t* app = log4c_appender_get(fullpath);
@@ -235,20 +242,20 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
 
     set_default_layout(app, layout);
 
-    long effectiveMaxCount = maxCount;
-    long effectiveMaxSize = maxSize;
-    if (effectiveMaxCount <= 0)
+    long effectiveMaxRotationCount = maxRotationCount;
+    long effectiveMaxBytesPerFile = maxBytesPerFile;
+    if (effectiveMaxRotationCount <= 0)
 	{
-        effectiveMaxCount = 1;
-        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxCount from %ld to %ld to avoid sizewin zero-allocation\n", maxCount, effectiveMaxCount);
+        effectiveMaxRotationCount = 1;
+        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxRotationCount from %ld to %ld to avoid sizewin zero-allocation\n", maxRotationCount, effectiveMaxRotationCount);
     }
-    if (effectiveMaxSize <= 0)
+    if (effectiveMaxBytesPerFile <= 0)
 	{
-        effectiveMaxSize = LONG_MAX;
-        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxSize from %ld to %ld (disable size rotation)\n", maxSize, effectiveMaxSize);
+        effectiveMaxBytesPerFile = LONG_MAX;
+        fprintf(stderr, "rdk_dbg_priv_ext_init: normalized maxBytesPerFile from %ld to %ld (disable size rotation)\n", maxBytesPerFile, effectiveMaxBytesPerFile);
     }
 
-    if (appender_type == FileOutput)
+    if (appender_type == RDK_LOG_OUTPUT_FILE)
     {
         rollingfile_udata_t *rudata = rollingfile_make_udata();
         if (rudata)
@@ -271,8 +278,8 @@ void rdk_dbg_priv_ext_init(const char* logdir, const char* log_file_name, long m
                 rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
                 if (sizewin_udata)
                 {
-                    sizewin_udata_set_file_maxsize(sizewin_udata, effectiveMaxSize);
-                    sizewin_udata_set_max_num_files(sizewin_udata, effectiveMaxCount);
+                    sizewin_udata_set_file_maxsize(sizewin_udata, effectiveMaxBytesPerFile);
+                    sizewin_udata_set_max_num_files(sizewin_udata, effectiveMaxRotationCount);
                     log4c_rollingpolicy_set_udata(policy, sizewin_udata);
                 }
                 rollingfile_udata_set_policy(rudata, policy);

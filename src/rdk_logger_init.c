@@ -43,6 +43,49 @@
 
 #define BUF_LEN 256
 static int isLogInited = 0;
+
+/**
+ * @brief Set the default log level for a category.
+ * @param category_name The log category name (e.g., "LOG.RDK").
+ * @param log_level The desired log level (e.g., RDK_LOG_DEBUG).
+ */
+void rdk_logger_set_default_loglevel(const char* category_name, rdk_LogLevel log_level)
+{
+    set_default_log_level(category_name, log_level);
+}
+
+/**
+ * @brief Set the layout for an appender.
+ * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
+ * @param layout The desired layout (e.g., LAYOUT_DATED).
+ */
+void rdk_logger_set_default_layout(const char* appender_name, rdk_LogLayout layout)
+{
+    log4c_appender_t* app = log4c_appender_get(appender_name);
+    if(!app)
+        app = log4c_appender_new(appender_name);
+    if (app)
+    {
+        set_default_layout(app, layout);
+    }
+}
+
+/**
+ * @brief Set the appender type for an appender.
+ * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
+ * @param appender_type The desired appender type (e.g., StdOut, FileOutput).
+ */
+void rdk_logger_set_default_appender_type(const char* appender_name, rdk_LogAppenderType appender_type)
+{
+    log4c_appender_t* app = log4c_appender_get(appender_name);
+    if(!app)
+        app = log4c_appender_new(appender_name);
+    if (app)
+    {
+        set_default_appender_type(app, appender_type);
+    }
+}
+
 /**
  * @brief Initialize the logger. Sets up the environment variable storage by parsing
  * debug configuration file then Initialize the debug support to the underlying platform.
@@ -95,7 +138,7 @@ rdk_Error rdk_logger_ext_init(const rdk_logger_ext_config_t* config)
     ret = RDK_LOGGER_INIT();
     if (ret == RDK_SUCCESS)
     {
-        rdk_dbg_priv_ext_init(config->logdir, config->fileName, config->maxCount, config->maxSize, config->appender_type, config->loglevel, config->layout);
+        rdk_dbg_priv_ext_init(config->moduleName, config->logdir, config->fileName, config->maxRotationCount, config->maxBytesPerFile, config->appender_type, config->loglevel, config->layout);
     }
     return ret;
  }

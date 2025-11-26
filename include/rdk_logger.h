@@ -204,44 +204,66 @@ typedef enum
  * @enum rdk_LogAppenderType
  * @brief Defines the destination type where log events are written.
  *
- * - Stdout:     Write logs to the process stdout/stderr stream (typically mapped via stream_env).
- * - FileOutput: Write logs to rolling files on disk (uses rollingfile appender).
- * - Journald:   Send logs to systemd's journal (if SYSTEMD_JOURNAL is enabled).
- * - Syslog:     Forward logs to the local syslog daemon.
+ * - RDK_LOG_OUTPUT_STDOUT:     Write logs to the process stdout/stderr stream (typically mapped via stream_env).
+ * - RDK_LOG_OUTPUT_FILE: Write logs to rolling files on disk (uses rollingfile appender).
+ * - RDK_LOG_OUTPUT_SOCKET: Write logs to socket (uses socket appender).
+ * - RDK_LOG_OUTPUT_SYSLOG:     Forward logs to the local syslog daemon.
  */
 typedef enum
 {
-    Stdout = 0,
-    FileOutput,
-    Journald,
-    Syslog
+    RDK_LOG_OUTPUT_STDOUT = 0,
+    RDK_LOG_OUTPUT_FILE,
+    RDK_LOG_OUTPUT_SOCKET,
+    RDK_LOG_OUTPUT_SYSLOG
 } rdk_LogAppenderType;
 
 /**
  * @enum rdk_LogLayout
  * @brief Defines the layout/format used to render log messages.
  *
- * - LAYOUT_BASIC:          Simple layout (priority, category, message).
- * - LAYOUT_DATED:          Timestamped layout including date/time and milliseconds.
- * - LAYOUT_COMCAST_DATED:  Comcast-specific dated layout with module, level and thread id info.
+ * - RDK_LOG_LAYOUT_PLAINTEXT:          Simple layout (priority, category, message).
+ * - RDK_LOG_LAYOUT_TIMESTAMPED:          Timestamped layout including date/time and milliseconds.
+ * - RDK_LOG_LAYOUT_COMCAST:  Comcast-specific dated layout with module, level and thread id info.
  */
 typedef enum
 {
-    LAYOUT_BASIC = 0,
-    LAYOUT_DATED,
-    LAYOUT_COMCAST_DATED
+    RDK_LOG_LAYOUT_PLAINTEXT = 0,
+    RDK_LOG_LAYOUT_TIMESTAMPED,
+    RDK_LOG_LAYOUT_COMCAST
 } rdk_LogLayout;
 
 typedef struct rdk_logger_ext_config_t
  {
+     char moduleName[32];
      char fileName[RDK_LOGGER_EXT_FILENAME_SIZE];
      char logdir[RDK_LOGGER_EXT_LOGDIR_SIZE];
-     long maxSize;
-     long maxCount;
+     long maxBytesPerFile;
+     long maxRotationCount;
      rdk_LogAppenderType appender_type;
      rdk_LogLevel loglevel;
      rdk_LogLayout layout;
  }rdk_logger_ext_config_t;
+
+/**
+ * @brief Set the default log level for a category.
+ * @param category_name The log category name (e.g., "LOG.RDK").
+ * @param log_level The desired log level (e.g., RDK_LOG_DEBUG).
+ */
+void rdk_logger_set_default_loglevel(const char* category_name, rdk_LogLevel log_level);
+
+/**
+ * @brief Set the layout for an appender.
+ * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
+ * @param layout The desired layout (e.g., RDK_LOG_LAYOUT_PLAINTEXT, RDK_LOG_LAYOUT_TIMESTAMPED, RDK_LOG_LAYOUT_COMCAST).
+ */
+void rdk_logger_set_default_layout(const char* appender_name, rdk_LogLayout layout);
+
+/**
+ * @brief Set the appender type for an appender.
+ * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
+ * @param appender_type The desired appender type (e.g., FileOutput, StdOut).
+ */
+void rdk_logger_set_default_appender_type(const char* appender_name, rdk_LogAppenderType appender_type);
 
 /**
  * @brief Initialize the RDK Logger.

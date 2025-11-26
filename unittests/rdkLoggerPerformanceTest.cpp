@@ -283,11 +283,11 @@ TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
     strncpy(config.logdir, "/tmp/rdk_logger_performance_test", sizeof(config.logdir) - 1);
     config.logdir[sizeof(config.logdir) - 1] = '\0';
     
-    config.maxSize = 1024;  // 1KB max size to trigger rotation
-    config.maxCount = 5;    // Keep 5 files
-    config.appender_type = FileOutput;
+    config.maxBytesPerFile = 1024;  // 1KB max size to trigger rotation
+    config.maxRotationCount = 5;    // Keep 5 files
+    config.appender_type = RDK_LOG_OUTPUT_FILE;
     config.loglevel = RDK_LOG_DEBUG;
-    config.layout = LAYOUT_DATED;
+    config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
     
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";
