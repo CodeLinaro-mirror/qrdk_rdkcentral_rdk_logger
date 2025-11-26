@@ -88,7 +88,7 @@ TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
         cfg.logdir[sizeof(cfg.logdir)-1] = '\0';
         cfg.maxRotationCount = 1;
         cfg.maxBytesPerFile = 512;
-        cfg.appender_type = Stdout;
+        cfg.appender_type = RDK_LOG_OUTPUT_STDOUT;
         cfg.loglevel = RDK_LOG_DEBUG;
         cfg.layout = RDK_LOG_LAYOUT_PLAINTEXT;
 
