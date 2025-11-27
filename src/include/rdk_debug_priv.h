@@ -23,6 +23,7 @@
 #include <rdk_logger_types.h>
 #include <rdk_logger.h>
 #include <rdk_error.h>
+#include <log4c.h>
 #include <log4c/appender_type_rollingfile.h>
 
 #ifdef __cplusplus
@@ -30,7 +31,7 @@ extern "C"
 {
 #endif
 
-void set_default_appender_type(log4c_appender_t* app, rdk_LogAppenderType appender_type);
+void set_default_appender_type(log4c_category_t* cat, const char* logdir, const char* fileName, log4c_appender_t* app, rdk_LogAppenderType appender_type);
 void set_default_layout(log4c_appender_t* app, rdk_LogLayout layout);
 void set_default_log_level(const char* category_name, rdk_LogLevel log_level);
 void rdk_dbg_priv_init(void);

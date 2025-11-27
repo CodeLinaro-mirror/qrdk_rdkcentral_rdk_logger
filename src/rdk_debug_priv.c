@@ -155,21 +155,52 @@ void rdk_dbg_priv_init()
     gRootCat = log4c_category_get("LOG.RDK");
 }
 
-void set_default_appender_type(log4c_appender_t* app, rdk_LogAppenderType appender_type)
+void set_default_appender_type(log4c_category_t* cat, const char* logdir, const char* fileName, log4c_appender_t* app, rdk_LogAppenderType appender_type)
 {
     const char* type_str = NULL;
     switch(appender_type) {
         case RDK_LOG_OUTPUT_STDOUT:    type_str = "stream_env"; break;
-        case RDK_LOG_OUTPUT_FILE:type_str = "rollingfile"; break;
+        case RDK_LOG_OUTPUT_FILE:      type_str = "rollingfile"; break;
         case RDK_LOG_OUTPUT_SYSLOG:    type_str = "syslog"; break;
         case RDK_LOG_OUTPUT_SOCKET:  type_str = "socket"; break;
         default:        type_str = "stream_env"; break;
     }
     const log4c_appender_type_t* type = log4c_appender_type_get(type_str);
-    if (app && type) {
-        printf("set appedertypr\n");
+    if (app && type) 
+    {
         log4c_appender_set_type(app, type);
+
+        if (appender_type == RDK_LOG_OUTPUT_FILE) 
+        {
+            rollingfile_udata_t *rudata = rollingfile_make_udata();
+            if (rudata) 
+            {
+                rollingfile_udata_set_logdir(rudata, logdir);
+                rollingfile_udata_set_files_prefix(rudata, fileName);
+
+                log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get("default");
+                if (!policy) policy = log4c_rollingpolicy_new("default");
+                if (policy) 
+                {
+                    const log4c_rollingpolicy_type_t* rtype = log4c_rollingpolicy_type_get("sizewin");
+                    if (rtype) 
+                        log4c_rollingpolicy_set_type(policy, rtype);
+
+                    rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
+                    if (sizewin_udata) 
+                    {
+                        sizewin_udata_set_file_maxsize(sizewin_udata, 1024 * 1024); // 1MB
+                        sizewin_udata_set_max_num_files(sizewin_udata, 3);
+                        log4c_rollingpolicy_set_udata(policy, sizewin_udata);
+                    }
+                    rollingfile_udata_set_policy(rudata, policy);
+                }
+                log4c_appender_set_udata(app, rudata);
+            }
+        }
     }
+    log4c_category_set_appender(cat, app);
+    log4c_category_set_additivity(cat, 0);
 }
 
 void set_default_layout(log4c_appender_t* app, rdk_LogLayout layout)
@@ -238,11 +269,11 @@ void rdk_dbg_priv_ext_init(const char* moduleName, const char* logdir, const cha
     }
 
 
-    set_default_appender_type(app, appender_type);
+    set_default_appender_type(cat, logdir, log_file_name, app, appender_type);
 
     set_default_layout(app, layout);
 
-    long effectiveMaxRotationCount = maxRotationCount;
+    /*long effectiveMaxRotationCount = maxRotationCount;
     long effectiveMaxBytesPerFile = maxBytesPerFile;
     if (effectiveMaxRotationCount <= 0)
 	{
@@ -286,11 +317,10 @@ void rdk_dbg_priv_ext_init(const char* moduleName, const char* logdir, const cha
             }
             log4c_appender_set_udata(app, rudata);
         }
-    }
+    }*/
 
-    log4c_category_set_appender(cat, app);
+    //log4c_category_set_appender(cat, app);
     set_default_log_level(cat_name, log_level);
-
 }
 
 void rdk_dbg_priv_deinit()
