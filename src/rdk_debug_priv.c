@@ -178,8 +178,8 @@ void set_default_appender_type(log4c_category_t* cat, const char* logdir, const 
                 rollingfile_udata_set_logdir(rudata, logdir);
                 rollingfile_udata_set_files_prefix(rudata, fileName);
 
-                log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get("default");
-                if (!policy) policy = log4c_rollingpolicy_new("default");
+                log4c_rollingpolicy_t *policy = log4c_rollingpolicy_get_name(app);
+                if (!policy) policy = log4c_rollingpolicy_new(log4c_rollingpolicy_get_name(app));
                 if (policy) 
                 {
                     const log4c_rollingpolicy_type_t* rtype = log4c_rollingpolicy_type_get("sizewin");
