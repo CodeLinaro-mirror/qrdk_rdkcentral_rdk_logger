@@ -323,7 +323,7 @@ void rdk_dbg_priv_ext_init(const char* moduleName, const char* logdir, const cha
             fprintf(stderr, "Error: logdir and log_file_name required for FileOutput\n");
             return;
         }
-        snprintf(app_name, sizeof(app_name), "rollingfile_%s", mod_sanitized);
+        snprintf(app_name, sizeof(app_name), "%s/%s", logdir, log_file_name);
     } else {
         snprintf(app_name, sizeof(app_name), "streamenv_%s", mod_sanitized);
     }
