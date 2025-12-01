@@ -30,8 +30,7 @@
 extern "C"
 {
 #endif
-void set_default_appender_type_with_rotation(log4c_category_t* cat, const char* logdir, const char* fileName, log4c_appender_t* app, rdk_LogAppenderType appender_type, long maxRotationCount, long maxBytesPerFile);
-//void set_default_appender_type(log4c_category_t* cat, const char* logdir, const char* fileName, log4c_appender_t* app, rdk_LogAppenderType appender_type);
+void set_default_appender_type(log4c_category_t* cat, const char* logdir, const char* fileName, log4c_appender_t* app, rdk_LogAppenderType appender_type, long maxRotationCount, long maxBytesPerFile);
 void set_default_layout(log4c_appender_t* app, rdk_LogLayout layout);
 void set_default_log_level(const char* category_name, rdk_LogLevel log_level);
 void rdk_dbg_priv_init(void);
