@@ -263,7 +263,7 @@ void rdk_logger_set_default_layout(const char* appender_name, rdk_LogLayout layo
  * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
  * @param appender_type The desired appender type (e.g., FileOutput, StdOut).
  */
-void rdk_logger_set_default_appender_type(const char* category_name, const char* logdir, const char* fileName, rdk_LogAppenderType appender_type);
+void rdk_logger_set_default_appender_type(const char* category_name, const char* logdir, const char* fileName, rdk_LogAppenderType appender_type, long maxRotationCount, long maxBytesPerFile);
 
 /**
  * @brief Initialize the RDK Logger.

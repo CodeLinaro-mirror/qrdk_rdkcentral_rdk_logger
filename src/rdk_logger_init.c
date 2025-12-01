@@ -75,7 +75,7 @@ void rdk_logger_set_default_layout(const char* appender_name, rdk_LogLayout layo
  * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
  * @param appender_type The desired appender type (e.g., StdOut, FileOutput).
  */
-void rdk_logger_set_default_appender_type(const char* category_name, const char* logdir, const char* fileName, rdk_LogAppenderType appender_type)
+void rdk_logger_set_default_appender_type(const char* category_name, const char* logdir, const char* fileName, rdk_LogAppenderType appender_type, long maxRotationCount, long maxBytesPerFile)
 {
     log4c_category_t* cat = log4c_category_get(category_name);
     char fullpath[512];
@@ -101,7 +101,7 @@ void rdk_logger_set_default_appender_type(const char* category_name, const char*
         app = log4c_appender_new(fullpath);
     if (app)
     {
-        set_default_appender_type(cat, logdir, fileName, app, appender_type);
+        set_default_appender_type(cat, logdir, fileName, app, appender_type, maxRotationCount, maxBytesPerFile);
     }
 }
 
