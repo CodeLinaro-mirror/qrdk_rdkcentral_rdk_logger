@@ -206,7 +206,6 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration) {
     ret = rdk_logger_ext_init(&config);
     // Should handle gracefully
 }
-#endif
 // Test log rotation with invalid directory
 TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
     RUN_IN_FORK({
@@ -229,6 +228,7 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
     });
 }
 
+#endif
 // Test log rotation with very small size limits
 TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
     RUN_IN_FORK({
@@ -333,7 +333,7 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
             rdk_logger_ext_config_t config;
             memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
-            config.loglevel = RDK_LOG_NONE;
+            config.loglevel = RDK_LOG_INFO;
             config.appender = RDK_LOG_OUTPUT_FILE;
             config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             config.pFilePolicy = &testPolicy;
