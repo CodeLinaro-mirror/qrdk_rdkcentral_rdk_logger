@@ -112,7 +112,7 @@ jobs:
           fi
           make  -C build
           cmake --install build
-          ./build/rdk_logger_gtest
+          valgrind --leak-check=full --show-leak-kinds=all ./build/rdk_logger_gtest
       - name: Collect coverage report
         if: ${{ matrix.coverage == 'with-coverage' }}
         run: |
