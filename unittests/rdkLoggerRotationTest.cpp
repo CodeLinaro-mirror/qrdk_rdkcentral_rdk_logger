@@ -125,6 +125,7 @@ TEST_F(RDKLoggerRotationTest, ExtendedInitialization) {
             testPolicy.maxBytesPerFile = 1024; // 2MB
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_TRACE;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -148,6 +149,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
             testPolicy.maxBytesPerFile = 256; // 2MB
             testPolicy.maxRotationCount = 2;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_TRACE;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -216,6 +218,7 @@ TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
             testPolicy.maxBytesPerFile = 1024; // 2MB
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_ERROR;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -237,6 +240,7 @@ TEST_F(RDKLoggerRotationTest, VerySmallSizeLimits) {
             testPolicy.maxBytesPerFile = 10; // 2MB
             testPolicy.maxRotationCount = 2;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_INFO;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -265,6 +269,7 @@ TEST_F(RDKLoggerRotationTest, VeryLargeSizeLimits) {
             testPolicy.maxBytesPerFile = 1024*1024*100; // 100MB
             testPolicy.maxRotationCount = 10;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_INFO;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -295,6 +300,7 @@ TEST_F(RDKLoggerRotationTest, ZeroCountLimits) {
             testPolicy.maxBytesPerFile = 1024; // 2MB
             testPolicy.maxRotationCount = 0;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_INFO;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -325,8 +331,9 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
             testPolicy.maxBytesPerFile = -1;
             testPolicy.maxRotationCount = -1;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
-            config.loglevel = RDK_LOG_TRACE;
+            config.loglevel = RDK_LOG_NONE;
             config.appender = RDK_LOG_OUTPUT_FILE;
             config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             config.pFilePolicy = &testPolicy;
@@ -360,6 +367,7 @@ TEST_F(RDKLoggerRotationTest, LongFileNames) {
             testPolicy.maxBytesPerFile = 1024; // 2MB
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_TRACE;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -393,6 +401,7 @@ TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
             testPolicy.maxBytesPerFile = 1024;
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_TRACE;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -421,6 +430,7 @@ TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
             testPolicy.maxBytesPerFile = 1024;
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_TRACE;
             config.appender = RDK_LOG_OUTPUT_FILE;
@@ -450,6 +460,7 @@ TEST_F(RDKLoggerRotationTest, ConcurrentAccess) {
             testPolicy.maxBytesPerFile = 512;
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
             config.pCategoryName = "LOG.RDK.ROTATION";
             config.loglevel = RDK_LOG_DEBUG;
             config.appender = RDK_LOG_OUTPUT_FILE;
