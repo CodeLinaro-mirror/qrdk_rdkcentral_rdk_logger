@@ -276,18 +276,17 @@ TEST_F(RDKLoggerPerformanceTest, CPUUsageTest) {
 
 // Test logging with file I/O stress
 TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
+    rdk_LogFilePolicy testPolicy;
+    strncpy(testPolicy.fileName, "stress_test.log", sizeof(testPolicy.fileName)-1);
+    strncpy(testPolicy.logdir, "/tmp/rdk_logger_performance_test", sizeof(testPolicy.logdir)-1);
+    testPolicy.maxBytesPerFile = 1024; // 2MB
+    testPolicy.maxRotationCount = 5;
     rdk_logger_ext_config_t config;
-    strncpy(config.fileName, "stress_test.log", sizeof(config.fileName) - 1);
-    config.fileName[sizeof(config.fileName) - 1] = '\0';
-    
-    strncpy(config.logdir, "/tmp/rdk_logger_performance_test", sizeof(config.logdir) - 1);
-    config.logdir[sizeof(config.logdir) - 1] = '\0';
-    
-    config.maxBytesPerFile = 1024;  // 1KB max size to trigger rotation
-    config.maxRotationCount = 5;    // Keep 5 files
-    config.appender_type = RDK_LOG_OUTPUT_FILE;
+    config.pCategoryName = "LOG.RDK.PERFORMANCE";
     config.loglevel = RDK_LOG_DEBUG;
+    config.appender = RDK_LOG_OUTPUT_FILE;
     config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
+    config.pFilePolicy = &testPolicy;
     
     rdk_Error ret = rdk_logger_ext_init(&config);
     ASSERT_EQ(ret, RDK_SUCCESS) << "Extended initialization should succeed";

@@ -32,11 +32,13 @@ extern "C"
 #endif
 void set_default_appender_type(log4c_category_t* cat, const char* logdir, const char* fileName, log4c_appender_t* app, rdk_LogAppenderType appender_type, long maxRotationCount, long maxBytesPerFile);
 void set_default_layout(log4c_appender_t* app, rdk_LogLayout layout);
-void set_default_log_level(const char* category_name, rdk_LogLevel log_level);
+rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layout, rdk_LogFilePolicy *pPolicy);
+rdk_Error rdk_dbg_priv_set_appender(const char* pCategoryName, rdk_LogAppenderType app, rdk_LogFilePolicy *pPolicy);
+rdk_Error rdk_dbg_priv_set_log_level(const char* category_name, rdk_LogLevel log_level);
 void rdk_dbg_priv_init(void);
 void rdk_dbg_priv_config(void);
 void rdk_dbg_priv_deinit(void);
-void rdk_dbg_priv_ext_init(const char* moduleName, const char* logdir, const char* log_file_name, long maxRotationCount, long maxBytesPerFile, rdk_LogAppenderType appender_type, rdk_LogLevel log_level, rdk_LogLayout layout_name);
+rdk_Error rdk_dbg_priv_ext_init(const char* moduleName, rdk_LogLevel loglevel, rdk_LogAppenderType appender, rdk_LogLayout layout, rdk_LogFilePolicy *pFilePolicy);
 void rdk_dbg_priv_shutdown();
 
 void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const char* format, va_list args);

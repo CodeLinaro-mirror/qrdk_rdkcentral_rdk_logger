@@ -35,116 +35,105 @@ protected:
 
 TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     RUN_IN_FORK({
-        rdk_logger_ext_config_t cfg;
-        memset(&cfg, 0, sizeof(cfg));
-        strncpy(cfg.fileName, "gtest_rdk_unittest.log", sizeof(cfg.fileName)-1);
-        cfg.fileName[sizeof(cfg.fileName)-1] = '\0';
-        strncpy(cfg.logdir, "/tmp", sizeof(cfg.logdir)-1);
-        cfg.logdir[sizeof(cfg.logdir)-1] = '\0';
-        cfg.maxRotationCount = 3;
-        cfg.maxBytesPerFile = 1024;
-        cfg.appender_type = RDK_LOG_OUTPUT_FILE;
-        cfg.loglevel = RDK_LOG_TRACE;
-        cfg.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
+            rdk_LogFilePolicy testPolicy;
+            strncpy(testPolicy.fileName, "gtest_rdkunittest.log", sizeof(testPolicy.fileName)-1);
+            strncpy(testPolicy.logdir, "/tmp", sizeof(testPolicy.logdir)-1);
+            testPolicy.maxBytesPerFile = 1024;
+            testPolicy.maxRotationCount = 3;
+            rdk_logger_ext_config_t cfg;
+            cfg.loglevel = RDK_LOG_TRACE;
+            cfg.appender = RDK_LOG_OUTPUT_FILE;
+            cfg.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
+            cfg.pFilePolicy = &testPolicy;
+            rdk_Error ret = rdk_logger_ext_init(&cfg);
+            ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed";
 
 
-        rdk_Error ret = rdk_logger_ext_init(&cfg);
-        ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed";
+            char fullpath[512];
+            snprintf(fullpath, sizeof(fullpath), "%s/%s", cfg.logdir, cfg.fileName);
 
 
-        char fullpath[512];
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", cfg.logdir, cfg.fileName);
+            log4c_appender_t* app = log4c_appender_get(fullpath);
+            ASSERT_NE(app, nullptr) << "Appender not created by rdk_logger_ext_init: " << fullpath;
 
 
-        log4c_appender_t* app = log4c_appender_get(fullpath);
-        ASSERT_NE(app, nullptr) << "Appender not created by rdk_logger_ext_init: " << fullpath;
+            EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("rollingfile")) << "Appender type mismatch";
+            EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("dated")) << "Appender layout mismatch";
 
 
-        EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("rollingfile")) << "Appender type mismatch";
-        EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("dated")) << "Appender layout mismatch";
-
-
-        log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
-        ASSERT_NE(rootCat, nullptr) << "Failed to obtain LOG.RDK category";
-        EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_TRACE) << "LOG.RDK priority not TRACE";
-        for (int i =0; i < 50; i++)
-        {
-            RDK_LOG(RDK_LOG_TRACE, "LOG.RDK.RTMESSAGE", "errorloh\n");
-            RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
-            RDK_LOG(RDK_LOG_WARN, "LOG.RDK.TEST", "test_LOGGING\n");
-            RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "DEBUG\n");
-        }
+            log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
+            ASSERT_NE(rootCat, nullptr) << "Failed to obtain LOG.RDK category";
+            EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_TRACE) << "LOG.RDK priority not TRACE";
+            for (int i =0; i < 50; i++)
+            {
+                RDK_LOG(RDK_LOG_TRACE, "LOG.RDK.RTMESSAGE", "errorloh\n");
+                RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
+                RDK_LOG(RDK_LOG_WARN, "LOG.RDK.TEST", "test_LOGGING\n");
+                RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "DEBUG\n");
+            }
     });
 }
 
 
 TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
     RUN_IN_FORK({
-        rdk_logger_ext_config_t cfg;
-        memset(&cfg, 0, sizeof(cfg));
-        strncpy(cfg.fileName, "unused.txt", sizeof(cfg.fileName)-1);
-        cfg.fileName[sizeof(cfg.fileName)-1] = '\0';
-        strncpy(cfg.logdir, "/tmp", sizeof(cfg.logdir)-1);
-        cfg.logdir[sizeof(cfg.logdir)-1] = '\0';
-        cfg.maxRotationCount = 1;
-        cfg.maxBytesPerFile = 512;
-        cfg.appender_type = RDK_LOG_OUTPUT_STDOUT;
-        cfg.loglevel = RDK_LOG_DEBUG;
-        cfg.layout = RDK_LOG_LAYOUT_PLAINTEXT;
+            rdk_logger_ext_config_t cfg;
+            cfg.loglevel = RDK_LOG_DEBUG;
+            cfg.appender = RDK_LOG_OUTPUT_STDOUT;
+            cfg.layout = RDK_LOG_LAYOUT_PLAINTEXT;
+            cfg.pFilePolicy = NULL;
 
 
-        rdk_Error ret = rdk_logger_ext_init(&cfg);
-        ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed for Stdout";
+            rdk_Error ret = rdk_logger_ext_init(&cfg);
+            ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed for Stdout";
 
 
-        log4c_appender_t* app = log4c_appender_get("stdout");
-        ASSERT_NE(app, nullptr) << "Stdout appender not found";
+            log4c_appender_t* app = log4c_appender_get("stdout");
+            ASSERT_NE(app, nullptr) << "Stdout appender not found";
 
 
-        log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
-        EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("stream_env")) << "Stdout appender type mismatch";
-        EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_DEBUG) << "LOG.RDK priority not DEBUG";
+            log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
+            EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("stream_env")) << "Stdout appender type mismatch";
+            EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_DEBUG) << "LOG.RDK priority not DEBUG";
 
 
-        EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("basic")) << "Stdout appender layout mismatch";
-        for (int i =0; i < 50; i++)
-        {
-            RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
-            RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
-            RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
-            RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
-        }
+            EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("basic")) << "Stdout appender layout mismatch";
+            for (int i =0; i < 50; i++)
+            {
+                RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
+                RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
+                RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
+                RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
+            }
     });
 }
 
 
 TEST_F(RdkLoggerExtInit, ComcastDatedViaExtInit) {
     RUN_IN_FORK({
-        rdk_logger_ext_config_t cfg;
-        memset(&cfg, 0, sizeof(cfg));
-        strncpy(cfg.fileName, "gtest_comcast_unittest.log", sizeof(cfg.fileName)-1);
-        cfg.fileName[sizeof(cfg.fileName)-1] = '\0';
-        strncpy(cfg.logdir, "/tmp", sizeof(cfg.logdir)-1);
-        cfg.logdir[sizeof(cfg.logdir)-1] = '\0';
-        cfg.maxRotationCount = 2;
-        cfg.maxBytesPerFile = 1024;
-        cfg.appender_type = RDK_LOG_OUTPUT_FILE;
-        cfg.loglevel = RDK_LOG_ERROR;
-        cfg.layout = RDK_LOG_LAYOUT_COMCAST;
+            rdk_LogFilePolicy testPolicy;
+            strncpy(testPolicy.fileName, "gtest_comcast_unittest.log", sizeof(testPolicy.fileName)-1);
+            strncpy(testPolicy.logdir, "/tmp", sizeof(testPolicy.logdir)-1);
+            testPolicy.maxBytesPerFile = 1024;
+            testPolicy.maxRotationCount = 2;
+            rdk_logger_ext_config_t cfg;
+            cfg.loglevel = RDK_LOG_ERROR;
+            cfg.appender = RDK_LOG_OUTPUT_FILE;
+            cfg.layout = RDK_LOG_LAYOUT_COMCAST;
+            cfg.pFilePolicy = &testPolicy;
+
+            rdk_Error ret = rdk_logger_ext_init(&cfg);
+            ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed for Comcast layout";
 
 
-        rdk_Error ret = rdk_logger_ext_init(&cfg);
-        ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed for Comcast layout";
-
-
-        log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
-        EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_ERROR) << "LOG.RDK priority not ERROR";
-        for (int i =0; i < 50; i++)
-        {
+            log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
+            EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_ERROR) << "LOG.RDK priority not ERROR";
+            for (int i =0; i < 50; i++)
+            {
             RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
             RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.RTMESSAGE", "LOGGING\n");
             RDK_LOG(RDK_LOG_INFO, "LOG.RDK.TEST", "test_LOGGING\n");
             RDK_LOG(RDK_LOG_DEBUG, "LOG.RDK.TEST", "DEBUG\n");
-        }
+            }
     });
 }

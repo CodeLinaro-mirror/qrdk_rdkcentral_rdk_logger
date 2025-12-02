@@ -232,38 +232,79 @@ typedef enum
     RDK_LOG_LAYOUT_COMCAST
 } rdk_LogLayout;
 
-typedef struct rdk_logger_ext_config_t
- {
-     char moduleName[32];
-     char fileName[RDK_LOGGER_EXT_FILENAME_SIZE];
-     char logdir[RDK_LOGGER_EXT_LOGDIR_SIZE];
-     long maxBytesPerFile;
-     long maxRotationCount;
-     rdk_LogAppenderType appender_type;
-     rdk_LogLevel loglevel;
-     rdk_LogLayout layout;
- }rdk_logger_ext_config_t;
+/**
+ * @brief File policy structure for rolling file appenders.
+ *
+ * This structure defines the configuration parameters for file-based log appenders
+ * including file naming, directory path, and rotation policy settings.
+ */
+typedef struct _filePolicy
+{
+     char fileName[RDK_LOGGER_EXT_FILENAME_SIZE];  /**< Base name for log files (without path) */
+     char logdir[RDK_LOGGER_EXT_LOGDIR_SIZE];      /**< Directory path for log files */
+     long maxBytesPerFile;                         /**< Maximum size per log file in bytes (0 = use default 1MB) */
+     long maxRotationCount;                        /**< Number of rotated log files to keep (0 = use default 1) */
+} rdk_LogFilePolicy;
 
 /**
- * @brief Set the default log level for a category.
- * @param category_name The log category name (e.g., "LOG.RDK").
+ * @brief Complete logger configuration structure for structured initialization.
+ *
+ * This structure contains all parameters needed for complete logger setup
+ * including appender configuration, category association, and log level settings.
+ */
+typedef struct rdk_logger_ext_config_t
+{
+     char* pCategoryName;              /**< Log category name (e.g., "LOG.RDK.TR69") */
+     rdk_LogLevel loglevel;           /**< Default log level for this category */
+     rdk_LogAppenderType appender;    /**< Type of appender (FILE, STDOUT, SYSLOG, SOCKET) */
+     rdk_LogLayout layout;            /**< Message layout format (PLAINTEXT, TIMESTAMPED, COMCAST) */
+     rdk_LogFilePolicy *pFilePolicy;  /**< File policy configuration (required for RDK_LOG_OUTPUT_FILE, NULL for others) */
+} rdk_logger_ext_config_t;
+
+/**
+ * @brief Initialize a log appender with specified configuration.
+ *
+ * Creates and configures a log appender with the specified type, layout, and file policy.
+ * For file appenders, this function sets up rolling file policies with size-based rotation.
+ * The appender is opened and ready for use after successful initialization.
+ *
+ * @param[in] app The appender type (RDK_LOG_OUTPUT_FILE, RDK_LOG_OUTPUT_STDOUT, etc.)
+ * @param[in] layout The log layout format (RDK_LOG_LAYOUT_PLAINTEXT, RDK_LOG_LAYOUT_TIMESTAMPED, RDK_LOG_LAYOUT_COMCAST)
+ * @param[in] pPolicy Pointer to file policy structure containing log directory, filename, max file size, and rotation count.
+ *                    Required for RDK_LOG_OUTPUT_FILE, can be NULL for other appender types.
+ *
+ * @return RDK_SUCCESS on success, -1 on failure.
+ *
+ * @note This function must be called before rdk_logger_set_appender() to create the appender.
+ * @note For file appenders, ensure the log directory exists and is writable.
+ */
+rdk_Error rdk_logger_appender_init(rdk_LogAppenderType app, rdk_LogLayout layout, rdk_LogFilePolicy *pPolicy);
+
+/**
+ * @brief Associate a log appender with a category.
+ *
+ * Links a previously created appender to a log category, enabling logging for that category
+ * to use the specified appender. The appender must be created first using rdk_logger_appender_init().
+ *
+ * @param[in] pCategoryName The name of the log category (e.g., "LOG.RDK.TEST").
+ *                          If NULL, defaults to "LOG.RDK".
+ * @param[in] app The appender type that was used in rdk_logger_appender_init()
+ * @param[in] pPolicy Pointer to the same file policy structure used in rdk_logger_appender_init().
+ *                    Required for RDK_LOG_OUTPUT_FILE to locate the correct appender, can be NULL for other types.
+ *
+ * @return RDK_SUCCESS on success, -1 on failure.
+ *
+ * @note The appender must be initialized using rdk_logger_appender_init() before calling this function.
+ * @note The same pPolicy parameter values must be used as in the corresponding rdk_logger_appender_init() call.
+ */
+rdk_Error rdk_logger_set_appender(const char* pCategoryName, rdk_LogAppenderType app, rdk_LogFilePolicy *pPolicy);
+
+/**
+ * @brief Set the log level for a category.
+ * @param category_name The log category name (e.g., "LOG.RDK.TEST").
  * @param log_level The desired log level (e.g., RDK_LOG_DEBUG).
  */
-void rdk_logger_set_default_loglevel(const char* category_name, rdk_LogLevel log_level);
-
-/**
- * @brief Set the layout for an appender.
- * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
- * @param layout The desired layout (e.g., RDK_LOG_LAYOUT_PLAINTEXT, RDK_LOG_LAYOUT_TIMESTAMPED, RDK_LOG_LAYOUT_COMCAST).
- */
-void rdk_logger_set_default_layout(const char* appender_name, rdk_LogLayout layout);
-
-/**
- * @brief Set the appender type for an appender.
- * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
- * @param appender_type The desired appender type (e.g., FileOutput, StdOut).
- */
-void rdk_logger_set_default_appender_type(const char* category_name, const char* logdir, const char* fileName, rdk_LogAppenderType appender_type, long maxRotationCount, long maxBytesPerFile);
+rdk_Error rdk_logger_set_loglevel(const char* category_name, rdk_LogLevel log_level);
 
 /**
  * @brief Initialize the RDK Logger.

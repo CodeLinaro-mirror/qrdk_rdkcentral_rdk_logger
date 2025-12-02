@@ -45,64 +45,61 @@
 static int isLogInited = 0;
 
 /**
- * @brief Set the default log level for a category.
- * @param category_name The log category name (e.g., "LOG.RDK").
+ * @brief Initialize a log appender with specified configuration.
+ *
+ * Creates and configures a log appender with the specified type, layout, and file policy.
+ * For file appenders, this function sets up rolling file policies with size-based rotation.
+ * The appender is opened and ready for use after successful initialization.
+ *
+ * @param[in] app The appender type (RDK_LOG_OUTPUT_FILE, RDK_LOG_OUTPUT_STDOUT, etc.)
+ * @param[in] layout The log layout format (RDK_LOG_LAYOUT_PLAINTEXT, RDK_LOG_LAYOUT_TIMESTAMPED, RDK_LOG_LAYOUT_COMCAST)
+ * @param[in] pPolicy Pointer to file policy structure containing log directory, filename, max file size, and rotation count.
+ *                    Required for RDK_LOG_OUTPUT_FILE, can be NULL for other appender types.
+ *
+ * @return RDK_SUCCESS on success, -1 on failure.
+ *
+ * @note This function must be called before rdk_logger_set_appender() to create the appender.
+ * @note For file appenders, ensure the log directory exists and is writable.
+ */
+rdk_Error rdk_logger_appender_init(rdk_LogAppenderType app, rdk_LogLayout layout, rdk_LogFilePolicy *pPolicy)
+{
+    rdk_Error ret = rdk_dbg_priv_appender_init(app, layout, pPolicy);
+    return ret;
+}
+
+/**
+ * @brief Associate a log appender with a category.
+ *
+ * Links a previously created appender to a log category, enabling logging for that category
+ * to use the specified appender. The appender must be created first using rdk_logger_appender_init().
+ *
+ * @param[in] pCategoryName The name of the log category (e.g., "LOG.RDK.TR69").
+ *                          If NULL, defaults to "LOG.RDK".
+ * @param[in] app The appender type that was used in rdk_logger_appender_init()
+ * @param[in] pPolicy Pointer to the same file policy structure used in rdk_logger_appender_init().
+ *                    Required for RDK_LOG_OUTPUT_FILE to locate the correct appender, can be NULL for other types.
+ *
+ * @return RDK_SUCCESS on success, -1 on failure.
+ *
+ * @note The appender must be initialized using rdk_logger_appender_init() before calling this function.
+ * @note The same pPolicy parameter values must be used as in the corresponding rdk_logger_appender_init() call.
+ */
+rdk_Error rdk_logger_set_appender(const char* pCategoryName, rdk_LogAppenderType app, rdk_LogFilePolicy *pPolicy)
+{
+    rdk_Error ret = rdk_dbg_priv_set_appender(pCategoryName, app, pPolicy);
+
+    return ret;
+}
+/**
+ * @brief Set the log level for a category.
+ * @param category_name The log category name (e.g., "LOG.RDK.TEST").
  * @param log_level The desired log level (e.g., RDK_LOG_DEBUG).
+ * @return RDK_SUCCESS on success, -1 on failure.
  */
-void rdk_logger_set_default_loglevel(const char* category_name, rdk_LogLevel log_level)
+rdk_Error rdk_logger_set_loglevel(const char* category_name, rdk_LogLevel log_level)
 {
-    set_default_log_level(category_name, log_level);
-}
-
-/**
- * @brief Set the layout for an appender.
- * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
- * @param layout The desired layout (e.g., LAYOUT_DATED).
- */
-void rdk_logger_set_default_layout(const char* appender_name, rdk_LogLayout layout)
-{
-    log4c_appender_t* app = log4c_appender_get(appender_name);
-    if(!app)
-        app = log4c_appender_new(appender_name);
-    if (app)
-    {
-        set_default_layout(app, layout);
-    }
-}
-
-/**
- * @brief Set the appender type for an appender.
- * @param appender_name The appender name (e.g., "stream_env", "rollingfile").
- * @param appender_type The desired appender type (e.g., StdOut, FileOutput).
- */
-void rdk_logger_set_default_appender_type(const char* category_name, const char* logdir, const char* fileName, rdk_LogAppenderType appender_type, long maxRotationCount, long maxBytesPerFile)
-{
-    log4c_category_t* cat = log4c_category_get(category_name);
-    char fullpath[512];
-    if (!cat) 
-        cat = log4c_category_new(category_name);
-
-    if (appender_type == RDK_LOG_OUTPUT_FILE)
-    {
-        if (!logdir || !fileName)
-        {
-            fprintf(stderr, "Error: logdir and log_file_name required for FileOutput\n");
-            return;
-        }
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", logdir, fileName);
-    }
-    else
-    {
-        strncpy(fullpath, "stdout", sizeof(fullpath)-1);
-        fullpath[sizeof(fullpath)-1] = '\0';
-    }
-    log4c_appender_t* app = log4c_appender_get(fullpath);
-    if(!app)
-        app = log4c_appender_new(fullpath);
-    if (app)
-    {
-        set_default_appender_type(cat, logdir, fileName, app, appender_type, maxRotationCount, maxBytesPerFile);
-    }
+    rdk_Error ret = rdk_dbg_priv_set_log_level(category_name, log_level);
+    return ret;
 }
 
 /**
@@ -151,13 +148,35 @@ rdk_Error rdk_logger_init(const char* debugConfigFile)
     return RDK_SUCCESS;
 }
 
+/**
+ * @brief Initialize RDK logger with extended configuration.
+ *
+ * This function provides a comprehensive logger initialization interface that combines
+ * the standard RDK logger initialization with extended configuration options. It first
+ * calls RDK_LOGGER_INIT() to perform basic logger setup, then applies the extended
+ * configuration parameters for specific module logging requirements.
+ *
+ * @param[in] config Pointer to extended logger configuration structure containing:
+ *                   - pCategoryName: Log category/module name (required, cannot be NULL)
+ *                   - loglevel: Default log level for the category
+ *                   - appender: Type of log appender (FILE, STDOUT, SYSLOG, SOCKET)
+ *                   - layout: Message layout format (PLAINTEXT, TIMESTAMPED, COMCAST)
+ *                   - pFilePolicy: File policy configuration (required for file appenders, NULL for others)
+ *
+ * @return RDK_SUCCESS on successful initialization, -1 on error.
+ *
+ * @note This function must be called after the basic RDK logger system is available.
+ * @note If RDK_LOGGER_INIT() fails, the extended configuration is not applied.
+ * @note For file appenders, ensure the log directory exists and has write permissions.
+ * @note This function internally calls rdk_dbg_priv_ext_init() for the actual configuration.
+ */
 rdk_Error rdk_logger_ext_init(const rdk_logger_ext_config_t* config)
 {
     rdk_Error ret;
     ret = RDK_LOGGER_INIT();
     if (ret == RDK_SUCCESS)
     {
-        rdk_dbg_priv_ext_init(config->moduleName, config->logdir, config->fileName, config->maxRotationCount, config->maxBytesPerFile, config->appender_type, config->loglevel, config->layout);
+        ret = rdk_dbg_priv_ext_init(config->pCategoryName, config->loglevel, config->appender, config->layout, config->pFilePolicy);
     }
     return ret;
  }
