@@ -317,6 +317,7 @@ rdk_Error rdk_dbg_priv_set_log_level(const char* category_name, rdk_LogLevel log
         int log4c_prio = rdk_logLevel_to_log4c_priority(log_level);
         log4c_category_set_priority(cat, log4c_prio);
     }
+    return RDK_SUCCESS;
 }
 
 rdk_Error rdk_dbg_priv_ext_init(const char* moduleName, rdk_LogLevel loglevel, rdk_LogAppenderType appender, rdk_LogLayout layout, rdk_LogFilePolicy* pFilePolicy)
