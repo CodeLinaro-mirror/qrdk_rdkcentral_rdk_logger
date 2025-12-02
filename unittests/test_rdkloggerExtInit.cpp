@@ -50,7 +50,7 @@ TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
 
 
             char fullpath[512];
-            snprintf(fullpath, sizeof(fullpath), "%s/%s", cfg.logdir, cfg.fileName);
+            snprintf(fullpath, sizeof(fullpath), "%s/%s", testPolicy.logdir, testPolicy.fileName);
 
 
             log4c_appender_t* app = log4c_appender_get(fullpath);
