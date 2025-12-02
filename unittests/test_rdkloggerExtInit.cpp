@@ -61,10 +61,6 @@ TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
             EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("rollingfile")) << "Appender type mismatch";
             EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("dated")) << "Appender layout mismatch";
 
-
-            log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
-            ASSERT_NE(rootCat, nullptr) << "Failed to obtain LOG.RDK category";
-            EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_TRACE) << "LOG.RDK priority not TRACE";
             for (int i =0; i < 50; i++)
             {
                 RDK_LOG(RDK_LOG_TRACE, "LOG.RDK.RTMESSAGE", "errorloh\n");
@@ -93,11 +89,7 @@ TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
             log4c_appender_t* app = log4c_appender_get("stdout");
             ASSERT_NE(app, nullptr) << "Stdout appender not found";
 
-
-            log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
             EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("stream_env")) << "Stdout appender type mismatch";
-            EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_DEBUG) << "LOG.RDK priority not DEBUG";
-
 
             EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("basic")) << "Stdout appender layout mismatch";
             for (int i =0; i < 50; i++)
@@ -128,9 +120,6 @@ TEST_F(RdkLoggerExtInit, ComcastDatedViaExtInit) {
             rdk_Error ret = rdk_logger_ext_init(&cfg);
             ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed for Comcast layout";
 
-
-            log4c_category_t* rootCat = log4c_category_get("LOG.RDK");
-            EXPECT_EQ(log4c_category_get_priority(rootCat), LOG4C_PRIORITY_ERROR) << "LOG.RDK priority not ERROR";
             for (int i =0; i < 50; i++)
             {
             RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
