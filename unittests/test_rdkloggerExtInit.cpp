@@ -41,6 +41,7 @@ TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
             testPolicy.maxBytesPerFile = 1024;
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t cfg;
+            memset(&cfg, 0, sizeof(cfg));
             cfg.loglevel = RDK_LOG_TRACE;
             cfg.appender = RDK_LOG_OUTPUT_FILE;
             cfg.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
@@ -78,6 +79,7 @@ TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
 TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
     RUN_IN_FORK({
             rdk_logger_ext_config_t cfg;
+            memset(&cfg, 0, sizeof(cfg));
             cfg.loglevel = RDK_LOG_DEBUG;
             cfg.appender = RDK_LOG_OUTPUT_STDOUT;
             cfg.layout = RDK_LOG_LAYOUT_PLAINTEXT;
@@ -117,6 +119,7 @@ TEST_F(RdkLoggerExtInit, ComcastDatedViaExtInit) {
             testPolicy.maxBytesPerFile = 1024;
             testPolicy.maxRotationCount = 2;
             rdk_logger_ext_config_t cfg;
+            memset(&cfg, 0, sizeof(cfg));
             cfg.loglevel = RDK_LOG_ERROR;
             cfg.appender = RDK_LOG_OUTPUT_FILE;
             cfg.layout = RDK_LOG_LAYOUT_COMCAST;
