@@ -284,6 +284,7 @@ TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
     testPolicy.maxBytesPerFile = 1024; // 2MB
     testPolicy.maxRotationCount = 5;
     rdk_logger_ext_config_t config;
+    memset(&config, 0, sizeof(config));
     config.pCategoryName = "LOG.RDK.PERFORMANCE";
     config.loglevel = RDK_LOG_DEBUG;
     config.appender = RDK_LOG_OUTPUT_FILE;
