@@ -213,9 +213,9 @@ TEST_F(RDKLoggerPerformanceTest, RapidCallsPerformance) {
     
     // Log messages rapidly
     for (int i = 0; i < 5000; i++) {
-        rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", "Rapid message %d", i);
-        rdk_logger_msg_printf(RDK_LOG_DEBUG, "LOG.RDK.PERFORMANCE", "Rapid debug %d", i);
-        rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.PERFORMANCE", "Rapid error %d", i);
+        rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", "Rapid message %d\n", i);
+        rdk_logger_msg_printf(RDK_LOG_DEBUG, "LOG.RDK.PERFORMANCE", "Rapid debug %d\n", i);
+        rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.PERFORMANCE", "Rapid error %d\n", i);
     }
     
     gettimeofday(&end, NULL);

@@ -306,6 +306,7 @@ rdk_Error rdk_dbg_priv_set_appender(const char* pCategoryName, rdk_LogAppenderTy
 
 rdk_Error rdk_dbg_priv_set_log_level(const char* category_name, rdk_LogLevel log_level)
 {
+    const char* cat_name = category_name ? category_name : "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(category_name);
     if (!cat)
     {
