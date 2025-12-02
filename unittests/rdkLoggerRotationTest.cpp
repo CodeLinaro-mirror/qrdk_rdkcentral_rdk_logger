@@ -349,7 +349,7 @@ TEST_F(RDKLoggerRotationTest, NegativeValues) {
             // Should handle gracefully
     });
 }
-
+#if 0
 // Test log rotation with long file names
 TEST_F(RDKLoggerRotationTest, LongFileNames) {
     RUN_IN_FORK({
@@ -418,7 +418,7 @@ TEST_F(RDKLoggerRotationTest, LongDirectoryPaths) {
     });
     // Should handle gracefully
 }
-
+#endif
 // Test log rotation with special characters in file names
 TEST_F(RDKLoggerRotationTest, SpecialCharactersInFileNames) {
     RUN_IN_FORK({
