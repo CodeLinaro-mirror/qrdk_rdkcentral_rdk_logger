@@ -165,7 +165,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
             int file_count = countFilesInDirectory("/tmp/rdk_logger_rotation_test");
             printf("file_count : %d\n",file_count);
             system("ls -lt /tmp/rdk_logger_rotation_test");
-            EXPECT_LE(file_count, config.maxRotationCount + 1) << "Should not exceed maxCount files";
+            EXPECT_LE(file_count, testPolicy.maxRotationCount + 1) << "Should not exceed maxCount files";
     });
 }
 #if 0
