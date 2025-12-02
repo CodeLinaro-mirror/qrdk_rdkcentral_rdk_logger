@@ -160,10 +160,16 @@ rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layo
     char app_name[256];
     const char* type_str = NULL;
     const char* layout_str = NULL;
-
+    
     if (app == RDK_LOG_OUTPUT_FILE && pPolicy)
     {
-        snprintf(app_name, sizeof(app_name), "%s/%s", pPolicy->logdir, pPolicy->fileName);
+        if (!logdir || !log_file_name) 
+        {
+            fprintf(stderr, "Error: logdir and log_file_name required for FileOutput\n");
+            return -1;
+        }
+        else
+            snprintf(app_name, sizeof(app_name), "%s/%s", pPolicy->logdir, pPolicy->fileName);
     }
     else
     {
