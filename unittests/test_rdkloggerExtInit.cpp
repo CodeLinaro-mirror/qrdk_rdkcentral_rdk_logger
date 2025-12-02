@@ -37,7 +37,9 @@ TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     RUN_IN_FORK({
             rdk_LogFilePolicy testPolicy;
             strncpy(testPolicy.fileName, "gtest_rdkunittest.log", sizeof(testPolicy.fileName)-1);
+            testPolicy.fileName[sizeof(testPolicy.fileName) - 1] = '\0';
             strncpy(testPolicy.logdir, "/tmp", sizeof(testPolicy.logdir)-1);
+            testPolicy.logdir[sizeof(testPolicy.logdir) - 1] = '\0';
             testPolicy.maxBytesPerFile = 1024;
             testPolicy.maxRotationCount = 3;
             rdk_logger_ext_config_t cfg;
@@ -107,7 +109,9 @@ TEST_F(RdkLoggerExtInit, ComcastDatedViaExtInit) {
     RUN_IN_FORK({
             rdk_LogFilePolicy testPolicy;
             strncpy(testPolicy.fileName, "gtest_comcast_unittest.log", sizeof(testPolicy.fileName)-1);
+            testPolicy.fileName[sizeof(testPolicy.fileName) - 1] = '\0';
             strncpy(testPolicy.logdir, "/tmp", sizeof(testPolicy.logdir)-1);
+            testPolicy.logdir[sizeof(testPolicy.logdir) - 1] = '\0';
             testPolicy.maxBytesPerFile = 1024;
             testPolicy.maxRotationCount = 2;
             rdk_logger_ext_config_t cfg;

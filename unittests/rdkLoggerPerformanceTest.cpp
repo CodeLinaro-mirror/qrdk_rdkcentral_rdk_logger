@@ -278,7 +278,9 @@ TEST_F(RDKLoggerPerformanceTest, CPUUsageTest) {
 TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
     rdk_LogFilePolicy testPolicy;
     strncpy(testPolicy.fileName, "stress_test.log", sizeof(testPolicy.fileName)-1);
+    testPolicy.fileName[sizeof(testPolicy.fileName) - 1] = '\0';
     strncpy(testPolicy.logdir, "/tmp/rdk_logger_performance_test", sizeof(testPolicy.logdir)-1);
+    testPolicy.logdir[sizeof(testPolicy.logdir) - 1] = '\0';
     testPolicy.maxBytesPerFile = 1024; // 2MB
     testPolicy.maxRotationCount = 5;
     rdk_logger_ext_config_t config;
@@ -303,8 +305,8 @@ TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
     gettimeofday(&end, NULL);
     double elapsed = getTimeDifference(&start, &end);
     
-    printf("Logged 5000 messages with file rotation in %.3f seconds (%.0f messages/sec)\n", 
-           elapsed, 5000.0 / elapsed);
+    printf("Logged 1000 messages with file rotation in %.3f seconds (%.0f messages/sec)\n", 
+           elapsed, 1000.0 / elapsed);
     
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 20.0) << "File I/O stress test should be reasonably fast";
