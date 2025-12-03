@@ -180,7 +180,7 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
     RUN_IN_FORK({
 
             rdk_Error ret = rdk_logger_ext_init(NULL);
-            EXPECT_EQ(-1, ret)<<"EXT_INIT failed;
+            EXPECT_EQ(-1, ret)<<"EXT_INIT failed";
 
             rdk_LogFilePolicy testPolicy;
             strncpy(testPolicy.fileName, "", sizeof(testPolicy.fileName)-1);
@@ -198,10 +198,8 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
             config.pFilePolicy = &testPolicy;
 
             rdk_Error ret = rdk_logger_ext_init(config);
-            EXPECT_EQ(-1, ret)<<"EXT_INIT failed;
-
-
-    })
+            EXPECT_EQ(-1, ret)<<"EXT_INIT failed";
+    });
 }
 // Test log rotation with invalid directory
 TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
