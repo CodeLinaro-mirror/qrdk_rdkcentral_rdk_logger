@@ -113,7 +113,7 @@ static const char* comcast_dated_format_nocr(const log4c_layout_t* a_layout,
 static int stream_env_overwrite_open(log4c_appender_t * appender);
 static int stream_env_append_open(log4c_appender_t * appender);
 static int stream_env_append(log4c_appender_t* appender, const log4c_logging_event_t* event);
-static int stream_env_plus_stderr_append(log4c_appender_t* appender, const log4c_logging_event_t* event);
+static int stream_env_plus_stdout_append(log4c_appender_t* appender, const log4c_logging_event_t* event);
 static int stream_env_close(log4c_appender_t * appender);
 
 /**
@@ -137,13 +137,13 @@ static const log4c_appender_type_t log4c_appender_type_stream_env_append =
 { "stream_env_append", stream_env_append_open, stream_env_append,
         stream_env_close, };
 
-static const log4c_appender_type_t log4c_appender_type_stream_env_plus_stderr =
-{ "stream_env_plus_stderr", stream_env_overwrite_open,
-        stream_env_plus_stderr_append, stream_env_close, };
+static const log4c_appender_type_t log4c_appender_type_stream_env_plus_stdout =
+{ "stream_env_plus_stdout", stream_env_overwrite_open,
+        stream_env_plus_stdout_append, stream_env_close, };
 
-static const log4c_appender_type_t log4c_appender_type_stream_env_append_plus_stderr =
-{ "stream_env_append_plus_stderr", stream_env_append_open,
-        stream_env_plus_stderr_append, stream_env_close, };
+static const log4c_appender_type_t log4c_appender_type_stream_env_append_plus_stdout =
+{ "stream_env_append_plus_stdout", stream_env_append_open,
+        stream_env_plus_stdout_append, stream_env_close, };
 
 void rdk_dbg_priv_init()
 {
@@ -653,9 +653,9 @@ static int initLogger(char *category)
     ///> will configure them
     (void) log4c_appender_type_set(&log4c_appender_type_stream_env);
     (void) log4c_appender_type_set(&log4c_appender_type_stream_env_append);
-    (void) log4c_appender_type_set(&log4c_appender_type_stream_env_plus_stderr);
+    (void) log4c_appender_type_set(&log4c_appender_type_stream_env_plus_stdout);
     (void) log4c_appender_type_set(
-            &log4c_appender_type_stream_env_append_plus_stderr);
+            &log4c_appender_type_stream_env_append_plus_stdout);
     (void) log4c_layout_type_set(&log4c_layout_type_dated_nocr);
     (void) log4c_layout_type_set(&log4c_layout_type_basic_nocr);
     (void) log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);
@@ -838,8 +838,8 @@ static int stream_env_open(log4c_appender_t* appender, int append)
 
     if (!strcmp(newName,"stderr"))
     fp = stderr;
-    else if (!strcmp(newName,"stderr"))
-    fp = stderr;
+    else if (!strcmp(newName,"stdout"))
+    fp = stdout;
     else if (append)
     {
         printf("****Opening %s in append mode\n", newName);
@@ -924,7 +924,7 @@ static int stream_env_append(log4c_appender_t* appender,
 #if defined(SYSTEMD_SYSLOG_HELPER)
     send_logs_to_syslog(event->evt_rendered_msg);
 #elif defined(SYSTEMD_JOURNAL)
-    if (fp == stderr || fp == stderr)
+    if (fp == stdout || fp == stderr)
     {
         retval = sd_journal_print(stream_env_append_get_priority(event->evt_priority), "%s",event->evt_rendered_msg);
     }
@@ -943,7 +943,7 @@ static int stream_env_append(log4c_appender_t* appender,
     return retval;
 }
 
-static int stream_env_plus_stderr_append(log4c_appender_t* appender,
+static int stream_env_plus_stdout_append(log4c_appender_t* appender,
         const log4c_logging_event_t* event)
 {
     int retval=0;
@@ -952,7 +952,7 @@ static int stream_env_plus_stderr_append(log4c_appender_t* appender,
 #if defined(SYSTEMD_SYSLOG_HELPER)
         send_logs_to_syslog(event->evt_rendered_msg);
 #elif defined(SYSTEMD_JOURNAL)
-    if (fp != stderr || fp != stderr)
+    if (fp != stdout || fp != stderr)
     {
        retval = fprintf(fp, "%s", event->evt_rendered_msg);
     }
@@ -963,9 +963,9 @@ static int stream_env_plus_stderr_append(log4c_appender_t* appender,
     (void)fflush(fp);
 #else
     retval = fprintf(fp, "%s", event->evt_rendered_msg);
-    fprintf(stderr, "%s", event->evt_rendered_msg);
+    fprintf(stdout, "%s", event->evt_rendered_msg);
     (void)fflush(fp);
-    (void)fflush(stderr);
+    (void)fflush(stdout);
 #endif
     //free((void *)event->evt_rendered_msg);
 
@@ -977,7 +977,7 @@ static int stream_env_close(log4c_appender_t* appender)
 {
     FILE* fp = (FILE*)log4c_appender_get_udata(appender);
 
-    if (!fp || fp == stderr || fp == stderr)
+    if (!fp || fp == stdout || fp == stderr)
     return 0;
 
     return fclose(fp);
