@@ -16,22 +16,21 @@ protected:
     }
 };
 
-
 #define RUN_IN_FORK(test_body) \
     pid_t pid = fork(); \
     ASSERT_NE(pid, -1) << "fork failed"; \
     if (pid == 0) { \
-        log4c_init(); \
         test_body; \
         rdk_logger_deinit(); \
-        exit(0); \
+        exit(::testing::Test::HasFailure() ? 1 : 0); \
     } else { \
         int status = 0; \
         waitpid(pid, &status, 0); \
         ASSERT_TRUE(WIFEXITED(status)); \
-        ASSERT_EQ(WEXITSTATUS(status), 0); \
+        if (WEXITSTATUS(status) != 0) { \
+            FAIL() << "Child process failed with exit code " << WEXITSTATUS(status); \
+        } \
     }
-
 
 TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     RUN_IN_FORK({

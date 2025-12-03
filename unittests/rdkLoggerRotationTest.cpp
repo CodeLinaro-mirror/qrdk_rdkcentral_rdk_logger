@@ -106,12 +106,14 @@ protected:
     if (pid == 0) { \
         test_body; \
         rdk_logger_deinit(); \
-        exit(0); \
+        exit(::testing::Test::HasFailure() ? 1 : 0); \
     } else { \
         int status = 0; \
         waitpid(pid, &status, 0); \
         ASSERT_TRUE(WIFEXITED(status)); \
-        ASSERT_EQ(WEXITSTATUS(status), 0); \
+        if (WEXITSTATUS(status) != 0) { \
+            FAIL() << "Child process failed with exit code " << WEXITSTATUS(status); \
+        } \
     }
 
 // Test extended initialization with log rotation
@@ -178,9 +180,8 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
 TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
 {
     RUN_IN_FORK({
-
-            rdk_Error ret = rdk_logger_ext_init(NULL);
-            EXPECT_EQ(-1, ret)<<"EXT_INIT failed";
+            rdk_Error err = rdk_logger_ext_init(NULL);
+            EXPECT_EQ(-1, (int)ret)<<"EXT_INIT failed";
 
             rdk_LogFilePolicy testPolicy;
             strncpy(testPolicy.fileName, "", sizeof(testPolicy.fileName)-1);
@@ -198,7 +199,7 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
             config.pFilePolicy = &testPolicy;
 
             ret = rdk_logger_ext_init(&config);
-            EXPECT_EQ(-1, ret)<<"EXT_INIT failed";
+            EXPECT_EQ(-1, (int)ret)<<"EXT_INIT failed";
     });
 }
 // Test log rotation with invalid directory
