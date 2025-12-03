@@ -172,8 +172,7 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
     }
     else
     {
-        strncpy(app_name, "stdout", sizeof(app_name)-1);
-        app_name[sizeof(app_name)-1] = '\0';
+        snprintf(app_name, sizeof(app_name), "%s.stdout", categoryName);
     }
 
     strncpy(appender_name_out, app_name, 255);
@@ -287,6 +286,7 @@ static rdk_Error rdk_dbg_priv_set_appender(const char* categoryName, const char*
         fprintf(stderr, "Error: categoryName or appender_name is NULL\n");
         return -1;
     }
+
     log4c_category_t* cat = log4c_category_get(categoryName);
     if (!cat)
         cat = log4c_category_new(categoryName);
@@ -840,6 +840,8 @@ static int stream_env_open(log4c_appender_t* appender, int append)
     if (!strcmp(newName,"stderr"))
     fp = stderr;
     else if (!strcmp(newName,"stdout"))
+    fp = stdout;
+    else if (strlen(newName) > 7 && strcmp(newName + strlen(newName) - 7, ".stdout") == 0)
     fp = stdout;
     else if (append)
     {
