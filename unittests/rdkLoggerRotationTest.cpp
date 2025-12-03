@@ -197,7 +197,7 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
             config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
             config.pFilePolicy = &testPolicy;
 
-            rdk_Error ret = rdk_logger_ext_init(config);
+            ret = rdk_logger_ext_init(&config);
             EXPECT_EQ(-1, ret)<<"EXT_INIT failed";
     });
 }
