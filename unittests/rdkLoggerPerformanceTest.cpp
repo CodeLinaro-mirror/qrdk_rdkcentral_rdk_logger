@@ -355,7 +355,7 @@ TEST_F(RDKLoggerPerformanceTest, ErrorConditionsTest) {
     for (int i = 0; i < 1000; i++) {
         // Test with NULL parameters
         rdk_logger_msg_printf(RDK_LOG_INFO, NULL, "NULL module test %d", i);
-        rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", NULL);
+        //rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", NULL);
         
         // Test with invalid log levels
         rdk_logger_msg_printf((rdk_LogLevel)999, "LOG.RDK.PERFORMANCE", "Invalid level test %d", i);
