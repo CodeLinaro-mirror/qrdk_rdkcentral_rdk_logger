@@ -59,8 +59,8 @@ TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
             ASSERT_NE(app, nullptr) << "Appender not created by rdk_logger_ext_init: " << fullpath;
 
 
-            EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("rollingfile")) << "Appender type mismatch";
-            EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("dated")) << "Appender layout mismatch";
+            EXPECT_STREQ(log4c_appender_type_get_name(log4c_appender_get_type(app)), "rollingfile") << "Appender type mismatch";
+            EXPECT_STREQ(log4c_layout_get_name(log4c_appender_get_layout(app)), "dated") << "Appender layout mismatch";
 
             for (int i =0; i < 50; i++)
             {
@@ -90,9 +90,9 @@ TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
             log4c_appender_t* app = log4c_appender_get("stdout");
             ASSERT_NE(app, nullptr) << "Stdout appender not found";
 
-            EXPECT_EQ(log4c_appender_get_type(app), log4c_appender_type_get("stream_env")) << "Stdout appender type mismatch";
+            EXPECT_STREQ(log4c_appender_type_get_name(log4c_appender_get_type(app)), "stream_env") << "Stdout appender type mismatch";
 
-            EXPECT_EQ(log4c_appender_get_layout(app), log4c_layout_get("basic")) << "Stdout appender layout mismatch";
+            EXPECT_STREQ(log4c_layout_get_name(log4c_appender_get_layout(app)), "basic") << "Stdout appender layout mismatch";
             for (int i =0; i < 50; i++)
             {
                 RDK_LOG(RDK_LOG_ERROR, "LOG.RDK.RTMESSAGE", "errorloh\n");
