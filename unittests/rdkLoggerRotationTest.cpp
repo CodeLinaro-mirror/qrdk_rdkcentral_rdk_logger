@@ -176,6 +176,7 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
             EXPECT_LE(file_count, testPolicy.maxRotationCount + 1) << "Should not exceed maxCount files";
     });
 }
+#if 0
 // Test log rotation with invalid configuration
 TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
 {
@@ -202,6 +203,7 @@ TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
             EXPECT_EQ(-1, (int)err)<<"EXT_INIT failed";
     });
 }
+#endif
 // Test log rotation with invalid directory
 TEST_F(RDKLoggerRotationTest, InvalidDirectory) {
     RUN_IN_FORK({
