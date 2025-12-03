@@ -175,35 +175,33 @@ TEST_F(RDKLoggerRotationTest, CountBasedRotation) {
     });
 }
 // Test log rotation with invalid configuration
-TEST_F(RDKLoggerRotationTest, InvalidConfiguration) {
-    rdk_logger_ext_config_t config;
-    
-    // Test with NULL config
-    rdk_Error ret = rdk_logger_ext_init(NULL);
-    // Should handle gracefully
-    
-    // Test with empty file name
-    strncpy(config.fileName, "", sizeof(config.fileName) - 1);
-    config.fileName[sizeof(config.fileName) - 1] = '\0';
-    
-    strncpy(config.logdir, "/tmp/rdk_logger_rotation_test", sizeof(config.logdir) - 1);
-    config.logdir[sizeof(config.logdir) - 1] = '\0';
-    
-    config.maxBytesPerFile = 1024;
-    config.maxRotationCount = 3;
-    
-    ret = rdk_logger_ext_init(&config);
-    // Should handle gracefully
-    
-    // Test with empty log directory
-    strncpy(config.fileName, "test.log", sizeof(config.fileName) - 1);
-    config.fileName[sizeof(config.fileName) - 1] = '\0';
-    
-    strncpy(config.logdir, "", sizeof(config.logdir) - 1);
-    config.logdir[sizeof(config.logdir) - 1] = '\0';
-    
-    ret = rdk_logger_ext_init(&config);
-    // Should handle gracefully
+TEST_F(RDKLoggerRotationTest, InvalidConfiguration)
+{
+    RUN_IN_FORK({
+
+            rdk_Error ret = rdk_logger_ext_init(NULL);
+            EXPECT_EQ(-1, ret)<<"EXT_INIT failed;
+
+            rdk_LogFilePolicy testPolicy;
+            strncpy(testPolicy.fileName, "", sizeof(testPolicy.fileName)-1);
+            testPolicy.fileName[sizeof(testPolicy.fileName) - 1] = '\0';
+            strncpy(testPolicy.logdir, "/tmp/rotation_test", sizeof(testPolicy.logdir)-1);
+            testPolicy.logdir[sizeof(testPolicy.logdir) - 1] = '\0';
+            testPolicy.maxBytesPerFile = 1024; // 2MB
+            testPolicy.maxRotationCount = 3;
+            rdk_logger_ext_config_t config;
+            memset(&config, 0, sizeof(config));
+            config.pCategoryName = "LOG.RDK.ROTATION";
+            config.loglevel = RDK_LOG_ERROR;
+            config.appender = RDK_LOG_OUTPUT_FILE;
+            config.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
+            config.pFilePolicy = &testPolicy;
+
+            rdk_Error ret = rdk_logger_ext_init(config);
+            EXPECT_EQ(-1, ret)<<"EXT_INIT failed;
+
+
+    })
 }
 // Test log rotation with invalid directory
 TEST_F(RDKLoggerRotationTest, InvalidDirectory) {

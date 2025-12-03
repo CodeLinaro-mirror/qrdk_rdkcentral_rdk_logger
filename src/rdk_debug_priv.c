@@ -217,7 +217,7 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
         long maxBytes = pPolicy->maxBytesPerFile > 0 ? pPolicy->maxBytesPerFile : 1024 * 1024;
 
         rollingfile_udata_t *rudata = rollingfile_make_udata();
-        if (rudata) 
+        if (rudata && pPolicy->logdir && pPolicy->fileName) 
         {
             rollingfile_udata_set_logdir(rudata, pPolicy->logdir);
             rollingfile_udata_set_files_prefix(rudata, pPolicy->fileName);
@@ -249,6 +249,11 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
                 rollingfile_udata_set_policy(rudata, policy);
             }
             log4c_appender_set_udata(appender, rudata);
+        }
+        else
+        {
+            fprintf(stderr, "ruData or logdir or fileName is NULL\n");
+            return -1;
         }
     }
 
