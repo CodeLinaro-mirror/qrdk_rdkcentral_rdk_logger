@@ -212,7 +212,7 @@ TEST_F(RDKLoggerPerformanceTest, RapidCallsPerformance) {
     gettimeofday(&start, NULL);
     
     // Log messages rapidly
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 5000; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", "Rapid message %d\n", i);
         rdk_logger_msg_printf(RDK_LOG_DEBUG, "LOG.RDK.PERFORMANCE", "Rapid debug %d\n", i);
         rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.PERFORMANCE", "Rapid error %d\n", i);
@@ -221,8 +221,8 @@ TEST_F(RDKLoggerPerformanceTest, RapidCallsPerformance) {
     gettimeofday(&end, NULL);
     double elapsed = getTimeDifference(&start, &end);
     
-    printf("Logged 15000 rapid messages in %.3f seconds (%.0f messages/sec)\n", 
-           elapsed, 15000.0 / elapsed);
+    printf("Logged 5000 rapid messages in %.3f seconds (%.0f messages/sec)\n", 
+           elapsed, 5000.0 / elapsed);
     
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 15.0) << "Rapid logging should be reasonably fast";
@@ -298,7 +298,7 @@ TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
     gettimeofday(&start, NULL);
     
     // Log many messages to trigger file rotation
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 5000; i++) {
         rdk_logger_msg_printf(RDK_LOG_INFO, "LOG.RDK.PERFORMANCE", 
             "File I/O stress test message %d", i);
     }
@@ -306,8 +306,8 @@ TEST_F(RDKLoggerPerformanceTest, FileIOStressTest) {
     gettimeofday(&end, NULL);
     double elapsed = getTimeDifference(&start, &end);
     
-    printf("Logged 1000 messages with file rotation in %.3f seconds (%.0f messages/sec)\n", 
-           elapsed, 1000.0 / elapsed);
+    printf("Logged 5000 messages with file rotation in %.3f seconds (%.0f messages/sec)\n", 
+           elapsed, 5000.0 / elapsed);
     
     // Should complete in reasonable time
     EXPECT_LT(elapsed, 20.0) << "File I/O stress test should be reasonably fast";

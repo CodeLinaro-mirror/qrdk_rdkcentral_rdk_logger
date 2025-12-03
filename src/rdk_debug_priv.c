@@ -280,10 +280,6 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
     return RDK_SUCCESS;
 }
 
-/**
- * @brief Internal function to associate appender with category using appender name.
- * Gets the appender name from rdk_logger_internal_appender_init.
- */
 static rdk_Error rdk_dbg_priv_set_appender(const char* categoryName, const char* appender_name)
 {
     if (!categoryName || !appender_name)
@@ -333,7 +329,7 @@ static rdk_Error rdk_dbg_priv_set_log_level(const char* category_name, rdk_LogLe
  * @brief Initialize RDK logger with extended configuration.
  * This is the ONLY public API for extended logger initialization.
  */
-rdk_Error rdk_dbg_priv_ext_init(const rdk_logger_ext_config_t* config)
+rdk_Error rdk_dbg_priv_ext_init(rdk_logger_ext_config_t* config)
 {
     char appender_name[256];
 

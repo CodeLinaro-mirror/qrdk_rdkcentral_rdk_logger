@@ -40,7 +40,6 @@
 #include "rdk_debug_priv.h"
 #include "rdk_dynamic_logger.h"
 #include "rdk_utils.h"
-#include <string.h>
 #define BUF_LEN 256
 static int isLogInited = 0;
 /**

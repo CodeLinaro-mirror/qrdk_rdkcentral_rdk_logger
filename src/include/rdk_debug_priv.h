@@ -33,7 +33,7 @@ extern "C"
 void rdk_dbg_priv_init(void);
 void rdk_dbg_priv_config(void);
 void rdk_dbg_priv_deinit(void);
-rdk_Error rdk_dbg_priv_ext_init(const rdk_logger_ext_config_t* config);
+rdk_Error rdk_dbg_priv_ext_init(rdk_logger_ext_config_t* config);
 void rdk_dbg_priv_shutdown();
 
 void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const char* format, va_list args);
