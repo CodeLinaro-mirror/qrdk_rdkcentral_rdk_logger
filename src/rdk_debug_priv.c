@@ -113,7 +113,7 @@ static const char* comcast_dated_format_nocr(const log4c_layout_t* a_layout,
 static int stream_env_overwrite_open(log4c_appender_t * appender);
 static int stream_env_append_open(log4c_appender_t * appender);
 static int stream_env_append(log4c_appender_t* appender, const log4c_logging_event_t* event);
-static int stream_env_plus_stdout_append(log4c_appender_t* appender, const log4c_logging_event_t* event);
+static int stream_env_plus_stderr_append(log4c_appender_t* appender, const log4c_logging_event_t* event);
 static int stream_env_close(log4c_appender_t * appender);
 
 /**
@@ -137,13 +137,13 @@ static const log4c_appender_type_t log4c_appender_type_stream_env_append =
 { "stream_env_append", stream_env_append_open, stream_env_append,
         stream_env_close, };
 
-static const log4c_appender_type_t log4c_appender_type_stream_env_plus_stdout =
-{ "stream_env_plus_stdout", stream_env_overwrite_open,
-        stream_env_plus_stdout_append, stream_env_close, };
+static const log4c_appender_type_t log4c_appender_type_stream_env_plus_stderr =
+{ "stream_env_plus_stderr", stream_env_overwrite_open,
+        stream_env_plus_stderr_append, stream_env_close, };
 
-static const log4c_appender_type_t log4c_appender_type_stream_env_append_plus_stdout =
-{ "stream_env_append_plus_stdout", stream_env_append_open,
-        stream_env_plus_stdout_append, stream_env_close, };
+static const log4c_appender_type_t log4c_appender_type_stream_env_append_plus_stderr =
+{ "stream_env_append_plus_stderr", stream_env_append_open,
+        stream_env_plus_stderr_append, stream_env_close, };
 
 void rdk_dbg_priv_init()
 {
@@ -155,21 +155,20 @@ void rdk_dbg_priv_init()
     gRootCat = log4c_category_get("LOG.RDK");
 }
 
-rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layout, rdk_LogFilePolicy *pPolicy)
+static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogAppenderType app,
+                                                   rdk_LogLayout layout, rdk_LogFilePolicy *pPolicy,
+                                                   char* appender_name_out)
 {
     char app_name[256];
-    const char* type_str = NULL;
-    const char* layout_str = NULL;
-    
+
+    if (!categoryName || !appender_name_out) {
+        fprintf(stderr, "Error: categoryName or appender_name_out is NULL\n");
+        return -1;
+    }
+
     if (app == RDK_LOG_OUTPUT_FILE && pPolicy)
     {
-        if (!logdir || !log_file_name) 
-        {
-            fprintf(stderr, "Error: logdir and log_file_name required for FileOutput\n");
-            return -1;
-        }
-        else
-            snprintf(app_name, sizeof(app_name), "%s/%s", pPolicy->logdir, pPolicy->fileName);
+        snprintf(app_name, sizeof(app_name), "%s.app", categoryName);
     }
     else
     {
@@ -177,22 +176,8 @@ rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layo
         app_name[sizeof(app_name)-1] = '\0';
     }
 
-    switch(app)
-    {
-        case RDK_LOG_OUTPUT_STDOUT:    type_str = "stream_env"; break;
-        case RDK_LOG_OUTPUT_FILE:      type_str = "rollingfile"; break;
-        case RDK_LOG_OUTPUT_SYSLOG:    type_str = "syslog"; break;
-        case RDK_LOG_OUTPUT_SOCKET:    type_str = "socket"; break;
-        default:                       type_str = "stream_env"; break;
-    }
-
-    switch(layout)
-    {
-        case RDK_LOG_LAYOUT_PLAINTEXT:         layout_str = "basic"; break;
-        case RDK_LOG_LAYOUT_TIMESTAMPED:       layout_str = "dated"; break;
-        case RDK_LOG_LAYOUT_COMCAST:           layout_str = "comcast_dated"; break;
-        default:                               layout_str = "basic"; break;
-    }
+    strncpy(appender_name_out, app_name, 255);
+    appender_name_out[255] = '\0';
 
     log4c_appender_t* appender = log4c_appender_get(app_name);
     if (appender)
@@ -203,10 +188,21 @@ rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layo
     else
     {
         appender = log4c_appender_new(app_name);
-        if (!appender) {
+        if (!appender)
+        {
             fprintf(stderr, "Failed to create appender %s\n", app_name);
             return -1;
         }
+    }
+
+    const char* type_str = NULL;
+    switch(app)
+    {
+        case RDK_LOG_OUTPUT_STDOUT:    type_str = "stream_env"; break;
+        case RDK_LOG_OUTPUT_FILE:      type_str = "rollingfile"; break;
+        case RDK_LOG_OUTPUT_SYSLOG:    type_str = "syslog"; break;
+        case RDK_LOG_OUTPUT_SOCKET:    type_str = "socket"; break;
+        default:                       type_str = "stream_env"; break;
     }
 
     const log4c_appender_type_t* type = log4c_appender_type_get(type_str);
@@ -217,11 +213,11 @@ rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layo
 
     if (app == RDK_LOG_OUTPUT_FILE && pPolicy)
     {
-        long effectiveMaxRotationCount = pPolicy->maxRotationCount > 0 ? pPolicy->maxRotationCount : 1;
-        long effectiveMaxBytesPerFile = pPolicy->maxBytesPerFile > 0 ? pPolicy->maxBytesPerFile : 1024 * 1024;
+        long rotationCount = pPolicy->maxRotationCount > 0 ? pPolicy->maxRotationCount : 1;
+        long maxBytes = pPolicy->maxBytesPerFile > 0 ? pPolicy->maxBytesPerFile : 1024 * 1024;
 
         rollingfile_udata_t *rudata = rollingfile_make_udata();
-        if (rudata)
+        if (rudata) 
         {
             rollingfile_udata_set_logdir(rudata, pPolicy->logdir);
             rollingfile_udata_set_files_prefix(rudata, pPolicy->fileName);
@@ -246,8 +242,8 @@ rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layo
                 rollingpolicy_sizewin_udata_t *sizewin_udata = sizewin_make_udata();
                 if (sizewin_udata)
                 {
-                    sizewin_udata_set_file_maxsize(sizewin_udata, effectiveMaxBytesPerFile);
-                    sizewin_udata_set_max_num_files(sizewin_udata, effectiveMaxRotationCount);
+                    sizewin_udata_set_file_maxsize(sizewin_udata, maxBytes);
+                    sizewin_udata_set_max_num_files(sizewin_udata, rotationCount);
                     log4c_rollingpolicy_set_udata(policy, sizewin_udata);
                 }
                 rollingfile_udata_set_policy(rudata, policy);
@@ -256,8 +252,17 @@ rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layo
         }
     }
 
+    const char* layout_str = NULL;
+    switch(layout)
+    {
+        case RDK_LOG_LAYOUT_PLAINTEXT:         layout_str = "basic"; break;
+        case RDK_LOG_LAYOUT_TIMESTAMPED:       layout_str = "dated"; break;
+        case RDK_LOG_LAYOUT_COMCAST:           layout_str = "comcast_dated"; break;
+        default:                               layout_str = "basic"; break;
+    }
+
     log4c_layout_t* layout_obj = log4c_layout_get(layout_str);
-    if (layout_obj && appender)
+    if (layout_obj)
     {
         log4c_appender_set_layout(appender, layout_obj);
     }
@@ -267,18 +272,23 @@ rdk_Error rdk_dbg_priv_appender_init(rdk_LogAppenderType app, rdk_LogLayout layo
         fprintf(stderr, "log4c_appender_open failed for %s\n", app_name);
         return -1;
     }
-
     return RDK_SUCCESS;
 }
 
-rdk_Error rdk_dbg_priv_set_appender(const char* pCategoryName, rdk_LogAppenderType app, rdk_LogFilePolicy *pPolicy)
+/**
+ * @brief Internal function to associate appender with category using appender name.
+ * Gets the appender name from rdk_logger_internal_appender_init.
+ */
+static rdk_Error rdk_dbg_priv_set_appender(const char* categoryName, const char* appender_name)
 {
-    char app_name[256];
-
-    const char* cat_name = pCategoryName ? pCategoryName : "LOG.RDK";
-    log4c_category_t* cat = log4c_category_get(cat_name);
+    if (!categoryName || !appender_name)
+    {
+        fprintf(stderr, "Error: categoryName or appender_name is NULL\n");
+        return -1;
+    }
+    log4c_category_t* cat = log4c_category_get(categoryName);
     if (!cat)
-        cat = log4c_category_new(cat_name);
+        cat = log4c_category_new(categoryName);
     if (!cat)
         cat = gRootCat;
     if (!cat)
@@ -287,30 +297,19 @@ rdk_Error rdk_dbg_priv_set_appender(const char* pCategoryName, rdk_LogAppenderTy
         return -1;
     }
 
-    if (app == RDK_LOG_OUTPUT_FILE && pPolicy)
-    {
-        snprintf(app_name, sizeof(app_name), "%s/%s", pPolicy->logdir, pPolicy->fileName);
-    }
-    else
-    {
-        strncpy(app_name, "stdout", sizeof(app_name)-1);
-        app_name[sizeof(app_name)-1] = '\0';
-    }
-
-    log4c_appender_t* appender = log4c_appender_get(app_name);
+    log4c_appender_t* appender = log4c_appender_get(appender_name);
     if (!appender)
     {
-        fprintf(stderr, "Appender not found: %s. Call rdk_logger_appender_init first.\n", app_name);
+        fprintf(stderr, "Appender not found: %s\n", appender_name);
         return -1;
     }
 
     log4c_category_set_appender(cat, appender);
     log4c_category_set_additivity(cat, 0);
-
     return RDK_SUCCESS;
 }
 
-rdk_Error rdk_dbg_priv_set_log_level(const char* category_name, rdk_LogLevel log_level)
+static rdk_Error rdk_dbg_priv_set_log_level(const char* category_name, rdk_LogLevel log_level)
 {
     const char* cat_name = category_name ? category_name : "LOG.RDK";
     log4c_category_t* cat = log4c_category_get(category_name);
@@ -325,27 +324,52 @@ rdk_Error rdk_dbg_priv_set_log_level(const char* category_name, rdk_LogLevel log
     }
     return RDK_SUCCESS;
 }
-
-rdk_Error rdk_dbg_priv_ext_init(const char* moduleName, rdk_LogLevel loglevel, rdk_LogAppenderType appender, rdk_LogLayout layout, rdk_LogFilePolicy* pFilePolicy)
+/**
+ * @brief Initialize RDK logger with extended configuration.
+ * This is the ONLY public API for extended logger initialization.
+ */
+rdk_Error rdk_dbg_priv_ext_init(const rdk_logger_ext_config_t* config)
 {
-    rdk_Error result = rdk_logger_appender_init(appender, layout, pFilePolicy);
-    if (result != RDK_SUCCESS) {
-        fprintf(stderr, "Failed to initialize appender\n");
+    char appender_name[256];
+
+    if (!config)
+    {
+        fprintf(stderr, "Error: config parameter is NULL\n");
+        return -1;
+    }
+    const char* cat_name = config->pCategoryName ? config->pCategoryName : "LOG.RDK";
+    log4c_category_t* cat = log4c_category_get(cat_name);
+    if (!cat)
+        cat = log4c_category_new(cat_name);
+    if (!cat)
+        cat = gRootCat;
+    if (!cat)
+    {
+        fprintf(stderr, "Failed to get or create log category\n");
+        return -1;
+    }
+
+    rdk_Error result = rdk_dbg_priv_appender_init(cat_name, config->appender,
+                                                         config->layout, config->pFilePolicy, appender_name);
+    if (result != RDK_SUCCESS)
+    {
+        fprintf(stderr, "Failed to initialize appender for category %s\n", cat_name);
         return result;
     }
 
-    result = rdk_logger_set_appender(moduleName, appender, pFilePolicy);
-    if (result != RDK_SUCCESS) {
-        fprintf(stderr, "Failed to set appender for category\n");
+    result = rdk_dbg_priv_set_appender(cat_name, appender_name);
+    if (result != RDK_SUCCESS)
+    {
+        fprintf(stderr, "Failed to set appender %s for category %s\n", appender_name, cat_name);
         return result;
     }
 
-    result = rdk_dbg_priv_set_log_level(moduleName, loglevel);
-    if (result != RDK_SUCCESS) {
-        fprintf(stderr, "Failed to set log level for category\n");
+    result = rdk_dbg_priv_set_log_level(cat_name, config->loglevel);
+    if(result != RDK_SUCCESS)
+    {
+        fprintf(stderr, "Failed to set log level for category%s\n", cat_name);
         return result;
     }
-
 
     return RDK_SUCCESS;
 }
@@ -629,9 +653,9 @@ static int initLogger(char *category)
     ///> will configure them
     (void) log4c_appender_type_set(&log4c_appender_type_stream_env);
     (void) log4c_appender_type_set(&log4c_appender_type_stream_env_append);
-    (void) log4c_appender_type_set(&log4c_appender_type_stream_env_plus_stdout);
+    (void) log4c_appender_type_set(&log4c_appender_type_stream_env_plus_stderr);
     (void) log4c_appender_type_set(
-            &log4c_appender_type_stream_env_append_plus_stdout);
+            &log4c_appender_type_stream_env_append_plus_stderr);
     (void) log4c_layout_type_set(&log4c_layout_type_dated_nocr);
     (void) log4c_layout_type_set(&log4c_layout_type_basic_nocr);
     (void) log4c_layout_type_set(&log4c_layout_type_comcast_dated_nocr);
@@ -814,8 +838,8 @@ static int stream_env_open(log4c_appender_t* appender, int append)
 
     if (!strcmp(newName,"stderr"))
     fp = stderr;
-    else if (!strcmp(newName,"stdout"))
-    fp = stdout;
+    else if (!strcmp(newName,"stderr"))
+    fp = stderr;
     else if (append)
     {
         printf("****Opening %s in append mode\n", newName);
@@ -900,7 +924,7 @@ static int stream_env_append(log4c_appender_t* appender,
 #if defined(SYSTEMD_SYSLOG_HELPER)
     send_logs_to_syslog(event->evt_rendered_msg);
 #elif defined(SYSTEMD_JOURNAL)
-    if (fp == stdout || fp == stderr)
+    if (fp == stderr || fp == stderr)
     {
         retval = sd_journal_print(stream_env_append_get_priority(event->evt_priority), "%s",event->evt_rendered_msg);
     }
@@ -919,7 +943,7 @@ static int stream_env_append(log4c_appender_t* appender,
     return retval;
 }
 
-static int stream_env_plus_stdout_append(log4c_appender_t* appender,
+static int stream_env_plus_stderr_append(log4c_appender_t* appender,
         const log4c_logging_event_t* event)
 {
     int retval=0;
@@ -928,7 +952,7 @@ static int stream_env_plus_stdout_append(log4c_appender_t* appender,
 #if defined(SYSTEMD_SYSLOG_HELPER)
         send_logs_to_syslog(event->evt_rendered_msg);
 #elif defined(SYSTEMD_JOURNAL)
-    if (fp != stdout || fp != stderr)
+    if (fp != stderr || fp != stderr)
     {
        retval = fprintf(fp, "%s", event->evt_rendered_msg);
     }
@@ -939,9 +963,9 @@ static int stream_env_plus_stdout_append(log4c_appender_t* appender,
     (void)fflush(fp);
 #else
     retval = fprintf(fp, "%s", event->evt_rendered_msg);
-    fprintf(stdout, "%s", event->evt_rendered_msg);
+    fprintf(stderr, "%s", event->evt_rendered_msg);
     (void)fflush(fp);
-    (void)fflush(stdout);
+    (void)fflush(stderr);
 #endif
     //free((void *)event->evt_rendered_msg);
 
@@ -953,7 +977,7 @@ static int stream_env_close(log4c_appender_t* appender)
 {
     FILE* fp = (FILE*)log4c_appender_get_udata(appender);
 
-    if (!fp || fp == stdout || fp == stderr)
+    if (!fp || fp == stderr || fp == stderr)
     return 0;
 
     return fclose(fp);

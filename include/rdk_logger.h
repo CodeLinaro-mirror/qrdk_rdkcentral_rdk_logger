@@ -261,6 +261,7 @@ typedef struct rdk_logger_ext_config_t
      rdk_LogFilePolicy *pFilePolicy;  /**< File policy configuration (required for RDK_LOG_OUTPUT_FILE, NULL for others) */
 } rdk_logger_ext_config_t;
 
+#if 0
 /**
  * @brief Initialize a log appender with specified configuration.
  *
@@ -305,7 +306,7 @@ rdk_Error rdk_logger_set_appender(const char* pCategoryName, rdk_LogAppenderType
  * @param log_level The desired log level (e.g., RDK_LOG_DEBUG).
  */
 rdk_Error rdk_logger_set_loglevel(const char* category_name, rdk_LogLevel log_level);
-
+#endif
 /**
  * @brief Initialize the RDK Logger.
  * @param debugConfigFile Path to the debug.ini configuration file.
