@@ -155,8 +155,8 @@ void rdk_dbg_priv_init()
     gRootCat = log4c_category_get("LOG.RDK");
 }
 
-static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogAppenderType app,
-                                                   rdk_LogLayout layout, rdk_LogFilePolicy *pPolicy,
+static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogOutput app,
+                                                   rdk_LogFormat layout, rdk_LogOutput_File *pPolicy,
                                                    char* appender_name_out)
 {
     char app_name[256];
@@ -166,7 +166,7 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
         return -1;
     }
 
-    if (app == RDK_LOG_OUTPUT_FILE && pPolicy)
+    if (app == RDKLOG_OUTPUT_FILE && pPolicy)
     {
         snprintf(app_name, sizeof(app_name), "%s.app", categoryName);
     }
@@ -197,10 +197,9 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
     const char* type_str = NULL;
     switch(app)
     {
-        case RDK_LOG_OUTPUT_STDOUT:    type_str = "stream_env"; break;
-        case RDK_LOG_OUTPUT_FILE:      type_str = "rollingfile"; break;
-        case RDK_LOG_OUTPUT_SYSLOG:    type_str = "syslog"; break;
-        case RDK_LOG_OUTPUT_SOCKET:    type_str = "socket"; break;
+        case RDKLOG_OUTPUT_CONSOLE:    type_str = "stream_env"; break;
+        case RDKLOG_OUTPUT_FILE:      type_str = "rollingfile"; break;
+        case RDKLOG_OUTPUT_SYSLOG:    type_str = "syslog"; break;
         default:                       type_str = "stream_env"; break;
     }
 
@@ -210,15 +209,15 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
         log4c_appender_set_type(appender, type);
     }
 
-    if (app == RDK_LOG_OUTPUT_FILE && pPolicy)
+    if (app == RDKLOG_OUTPUT_FILE && pPolicy)
     {
-        long rotationCount = pPolicy->maxRotationCount > 0 ? pPolicy->maxRotationCount : 1;
-        long maxBytes = pPolicy->maxBytesPerFile > 0 ? pPolicy->maxBytesPerFile : 1024 * 1024;
+        long rotationCount = pPolicy->fileCountMax > 0 ? pPolicy->fileCountMax : 1;
+        long maxBytes = pPolicy->fileSizeMax > 0 ? pPolicy->fileSizeMax : 1024 * 1024;
 
         rollingfile_udata_t *rudata = rollingfile_make_udata();
-        if (rudata && pPolicy->logdir && pPolicy->fileName) 
+        if (rudata && pPolicy->fileLocation && pPolicy->fileName) 
         {
-            rollingfile_udata_set_logdir(rudata, pPolicy->logdir);
+            rollingfile_udata_set_logdir(rudata, pPolicy->fileLocation);
             rollingfile_udata_set_files_prefix(rudata, pPolicy->fileName);
 
             char policy_name[256];
@@ -259,9 +258,9 @@ static rdk_Error rdk_dbg_priv_appender_init(const char* categoryName, rdk_LogApp
     const char* layout_str = NULL;
     switch(layout)
     {
-        case RDK_LOG_LAYOUT_PLAINTEXT:         layout_str = "basic"; break;
-        case RDK_LOG_LAYOUT_TIMESTAMPED:       layout_str = "dated"; break;
-        case RDK_LOG_LAYOUT_COMCAST:           layout_str = "comcast_dated"; break;
+        case RDKLOG_FORMAT_ONLY_TEXT:         layout_str = "basic"; break;
+        case RDKLOG_FORMAT_WITH_DATETIME:       layout_str = "dated"; break;
+        case RDKLOG_FORMAT_WITH_THREADID:           layout_str = "comcast_dated"; break;
         default:                               layout_str = "basic"; break;
     }
 

@@ -34,25 +34,25 @@ protected:
 
 TEST_F(RdkLoggerExtInit, CreatesAppenderAndSetsLevel) {
     RUN_IN_FORK({
-            rdk_LogFilePolicy testPolicy;
+            rdk_LogOutput_File testPolicy;
             strncpy(testPolicy.fileName, "gtest_rdkunittest.log", sizeof(testPolicy.fileName)-1);
             testPolicy.fileName[sizeof(testPolicy.fileName) - 1] = '\0';
-            strncpy(testPolicy.logdir, "/tmp", sizeof(testPolicy.logdir)-1);
-            testPolicy.logdir[sizeof(testPolicy.logdir) - 1] = '\0';
-            testPolicy.maxBytesPerFile = 1024;
-            testPolicy.maxRotationCount = 3;
+            strncpy(testPolicy.fileLocation, "/tmp", sizeof(testPolicy.fileLocation)-1);
+            testPolicy.fileLocation[sizeof(testPolicy.fileLocation) - 1] = '\0';
+            testPolicy.fileSizeMax = 1024;
+            testPolicy.fileCountMax = 3;
             rdk_logger_ext_config_t cfg;
             memset(&cfg, 0, sizeof(cfg));
             cfg.loglevel = RDK_LOG_TRACE;
-            cfg.appender = RDK_LOG_OUTPUT_FILE;
-            cfg.layout = RDK_LOG_LAYOUT_TIMESTAMPED;
+            cfg.appender = RDKLOG_OUTPUT_FILE;
+            cfg.layout = RDKLOG_FORMAT_WITH_DATETIME;
             cfg.pFilePolicy = &testPolicy;
             rdk_Error ret = rdk_logger_ext_init(&cfg);
             ASSERT_EQ(ret, RDK_SUCCESS) << "rdk_logger_ext_init failed";
 
 
             char fullpath[512];
-            snprintf(fullpath, sizeof(fullpath), "%s/%s", testPolicy.logdir, testPolicy.fileName);
+            snprintf(fullpath, sizeof(fullpath), "%s/%s", testPolicy.fileLocation, testPolicy.fileName);
 
 
             log4c_appender_t* app = log4c_appender_get(fullpath);
@@ -74,8 +74,8 @@ TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
             rdk_logger_ext_config_t cfg;
             memset(&cfg, 0, sizeof(cfg));
             cfg.loglevel = RDK_LOG_DEBUG;
-            cfg.appender = RDK_LOG_OUTPUT_STDOUT;
-            cfg.layout = RDK_LOG_LAYOUT_PLAINTEXT;
+            cfg.appender = RDKLOG_OUTPUT_CONSOLE;
+            cfg.layout = RDKLOG_FORMAT_ONLY_TEXT;
             cfg.pFilePolicy = NULL;
 
 
@@ -99,18 +99,18 @@ TEST_F(RdkLoggerExtInit, StdoutAppenderAndLayout) {
 
 TEST_F(RdkLoggerExtInit, ComcastDatedViaExtInit) {
     RUN_IN_FORK({
-            rdk_LogFilePolicy testPolicy;
+            rdk_LogOutput_File testPolicy;
             strncpy(testPolicy.fileName, "gtest_comcast_unittest.log", sizeof(testPolicy.fileName)-1);
             testPolicy.fileName[sizeof(testPolicy.fileName) - 1] = '\0';
-            strncpy(testPolicy.logdir, "/tmp", sizeof(testPolicy.logdir)-1);
-            testPolicy.logdir[sizeof(testPolicy.logdir) - 1] = '\0';
-            testPolicy.maxBytesPerFile = 1024;
-            testPolicy.maxRotationCount = 2;
+            strncpy(testPolicy.fileLocation, "/tmp", sizeof(testPolicy.fileLocation)-1);
+            testPolicy.fileLocation[sizeof(testPolicy.fileLocation) - 1] = '\0';
+            testPolicy.fileSizeMax = 1024;
+            testPolicy.fileCountMax = 2;
             rdk_logger_ext_config_t cfg;
             memset(&cfg, 0, sizeof(cfg));
             cfg.loglevel = RDK_LOG_ERROR;
-            cfg.appender = RDK_LOG_OUTPUT_FILE;
-            cfg.layout = RDK_LOG_LAYOUT_COMCAST;
+            cfg.appender = RDKLOG_OUTPUT_FILE;
+            cfg.layout = RDKLOG_FORMAT_WITH_THREADID;
             cfg.pFilePolicy = &testPolicy;
 
             rdk_Error ret = rdk_logger_ext_init(&cfg);

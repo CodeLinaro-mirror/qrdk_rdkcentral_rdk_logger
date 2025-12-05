@@ -201,7 +201,7 @@ typedef enum
 } rdk_LogLevel;
 
 /**
- * @enum rdk_LogAppenderType
+ * @enum rdk_LogOutput
  * @brief Defines the destination type where log events are written.
  *
  * - RDK_LOG_OUTPUT_STDOUT:     Write logs to the process stdout/stderr stream (typically mapped via stream_env).
@@ -209,43 +209,41 @@ typedef enum
  * - RDK_LOG_OUTPUT_SOCKET: Write logs to socket (uses socket appender).
  * - RDK_LOG_OUTPUT_SYSLOG:     Forward logs to the local syslog daemon.
  */
-typedef enum
+typedef enum _log_output
 {
-    RDK_LOG_OUTPUT_STDOUT = 0,
-    RDK_LOG_OUTPUT_FILE,
-    RDK_LOG_OUTPUT_SOCKET,
-    RDK_LOG_OUTPUT_SYSLOG
-} rdk_LogAppenderType;
+    RDKLOG_OUTPUT_CONSOLE = 0,               /** log_console */
+    RDKLOG_OUTPUT_SYSLOG,                /** log_syslog */
+    RDKLOG_OUTPUT_FILE,                  /** log_file */
+} rdk_LogOutput;
 
 /**
- * @enum rdk_LogLayout
+ * @enum rdk_LogFormat
  * @brief Defines the layout/format used to render log messages.
  *
- * - RDK_LOG_LAYOUT_PLAINTEXT:          Simple layout (priority, category, message).
- * - RDK_LOG_LAYOUT_TIMESTAMPED:          Timestamped layout including date/time and milliseconds.
- * - RDK_LOG_LAYOUT_COMCAST:  Comcast-specific dated layout with module, level and thread id info.
+ * - RDKLOG_FORMAT_ONLY_TEXT:          Simple layout (priority, category, message).
+ * - RDKLOG_FORMAT_WITH_DATETIME:          Timestamped layout including date/time and milliseconds.
+ * - RDKLOG_FORMAT_WITH_THREADID:  Comcast-specific dated layout with module, level and thread id info.
  */
-typedef enum
+typedef enum _log_format
 {
-    RDK_LOG_LAYOUT_PLAINTEXT = 0,
-    RDK_LOG_LAYOUT_TIMESTAMPED,
-    RDK_LOG_LAYOUT_COMCAST
-} rdk_LogLayout;
+    RDKLOG_FORMAT_ONLY_TEXT = 0,            /** format_text */
+    RDKLOG_FORMAT_WITH_DATETIME,        /** format_datetime */
+    RDKLOG_FORMAT_WITH_THREADID         /** format_threadid */
+} rdk_LogFormat;
 
 /**
- * @brief File policy structure for rolling file appenders.
+ * @brief _file_output structure for rolling file appenders.
  *
  * This structure defines the configuration parameters for file-based log appenders
  * including file naming, directory path, and rotation policy settings.
  */
-typedef struct _filePolicy
+typedef struct _file_output
 {
-     char fileName[RDK_LOGGER_EXT_FILENAME_SIZE];  /**< Base name for log files (without path) */
-     char logdir[RDK_LOGGER_EXT_LOGDIR_SIZE];      /**< Directory path for log files */
-     long maxBytesPerFile;                         /**< Maximum size per log file in bytes (0 = use default 1MB) */
-     long maxRotationCount;                        /**< Number of rotated log files to keep (0 = use default 1) */
-} rdk_LogFilePolicy;
-
+    char     fileName[RDK_LOGGER_EXT_FILENAME_SIZE];
+    char     fileLocation[RDK_LOGGER_EXT_LOGDIR_SIZE];
+    uint8_t  fileCountMax;
+    uint64_t fileSizeMax;
+} rdk_LogOutput_File;
 /**
  * @brief Complete logger configuration structure for structured initialization.
  *
@@ -256,9 +254,9 @@ typedef struct rdk_logger_ext_config_t
 {
      char* pCategoryName;              /**< Log category name (e.g., "LOG.RDK.TR69") */
      rdk_LogLevel loglevel;           /**< Default log level for this category */
-     rdk_LogAppenderType appender;    /**< Type of appender (FILE, STDOUT, SYSLOG, SOCKET) */
-     rdk_LogLayout layout;            /**< Message layout format (PLAINTEXT, TIMESTAMPED, COMCAST) */
-     rdk_LogFilePolicy *pFilePolicy;  /**< File policy configuration (required for RDK_LOG_OUTPUT_FILE, NULL for others) */
+     rdk_LogOutput appender;    /**< Type of appender (FILE, STDOUT, SYSLOG, SOCKET) */
+     rdk_LogFormat layout;            /**< Message layout format (PLAINTEXT, TIMESTAMPED, COMCAST) */
+     rdk_LogOutput_File *pFilePolicy;  /**< File policy configuration (required for RDK_LOG_OUTPUT_FILE, NULL for others) */
 } rdk_logger_ext_config_t;
 
 /**
