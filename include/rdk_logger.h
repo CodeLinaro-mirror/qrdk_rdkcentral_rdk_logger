@@ -113,6 +113,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -154,9 +155,12 @@ typedef bool rdk_logger_Bool;
 /**
  * Support for Init function
  */
-#define RDK_LOGGER_INIT()   (0 == access(DEBUG_INI_OVERRIDE_PATH_1, F_OK)) \
-                                ? rdk_logger_init(DEBUG_INI_OVERRIDE_PATH_1) \
-                                : rdk_logger_init(DEBUG_INI_NAME);
+#define RDK_LOGGER_INIT()   (0 == access(DEBUG_INI_OVERRIDE_PATH_1, F_OK))          \
+                                ? rdk_logger_init(DEBUG_INI_OVERRIDE_PATH_1)        \
+                                : (0 == access(DEBUG_INI_OVERRIDE_PATH_2, F_OK))    \
+                                    ? rdk_logger_init(DEBUG_INI_OVERRIDE_PATH_2)    \
+                                    : rdk_logger_init(DEBUG_INI_NAME);
+
 /**
  * Use RDK_LOG debug message as.
  * RDK_LOG (rdk_LogLevel level, const char *module, const char *format,...)
@@ -166,14 +170,6 @@ typedef bool rdk_logger_Bool;
  */
 #define RDK_LOG rdk_logger_msg_printf
 #define RDK_LOG1 rdk_logger_msg_vsprintf
-
-#define RDKLOG_FATAL(format, ...)   rdk_logger_msg_printf(RDK_LOG_FATAL,  format, ##__VA_ARGS__)
-#define RDKLOG_ERROR(format, ...)   rdk_logger_msg_printf(RDK_LOG_ERROR,  format, ##__VA_ARGS__)
-#define RDKLOG_WARN(format, ...)    rdk_logger_msg_printf(RDK_LOG_WARN,   format, ##__VA_ARGS__)
-#define RDKLOG_NOTICE(format, ...)  rdk_logger_msg_printf(RDK_LOG_NOTICE, format, ##__VA_ARGS__)
-#define RDKLOG_INFO(format, ...)    rdk_logger_msg_printf(RDK_LOG_INFO,   format, ##__VA_ARGS__)
-#define RDKLOG_DEBUG(format, ...)   rdk_logger_msg_printf(RDK_LOG_DEBUG,  format, ##__VA_ARGS__)
-#define RDKLOG_TRACE(format, ...)   rdk_logger_msg_printf(RDK_LOG_TRACE,  format, ##__VA_ARGS__)
 
 /**
  * Define the max length for the log file capture
@@ -229,7 +225,7 @@ typedef enum
  * @enum rdk_LogFormat
  * @brief Defines the layout/format used to render log messages.
  *
- * - RDKLOG_FORMAT_WITH_TS:              Simple layout (priority, category, message).
+ * - RDKLOG_FORMAT_PLAINTEXT:            Simple layout (priority, category, message).
  * - RDKLOG_FORMAT_WITH_TS:              Timestamped layout including date/time and milliseconds.
  * - RDKLOG_FORMAT_DETAIL_WITH_TS:       Specific layout with the exact fields
  *                                       (such as module, level, thread id) with time stamped
@@ -270,7 +266,7 @@ typedef struct rdk_LogOutput_File
 {
     char     fileName[RDKLOG_MAX_FILENAME_SIZE];
     char     fileLocation[RDKLOG_MAX_PATH_SIZE];
-    int8_t  fileCountMax;
+    int8_t   fileCountMax;
     int64_t  fileSizeMax;
 } rdk_LogOutput_File;
 

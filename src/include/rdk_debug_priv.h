@@ -21,13 +21,13 @@
 #define _RDK_DBG_PRIV_H
 
 #include <rdk_logger.h>
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-void rdk_dbg_priv_init(const char *pConfigFile);
+void rdk_dbg_priv_init(void);
+rdk_Error rdk_dbg_priv_config(const char *pConfigFile);
 void rdk_dbg_priv_deinit(void);
 rdk_Error rdk_dbg_priv_ext_init (const rdk_logger_ext_config_t* config);
 void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const char* format, va_list args);

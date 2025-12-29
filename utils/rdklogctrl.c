@@ -24,12 +24,12 @@ static void usage(const char* app_name)
     printf("app_name    -> Application name, as per listed by 'ps' command\n");
     printf("module_name -> Module name.\n");
     printf("               For RDK component, the 'Module name' is expected to start with 'LOG.RDK.' string\n");
-    printf("               For CPC component like 'Reciever', the module name can be either 'LOG.RDK.' or 'XREConnection', 'RmfMediaPlayer', etc.\n");
+    printf("               For CPC component like 'Receiver', the module name can be either 'LOG.RDK.' or 'XREConnection', 'RmfMediaPlayer', etc.\n");
     printf("loglevel    -> Log Level of the Component to be modified\n");
     printf("               Possible values - FATAL, ERROR, WARN, NOTICE, INFO, DEBUG, TRACE, NONE\n");
 }
 
-static int validate_loglevel(const char* level)
+static int8_t validate_loglevel(const char* level)
 {
     char *loglevel = (char *)level;
 

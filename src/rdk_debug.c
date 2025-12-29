@@ -100,6 +100,7 @@ bool rdk_logger_set_logLevel(const char *module, rdk_LogLevel logLevel)
  */
 bool rdk_logger_enable_logLevel(const char *module, rdk_LogLevel logLevel, rdk_logger_Bool enableLogLvl)
 {
+    (void) enableLogLvl;
     return rdk_dbg_priv_log_reconfig(module, logLevel);
 }
 

@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <stdatomic.h>
 
 
 #include "rdk_debug_priv.h"
@@ -310,48 +311,54 @@ rdk_Error rdk_logger_parse_config( const char * path)
     return RDK_SUCCESS;
 }
 
-void rdk_dbg_priv_init(const char* debugConfigFile)
+void rdk_dbg_priv_init(void)
 {
-    static bool isLog4cInited = false;
+    ///> These must be set before calling log4c_init so that the log4crc file
+    ///> will configure them
+    (void) log4c_layout_type_set(&log4c_layout_type_rdk_plaintext);
+    (void) log4c_layout_type_set(&log4c_layout_type_rdk_with_ts);
+    (void) log4c_layout_type_set(&log4c_layout_type_rdk_detail_with_ts);
+    (void) log4c_layout_type_set(&log4c_layout_type_rdk_detail_without_ts);
 
-    if (!isLog4cInited)
-    {
-        ///> These must be set before calling log4c_init so that the log4crc file
-        ///> will configure them
-        (void) log4c_layout_type_set(&log4c_layout_type_rdk_plaintext);
-        (void) log4c_layout_type_set(&log4c_layout_type_rdk_with_ts);
-        (void) log4c_layout_type_set(&log4c_layout_type_rdk_detail_with_ts);
-        (void) log4c_layout_type_set(&log4c_layout_type_rdk_detail_without_ts);
-
-        (void) log4c_appender_type_set(&log4c_appender_type_to_console);
-        (void) log4c_appender_type_set(&log4c_appender_type_to_syslog);
-        (void) log4c_appender_type_set(&log4c_appender_type_to_journal);
+    (void) log4c_appender_type_set(&log4c_appender_type_to_console);
+    (void) log4c_appender_type_set(&log4c_appender_type_to_syslog);
+    (void) log4c_appender_type_set(&log4c_appender_type_to_journal);
 
 
-        if (log4c_init())
-            fprintf(stderr, "log4c_init() failed?!");
-        else
-        {
-            isLog4cInited = true;
-            gRootCat = log4c_category_get(gRootCatName);
-            if (!gRootCat)
-            {
-                gRootCat = log4c_category_new(gRootCatName);
-                /* */
-                if (!gRootCat)
-                {
-                    fprintf(stderr, "RDK Root Category Creation failed?!");
-                }
-            }
-            /* Read the config file & populate pre-configured log levels */
-            rdk_logger_parse_config(debugConfigFile);
-            /* Get the Root Priority */
-            if (gRootCat)
-                gRootPriority = log4c_category_get_priority(gRootCat);
-        }
-    }
+    if (log4c_init())
+        fprintf(stderr, "log4c_init() failed?!");
 
     return;
+}
+
+rdk_Error rdk_dbg_priv_config(const char* debugConfigFile)
+{
+    rdk_Error ret = RDK_SUCCESS;
+    if (debugConfigFile)
+    {
+        gRootCat = log4c_category_get(gRootCatName);
+        if (!gRootCat)
+        {
+            gRootCat = log4c_category_new(gRootCatName);
+            /* Get the root category */
+            if (!gRootCat)
+            {
+                fprintf(stderr, "RDK Root Category Creation failed?!");
+            }
+        }
+        /* Read the config file & populate pre-configured log levels */
+        ret = rdk_logger_parse_config(debugConfigFile);
+        /* Get the Root Priority */
+        if (gRootCat)
+            gRootPriority = log4c_category_get_priority(gRootCat);
+    }
+    else
+    {
+        fprintf(stderr, "Invalid conf file!");
+        ret = RDK_FAILURE;
+    }
+
+    return ret;
 }
 
 rdk_Error rdk_dbg_priv_ext_init (const rdk_logger_ext_config_t* config)
@@ -385,8 +392,6 @@ rdk_Error rdk_dbg_priv_ext_init (const rdk_logger_ext_config_t* config)
         else
         {
             char app_name[128] = "";
-            log4c_appender_t* app = NULL;
-
             const char* cat_name = config->pModuleName ? config->pModuleName : gRootCatName;
 
             if (RDKLOG_OUTPUT_FILE == config->output)
@@ -466,22 +471,38 @@ rdk_Error rdk_dbg_priv_ext_init (const rdk_logger_ext_config_t* config)
 
         if (app)
         {
-            const char* layout_str = NULL;
+            log4c_layout_t* layoutObj = NULL;
             switch (config->format)
             {
-                case RDKLOG_FORMAT_PLAINTEXT:           layout_str = "rdk_plaintext"; break;
-                case RDKLOG_FORMAT_WITH_TS:             layout_str = "rdk_with_ts"; break;
-                case RDKLOG_FORMAT_DETAIL_WITH_TS:      layout_str = "rdk_detail_with_ts"; break;
-                case RDKLOG_FORMAT_DETAIL_WITHOUT_TS:   layout_str = "rdk_detail_without_ts"; break;
-                default:                                layout_str = "rdk_plaintext"; break;
-            }
-            if (layout_str)
-            {
-                log4c_layout_t* layoutObj = log4c_layout_get(layout_str);
-                if (layoutObj)
+                case RDKLOG_FORMAT_PLAINTEXT:
                 {
-                    log4c_appender_set_layout(app, layoutObj);
+                    layoutObj = log4c_layout_get("rdk_plaintext");
+                    break;
                 }
+                case RDKLOG_FORMAT_WITH_TS:
+                {
+                    layoutObj = log4c_layout_get("rdk_with_ts");
+                    break;
+                }
+                case RDKLOG_FORMAT_DETAIL_WITH_TS:
+                {
+                    layoutObj = log4c_layout_get("rdk_detail_with_ts");
+                    break;
+                }
+                case RDKLOG_FORMAT_DETAIL_WITHOUT_TS:
+                {
+                    layoutObj = log4c_layout_get("rdk_detail_without_ts");
+                    break;
+                }
+                default:
+                {
+                    layoutObj = log4c_layout_get("rdk_plaintext");
+                    break;
+                }
+            }
+            if (layoutObj)
+            {
+                log4c_appender_set_layout(app, layoutObj);
             }
 
             log4c_category_set_appender(cat, app);
@@ -511,6 +532,10 @@ void rdk_dbg_priv_deinit()
   gRootCat = NULL;
 }
 
+/**
+ * Format the time into a fixed-length ISO 8601-style timestamp.
+ *
+ */
 static void printTime(const struct tm *pTm, char *pBuff)
 {
     sprintf(pBuff,"%02d-%02d-%02dT%02d:%02d:%02d",pTm->tm_year + 1900, pTm->tm_mon + 1, pTm->tm_mday, pTm->tm_hour, pTm->tm_min, pTm->tm_sec);
@@ -588,18 +613,28 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     /* To Ensure that we dont log at all when category is invalid */
     if(cat)
     {
+        va_list localArg;
         char logMsg[LOG4C_MSG_BUFFER_SIZE] = "";
         int n = 0;
         int log4cPriority = rdk_logLevel_to_log4c_priority(level);
-        n = vsnprintf(logMsg, LOG4C_MSG_BUFFER_SIZE, format, args);
+
+        va_copy(localArg, args);
+        n = vsnprintf(logMsg, LOG4C_MSG_BUFFER_SIZE, format, localArg);
+        va_end(localArg);
+
         if (n > LOG4C_MSG_BUFFER_SIZE)
         {
-            // Lets allocalte the memory and split into multiple chunks of LOG4C_MSG_BUFFER_SIZE
+            // Lets allocate the memory and split into multiple chunks of LOG4C_MSG_BUFFER_SIZE
             char *p = (char*) malloc(n + 1);
             if (p)
             {
-                n = vsnprintf(p, n, format, args);
+                va_list reAllocArg;
                 int toPrint = 0;
+
+                va_copy(reAllocArg, args);
+                n = vsnprintf(p, n+1, format, reAllocArg);
+                va_end(reAllocArg);
+
                 for (int i = 0; i < n; i += toPrint)
                 {
                     toPrint = ((n - i) < LOG4C_MSG_BUFFER_SIZE) ? (n - i) : LOG4C_MSG_BUFFER_SIZE;
@@ -621,6 +656,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
 
 bool rdk_dbg_priv_log_reconfig(const char *pModuleName, rdk_LogLevel logLevel)
 {
+    bool ret = true;
     log4c_category_t* cat = NULL;
     log4c_priority_level_t prio = gRootPriority; // default
     prio = rdk_logLevel_to_log4c_priority(logLevel);
@@ -634,9 +670,14 @@ bool rdk_dbg_priv_log_reconfig(const char *pModuleName, rdk_LogLevel logLevel)
             log4c_category_set_priority(cat, prio);
         }
     }
+    else
+    {
+        ret = false;
+    }
+
     pthread_mutex_unlock(&gLoggingMutex);
 
-    return true;
+    return ret;
 }
 
 /****************************************************************

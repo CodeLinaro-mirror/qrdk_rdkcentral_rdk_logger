@@ -35,6 +35,7 @@ int rdk_logger_debug_test()
         rdk_logger_msg_printf(RDK_LOG_ERROR, "LOG.RDK.CC", "Pre error %d\n", i);
     }
 
+    printf ("2nd loop\n");
     rdk_logger_ext_config_t cfg;
     memset(&cfg, 0, sizeof(cfg));
     cfg.pModuleName = "LOG.RDK.BB";
