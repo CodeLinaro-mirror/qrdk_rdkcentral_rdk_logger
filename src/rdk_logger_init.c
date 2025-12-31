@@ -69,9 +69,11 @@ rdk_Error rdk_logger_init(const char* debugConfigFile)
     pthread_mutex_lock(&gInitMutex);
     if (!atomic_load(&isLogInited))
     {
+        printf("Inside atomic load\n");
         if (NULL == debugConfigFile)
         {
             debugConfigFile = DEBUG_CONF_FILE;
+            printf("debug conf file is NULL\n");
         }
 
         /* Perform Logger Internal Init */
@@ -79,6 +81,7 @@ rdk_Error rdk_logger_init(const char* debugConfigFile)
 
         if (RDK_SUCCESS == ret)
         {
+            printf("ret is success\n);
             /* Perform Dynamic Logger Internal Init */
             rdk_dyn_log_init();
 
