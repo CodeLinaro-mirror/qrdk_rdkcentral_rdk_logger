@@ -132,6 +132,7 @@ rdk_Error rdk_logger_deinit()
     {
         rdk_dyn_log_deinit();
         atomic_store(&isLogInited, false);
+        printf("Setting isLogInted to %d\n", &isLogInited);
     }
     pthread_mutex_unlock(&gInitMutex);
 
