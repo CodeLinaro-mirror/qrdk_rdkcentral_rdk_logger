@@ -117,6 +117,28 @@ rdk_Error rdk_logger_ext_init(const rdk_logger_ext_config_t* config)
     return ret;
 }
 
+rdk_Error rdk_logger_release_config()
+{
+    EnvVarNode *currentNode;
+    EnvVarNode *nextNode;
+
+    currentNode = g_envCache;
+    while(currentNode != NULL)
+    {
+       nextNode = currentNode->next;
+       if(currentNode->name != NULL)
+            free(currentNode->name);
+       if(currentNode->value != NULL)
+           free(currentNode->value);
+       free(currentNode);
+       currentNode = nextNode;
+    }
+    g_envCache = NULL;
+    number = 0;
+    global_count = number;
+    return RDK_SUCCESS;
+}
+
 /**
  * @brief Cleanup the logger instantiation.
  *
@@ -128,7 +150,7 @@ rdk_Error rdk_logger_deinit()
     if (atomic_load(&isLogInited))
     {
         rdk_dyn_log_deinit();
-        atomic_store(&isLogInited, false);
+        rdk_logger_release_config();
     }
     pthread_mutex_unlock(&gInitMutex);
 
