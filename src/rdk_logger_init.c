@@ -65,7 +65,7 @@ static void __attribute__((constructor)) _rdk_logger_init (void)
  */
 rdk_Error rdk_logger_init(const char* debugConfigFile)
 {
-    rdk_Error ret = RDK_SUCCESS;
+    rdk_Error ret = RDK_FAILURE;
     pthread_mutex_lock(&gInitMutex);
     if (!atomic_load(&isLogInited))
     {
