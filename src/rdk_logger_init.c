@@ -81,7 +81,7 @@ rdk_Error rdk_logger_init(const char* debugConfigFile)
 
         if (RDK_SUCCESS == ret)
         {
-            printf("ret is success\n);
+            printf("ret is success\n");
             /* Perform Dynamic Logger Internal Init */
             rdk_dyn_log_init();
 
