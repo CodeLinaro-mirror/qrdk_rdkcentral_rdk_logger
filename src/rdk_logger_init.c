@@ -32,7 +32,6 @@
 
 #include <sys/socket.h>
 #include <signal.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdatomic.h>
@@ -117,42 +116,6 @@ rdk_Error rdk_logger_ext_init(const rdk_logger_ext_config_t* config)
 
     return ret;
 }
-typedef struct EnvVarNode
-{
-    int number;
-    char* name;
-    char* value;
-    struct EnvVarNode *next;
-} EnvVarNode;
-
-/** Global count for the modules */
-int global_count;
-static int number = 0;
-
-/* Env var cache */
-static EnvVarNode *g_envCache = NULL;
-
-rdk_Error rdk_logger_release_config()
-{
-    EnvVarNode *currentNode;
-    EnvVarNode *nextNode;
-
-    currentNode = g_envCache;
-    while(currentNode != NULL)
-    {
-       nextNode = currentNode->next;
-       if(currentNode->name != NULL)
-            free(currentNode->name);
-       if(currentNode->value != NULL)
-           free(currentNode->value);
-       free(currentNode);
-       currentNode = nextNode;
-    }
-    g_envCache = NULL;
-    number = 0;
-    global_count = number;
-    return RDK_SUCCESS;
-}
 
 /**
  * @brief Cleanup the logger instantiation.
@@ -165,7 +128,6 @@ rdk_Error rdk_logger_deinit()
     if (atomic_load(&isLogInited))
     {
         rdk_dyn_log_deinit();
-        rdk_logger_release_config();
     }
     pthread_mutex_unlock(&gInitMutex);
 
