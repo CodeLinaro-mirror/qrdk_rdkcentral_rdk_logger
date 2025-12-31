@@ -128,6 +128,7 @@ rdk_Error rdk_logger_deinit()
     if (atomic_load(&isLogInited))
     {
         rdk_dyn_log_deinit();
+        atomic_store(&isLogInited, false);
     }
     pthread_mutex_unlock(&gInitMutex);
 
