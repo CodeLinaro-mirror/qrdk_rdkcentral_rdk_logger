@@ -82,7 +82,8 @@ TEST_F(RDKLoggerConfigTest, ValidConfigFileParsing) {
     ASSERT_EQ(ret, RDK_SUCCESS) << "Failed to initialize with valid config file";
     
     // Test that configuration was parsed correctly
-    rdk_logger_Bool enabled = rdk_logger_is_logLevel_enabled("LOG.RDK.TEST", RDK_LOG_DEBUG);
+    bool enabled = rdk_logger_is_logLevel_enabled("LOG.RDK.TEST", RDK_LOG_DEBUG);
+    printf("enabled:%d\n", enabled);
     EXPECT_EQ(enabled, TRUE) << "DEBUG level should be enabled for LOG.RDK.TEST";
     
     enabled = rdk_logger_is_logLevel_enabled("LOG.RDK.ERROR", RDK_LOG_ERROR);
