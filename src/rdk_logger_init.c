@@ -65,7 +65,7 @@ static void __attribute__((constructor)) _rdk_logger_init (void)
  */
 rdk_Error rdk_logger_init(const char* debugConfigFile)
 {
-    rdk_Error ret = RDK_SUCCESS;
+    rdk_Error ret = RDK_FAILURE;
     pthread_mutex_lock(&gInitMutex);
     if (!atomic_load(&isLogInited))
     {
@@ -95,6 +95,9 @@ rdk_Error rdk_logger_init(const char* debugConfigFile)
             printf("Parsing debug config file %s failed\n", debugConfigFile);
         }
     }
+    else
+        printf("Logger already initialized, skipping init\n");
+    
     pthread_mutex_unlock(&gInitMutex);
     return ret;
 }
