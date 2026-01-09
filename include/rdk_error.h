@@ -17,22 +17,10 @@
  * limitations under the License.
 */
 
-/**
- * @file rdk_debug.h
- * The header file provides RDK debug APIs.
- */
-
-#ifndef _RDK_DEBUG_H
-#define _RDK_DEBUG_H_
+/* For legacy projects that includes rdk_error.h */
+#ifndef _RDK_ERROR_H
+#define _RDK_ERROR_H_
 
 #include "rdk_logger.h"
 
-/* For legacy projects that does not include essential headers but relying on rdk_debug.h */
-#include <pthread.h>
-#include <time.h>
-
-#ifndef DEBUG_INI_OVERRIDE_PATH
-#define DEBUG_INI_OVERRIDE_PATH "/nvram/debug.ini"
-#endif
-
-#endif /* _RDK_DEBUG_H_ */
+#endif /* _RDK_ERROR_H_ */
