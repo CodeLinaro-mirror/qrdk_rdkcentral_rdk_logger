@@ -321,9 +321,6 @@ void rdk_dbg_priv_init(void)
     (void) log4c_layout_type_set(&log4c_layout_type_rdk_detail_with_ts);
     (void) log4c_layout_type_set(&log4c_layout_type_rdk_detail_without_ts);
 
-    log4c_layout_t* legacy = log4c_layout_get("comcast_dated");
-    if (NULL != legacy)
-        (void) log4c_layout_set_type(legacy, &log4c_layout_type_comcast_dated);
 
     (void) log4c_appender_type_set(&log4c_appender_type_to_console);
     (void) log4c_appender_type_set(&log4c_appender_type_to_syslog);
@@ -332,6 +329,11 @@ void rdk_dbg_priv_init(void)
 
     if (log4c_init())
         fprintf(stderr, "log4c_init() failed?!");
+
+    /* Register this for legacy Components */
+    log4c_layout_t* legacy = log4c_layout_get("comcast_dated");
+    if (NULL != legacy)
+        (void) log4c_layout_set_type(legacy, &log4c_layout_type_comcast_dated);
 
     return;
 }
