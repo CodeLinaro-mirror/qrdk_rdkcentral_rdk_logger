@@ -93,6 +93,16 @@ typedef struct {
 
 static duplicate_log_entry_t g_last_log = {0};
 static pthread_mutex_t g_duplicate_mutex = PTHREAD_MUTEX_INITIALIZER;
+static bool g_duplicate_suppression_initialized = false;
+
+/* Debug flag for duplicate suppression - set to 1 to enable debug logs */
+#define DUPLICATE_DEBUG 1
+
+#if DUPLICATE_DEBUG
+#define DUP_DEBUG_LOG(fmt, ...) fprintf(stderr, "[DUP_SUPPRESS_DEBUG] " fmt "\n", ##__VA_ARGS__)
+#else
+#define DUP_DEBUG_LOG(fmt, ...) do {} while(0)
+#endif
 
 /* Simple hash function for log messages */
 static unsigned int calculate_log_hash(const char* module_name, const char* message)
@@ -123,6 +133,10 @@ static void flush_duplicate_log(log4c_category_t* cat, int log4cPriority)
 {
     if (g_last_log.is_active && g_last_log.count > 1)
     {
+        DUP_DEBUG_LOG("Flushing duplicate count: module=%s, count=%u, duration=%.0f seconds",
+                     g_last_log.module_name, g_last_log.count - 1,
+                     difftime(g_last_log.last_timestamp, g_last_log.first_timestamp));
+        
         log4c_category_log(cat, log4cPriority, 
                           "[DUPLICATE] Previous message repeated %u times (suppressed for %.0f seconds)\n",
                           g_last_log.count - 1,
@@ -648,6 +662,15 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     log4c_category_t* cat = NULL;
     int prio = 0;
 
+    /* Initialize duplicate suppression feature flag on first call */
+    if (!g_duplicate_suppression_initialized)
+    {
+        g_duplicate_suppression_initialized = true;
+        DUP_DEBUG_LOG("=== Duplicate Suppression Feature INITIALIZED ===");
+        DUP_DEBUG_LOG("Buffer size: %d bytes, Debug mode: %s", 
+                     LOG4C_MSG_BUFFER_SIZE, DUPLICATE_DEBUG ? "ENABLED" : "DISABLED");
+    }
+
     /* Handling process request here. This is not a blocking call and it shall return immediately */
     rdk_dyn_log_process_pending_request();
 
@@ -707,17 +730,21 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 g_last_log.count++;
                 g_last_log.last_timestamp = current_time;
                 is_duplicate = true;
+                DUP_DEBUG_LOG("SUPPRESSED duplicate #%u: module=%s, hash=0x%08x, msg_preview='%.50s'",
+                             g_last_log.count, mod_name, msg_hash, logMsg);
                 pthread_mutex_unlock(&g_duplicate_mutex);
             }
             else
             {
                 /* This is a new message, need to flush previous if any */
                 bool need_flush = (g_last_log.is_active && g_last_log.count > 1);
+                unsigned int old_count = g_last_log.count;
                 pthread_mutex_unlock(&g_duplicate_mutex);
                 
                 /* Flush outside the duplicate mutex to avoid potential deadlock */
                 if (need_flush)
                 {
+                    DUP_DEBUG_LOG("NEW message detected, flushing previous duplicates (count=%u)", old_count);
                     flush_duplicate_log(cat, log4cPriority);
                 }
                 
@@ -733,8 +760,14 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 g_last_log.first_timestamp = current_time;
                 g_last_log.last_timestamp = current_time;
                 g_last_log.is_active = true;
+                DUP_DEBUG_LOG("TRACKING new message: module=%s, hash=0x%08x, msg_preview='%.50s'",
+                             mod_name, msg_hash, logMsg);
                 pthread_mutex_unlock(&g_duplicate_mutex);
             }
+        }
+        else if (n > LOG4C_MSG_BUFFER_SIZE)
+        {
+            DUP_DEBUG_LOG("SKIP tracking (message too large): size=%d bytes, module=%s", n, module_name ? module_name : "NULL");
         }
 
         /* Only log if not a duplicate */
