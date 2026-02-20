@@ -77,6 +77,60 @@ static pthread_mutex_t gLoggingMutex = PTHREAD_MUTEX_INITIALIZER;
 /* Define the priority as -ve to avoid printing */
 #define LOG4C_PRIORITY_NONE     -1
 
+/* Duplicate log detection */
+#define MAX_LOG_HASH_SIZE       256
+#define DUPLICATE_LOG_TIMEOUT   5  /* seconds */
+
+typedef struct {
+    char module_name[64];
+    char message[LOG4C_MSG_BUFFER_SIZE];
+    unsigned int hash;
+    rdk_LogLevel level;
+    unsigned int count;
+    time_t first_timestamp;
+    time_t last_timestamp;
+    bool is_active;
+} duplicate_log_entry_t;
+
+static duplicate_log_entry_t g_last_log = {0};
+static pthread_mutex_t g_duplicate_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/* Simple hash function for log messages */
+static unsigned int calculate_log_hash(const char* module_name, const char* message)
+{
+    unsigned int hash = 5381;
+    const char* str = module_name;
+    
+    /* Hash module name */
+    while (str && *str)
+    {
+        hash = ((hash << 5) + hash) + (unsigned char)(*str);
+        str++;
+    }
+    
+    /* Hash message */
+    str = message;
+    while (str && *str)
+    {
+        hash = ((hash << 5) + hash) + (unsigned char)(*str);
+        str++;
+    }
+    
+    return hash;
+}
+
+/* Flush duplicate log count if needed */
+static void flush_duplicate_log(log4c_category_t* cat, int log4cPriority)
+{
+    if (g_last_log.is_active && g_last_log.count > 1)
+    {
+        log4c_category_log(cat, log4cPriority, 
+                          "[DUPLICATE] Previous message repeated %u times (suppressed for %.0f seconds)",
+                          g_last_log.count - 1,
+                          difftime(g_last_log.last_timestamp, g_last_log.first_timestamp));
+    }
+}
+
 /**
  * Declare format/layout APIs.
  */
@@ -624,36 +678,95 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         char logMsg[LOG4C_MSG_BUFFER_SIZE] = "";
         int n = 0;
         int log4cPriority = rdk_logLevel_to_log4c_priority(level);
+        time_t current_time = time(NULL);
+        unsigned int msg_hash = 0;
+        bool is_duplicate = false;
 
         va_copy(localArg, args);
         n = vsnprintf(logMsg, LOG4C_MSG_BUFFER_SIZE, format, localArg);
         va_end(localArg);
 
-        if (n > LOG4C_MSG_BUFFER_SIZE)
+        /* Calculate hash for duplicate detection (only for messages that fit in buffer) */
+        if (n <= LOG4C_MSG_BUFFER_SIZE)
         {
-            // Lets allocate the memory and split into multiple chunks of LOG4C_MSG_BUFFER_SIZE
-            char *p = (char*) malloc(n + 1);
-            if (p)
+            pthread_mutex_lock(&g_duplicate_mutex);
+            msg_hash = calculate_log_hash(module_name ? module_name : "", logMsg);
+            
+            /* Check if this is a duplicate of the last log */
+            if (g_last_log.is_active && 
+                g_last_log.hash == msg_hash &&
+                g_last_log.level == level &&
+                strcmp(g_last_log.module_name, module_name ? module_name : "") == 0 &&
+                strcmp(g_last_log.message, logMsg) == 0)
             {
-                va_list reAllocArg;
-                int toPrint = 0;
-                int i = 0;
-
-                va_copy(reAllocArg, args);
-                n = vsnprintf(p, n+1, format, reAllocArg);
-                va_end(reAllocArg);
-
-                for (i = 0; i < n; i += toPrint)
+                /* This is a duplicate */
+                time_t time_diff = difftime(current_time, g_last_log.first_timestamp);
+                
+                /* If timeout has not expired, suppress the log */
+                if (time_diff < DUPLICATE_LOG_TIMEOUT)
                 {
-                    toPrint = ((n - i) < LOG4C_MSG_BUFFER_SIZE) ? (n - i) : LOG4C_MSG_BUFFER_SIZE;
-                    log4c_category_log(cat, log4cPriority, "%.*s\n", toPrint, p+i);
+                    g_last_log.count++;
+                    g_last_log.last_timestamp = current_time;
+                    is_duplicate = true;
                 }
-                free(p);
+                else
+                {
+                    /* Timeout expired, flush previous duplicate count and log new message */
+                    flush_duplicate_log(cat, log4cPriority);
+                    g_last_log.count = 1;
+                    g_last_log.first_timestamp = current_time;
+                    g_last_log.last_timestamp = current_time;
+                }
             }
+            else
+            {
+                /* This is a new message, flush previous duplicate count if any */
+                flush_duplicate_log(cat, log4cPriority);
+                
+                /* Store this message as the new last log */
+                strncpy(g_last_log.module_name, module_name ? module_name : "", sizeof(g_last_log.module_name) - 1);
+                g_last_log.module_name[sizeof(g_last_log.module_name) - 1] = '\0';
+                strncpy(g_last_log.message, logMsg, sizeof(g_last_log.message) - 1);
+                g_last_log.message[sizeof(g_last_log.message) - 1] = '\0';
+                g_last_log.hash = msg_hash;
+                g_last_log.level = level;
+                g_last_log.count = 1;
+                g_last_log.first_timestamp = current_time;
+                g_last_log.last_timestamp = current_time;
+                g_last_log.is_active = true;
+            }
+            pthread_mutex_unlock(&g_duplicate_mutex);
         }
-        else
+
+        /* Only log if not a duplicate */
+        if (!is_duplicate)
         {
-            log4c_category_log(cat, log4cPriority, "%s", logMsg);
+            if (n > LOG4C_MSG_BUFFER_SIZE)
+            {
+                // Lets allocate the memory and split into multiple chunks of LOG4C_MSG_BUFFER_SIZE
+                char *p = (char*) malloc(n + 1);
+                if (p)
+                {
+                    va_list reAllocArg;
+                    int toPrint = 0;
+                    int i = 0;
+
+                    va_copy(reAllocArg, args);
+                    n = vsnprintf(p, n+1, format, reAllocArg);
+                    va_end(reAllocArg);
+
+                    for (i = 0; i < n; i += toPrint)
+                    {
+                        toPrint = ((n - i) < LOG4C_MSG_BUFFER_SIZE) ? (n - i) : LOG4C_MSG_BUFFER_SIZE;
+                        log4c_category_log(cat, log4cPriority, "%.*s\n", toPrint, p+i);
+                    }
+                    free(p);
+                }
+            }
+            else
+            {
+                log4c_category_log(cat, log4cPriority, "%s", logMsg);
+            }
         }
     }
     pthread_mutex_unlock(&gLoggingMutex);
