@@ -124,10 +124,13 @@ static void flush_duplicate_log(log4c_category_t* cat, int log4cPriority)
     if (g_last_log.is_active && g_last_log.count > 1)
     {
         log4c_category_log(cat, log4cPriority, 
-                          "[DUPLICATE] Previous message repeated %u times (suppressed for %.0f seconds)",
+                          "[DUPLICATE] Previous message repeated %u times (suppressed for %.0f seconds)\n",
                           g_last_log.count - 1,
                           difftime(g_last_log.last_timestamp, g_last_log.first_timestamp));
     }
+    /* Reset the duplicate tracking state */
+    g_last_log.is_active = false;
+    g_last_log.count = 0;
 }
 
 /**
@@ -686,30 +689,41 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         va_end(localArg);
 
         /* Calculate hash for duplicate detection (only for messages that fit in buffer) */
-        if (n <= LOG4C_MSG_BUFFER_SIZE)
+        if (n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
         {
+            const char* mod_name = (module_name && *module_name) ? module_name : "";
+            
             pthread_mutex_lock(&g_duplicate_mutex);
-            msg_hash = calculate_log_hash(module_name ? module_name : "", logMsg);
+            msg_hash = calculate_log_hash(mod_name, logMsg);
             
             /* Check if this is a duplicate of the last log */
             if (g_last_log.is_active && 
                 g_last_log.hash == msg_hash &&
                 g_last_log.level == level &&
-                strcmp(g_last_log.module_name, module_name ? module_name : "") == 0 &&
+                strcmp(g_last_log.module_name, mod_name) == 0 &&
                 strcmp(g_last_log.message, logMsg) == 0)
             {
                 /* This is a duplicate - suppress it */
                 g_last_log.count++;
                 g_last_log.last_timestamp = current_time;
                 is_duplicate = true;
+                pthread_mutex_unlock(&g_duplicate_mutex);
             }
             else
             {
-                /* This is a new message, flush previous duplicate count if any */
-                flush_duplicate_log(cat, log4cPriority);
+                /* This is a new message, need to flush previous if any */
+                bool need_flush = (g_last_log.is_active && g_last_log.count > 1);
+                pthread_mutex_unlock(&g_duplicate_mutex);
                 
-                /* Store this message as the new last log */
-                strncpy(g_last_log.module_name, module_name ? module_name : "", sizeof(g_last_log.module_name) - 1);
+                /* Flush outside the duplicate mutex to avoid potential deadlock */
+                if (need_flush)
+                {
+                    flush_duplicate_log(cat, log4cPriority);
+                }
+                
+                /* Now store this message as the new last log */
+                pthread_mutex_lock(&g_duplicate_mutex);
+                strncpy(g_last_log.module_name, mod_name, sizeof(g_last_log.module_name) - 1);
                 g_last_log.module_name[sizeof(g_last_log.module_name) - 1] = '\0';
                 strncpy(g_last_log.message, logMsg, sizeof(g_last_log.message) - 1);
                 g_last_log.message[sizeof(g_last_log.message) - 1] = '\0';
@@ -719,8 +733,8 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 g_last_log.first_timestamp = current_time;
                 g_last_log.last_timestamp = current_time;
                 g_last_log.is_active = true;
+                pthread_mutex_unlock(&g_duplicate_mutex);
             }
-            pthread_mutex_unlock(&g_duplicate_mutex);
         }
 
         /* Only log if not a duplicate */
