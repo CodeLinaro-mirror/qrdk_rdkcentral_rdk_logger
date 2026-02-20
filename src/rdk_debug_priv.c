@@ -79,7 +79,6 @@ static pthread_mutex_t gLoggingMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Duplicate log detection */
 #define MAX_LOG_HASH_SIZE       256
-#define DUPLICATE_LOG_TIMEOUT   5  /* seconds */
 
 typedef struct {
     char module_name[64];
@@ -699,24 +698,10 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 strcmp(g_last_log.module_name, module_name ? module_name : "") == 0 &&
                 strcmp(g_last_log.message, logMsg) == 0)
             {
-                /* This is a duplicate */
-                time_t time_diff = difftime(current_time, g_last_log.first_timestamp);
-                
-                /* If timeout has not expired, suppress the log */
-                if (time_diff < DUPLICATE_LOG_TIMEOUT)
-                {
-                    g_last_log.count++;
-                    g_last_log.last_timestamp = current_time;
-                    is_duplicate = true;
-                }
-                else
-                {
-                    /* Timeout expired, flush previous duplicate count and log new message */
-                    flush_duplicate_log(cat, log4cPriority);
-                    g_last_log.count = 1;
-                    g_last_log.first_timestamp = current_time;
-                    g_last_log.last_timestamp = current_time;
-                }
+                /* This is a duplicate - suppress it */
+                g_last_log.count++;
+                g_last_log.last_timestamp = current_time;
+                is_duplicate = true;
             }
             else
             {
