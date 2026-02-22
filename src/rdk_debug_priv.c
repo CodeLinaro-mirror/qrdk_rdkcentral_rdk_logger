@@ -95,14 +95,31 @@ static duplicate_log_entry_t g_last_log = {0};
 static pthread_mutex_t g_duplicate_mutex = PTHREAD_MUTEX_INITIALIZER;
 static bool g_duplicate_suppression_initialized = false;
 
-/* Debug flag for duplicate suppression - set to 1 to enable debug logs */
-#define DUPLICATE_DEBUG 1
+/* Debug flag file - create this file to enable debug logging at runtime */
+#define DUPLICATE_DEBUG_FLAG_FILE "/tmp/rdk_logger_debug"
 
-#if DUPLICATE_DEBUG
-#define DUP_DEBUG_LOG(fmt, ...) fprintf(stderr, "[DUP_SUPPRESS_DEBUG] " fmt "\n", ##__VA_ARGS__)
-#else
-#define DUP_DEBUG_LOG(fmt, ...) do {} while(0)
-#endif
+/* Check if debug mode is enabled by checking for flag file */
+static inline bool is_duplicate_debug_enabled(void)
+{
+    static time_t last_check = 0;
+    static bool last_result = false;
+    time_t now = time(NULL);
+    
+    /* Check file existence every 5 seconds to avoid excessive file system calls */
+    if (now - last_check >= 5)
+    {
+        last_check = now;
+        last_result = (access(DUPLICATE_DEBUG_FLAG_FILE, F_OK) == 0);
+    }
+    return last_result;
+}
+
+#define DUP_DEBUG_LOG(fmt, ...) \
+    do { \
+        if (is_duplicate_debug_enabled()) { \
+            fprintf(stderr, "[DUP_SUPPRESS_DEBUG] " fmt "\n", ##__VA_ARGS__); \
+        } \
+    } while(0)
 
 /* Simple hash function for log messages */
 static unsigned int calculate_log_hash(const char* module_name, const char* message)
@@ -667,8 +684,9 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     {
         g_duplicate_suppression_initialized = true;
         DUP_DEBUG_LOG("=== Duplicate Suppression Feature INITIALIZED ===");
-        DUP_DEBUG_LOG("Buffer size: %d bytes, Debug mode: %s", 
-                     LOG4C_MSG_BUFFER_SIZE, DUPLICATE_DEBUG ? "ENABLED" : "DISABLED");
+        DUP_DEBUG_LOG("Buffer size: %d bytes, Debug flag file: %s", 
+                     LOG4C_MSG_BUFFER_SIZE, DUPLICATE_DEBUG_FLAG_FILE);
+        DUP_DEBUG_LOG("To enable debug logs: touch %s", DUPLICATE_DEBUG_FLAG_FILE);
     }
 
     /* Handling process request here. This is not a blocking call and it shall return immediately */
