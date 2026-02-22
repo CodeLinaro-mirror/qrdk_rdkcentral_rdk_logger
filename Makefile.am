@@ -17,7 +17,7 @@
 # limitations under the License.
 ##########################################################################
 
-SUBDIRS = src include utils
+SUBDIRS = src include utils test
 DIST_SUBDIRS = cfg src include
 
 distcleancheck_listfiles = *-libtool
