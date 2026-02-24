@@ -83,7 +83,6 @@ static pthread_mutex_t gLoggingMutex = PTHREAD_MUTEX_INITIALIZER;
 typedef struct {
     char module_name[64];
     char message[LOG4C_MSG_BUFFER_SIZE];
-    unsigned int hash;
     rdk_LogLevel level;
     unsigned int count;
     time_t first_timestamp;
@@ -120,30 +119,6 @@ static inline bool is_duplicate_debug_enabled(void)
             fprintf(stderr, "[DUP_SUPPRESS_DEBUG] " fmt "\n", ##__VA_ARGS__); \
         } \
     } while(0)
-
-/* Simple hash function for log messages */
-static unsigned int calculate_log_hash(const char* module_name, const char* message)
-{
-    unsigned int hash = 5381;
-    const char* str = module_name;
-    
-    /* Hash module name */
-    while (str && *str)
-    {
-        hash = ((hash << 5) + hash) + (unsigned char)(*str);
-        str++;
-    }
-    
-    /* Hash message */
-    str = message;
-    while (str && *str)
-    {
-        hash = ((hash << 5) + hash) + (unsigned char)(*str);
-        str++;
-    }
-    
-    return hash;
-}
 
 /* Flush duplicate log count if needed */
 static void flush_duplicate_log(log4c_category_t* cat, int log4cPriority)
@@ -722,24 +697,21 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         int n = 0;
         int log4cPriority = rdk_logLevel_to_log4c_priority(level);
         time_t current_time = time(NULL);
-        unsigned int msg_hash = 0;
         bool is_duplicate = false;
 
         va_copy(localArg, args);
         n = vsnprintf(logMsg, LOG4C_MSG_BUFFER_SIZE, format, localArg);
         va_end(localArg);
 
-        /* Calculate hash for duplicate detection (only for messages that fit in buffer) */
+        /* Check for duplicate detection (only for messages that fit in buffer) */
         if (n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
         {
             const char* mod_name = (module_name && *module_name) ? module_name : "";
             
             pthread_mutex_lock(&g_duplicate_mutex);
-            msg_hash = calculate_log_hash(mod_name, logMsg);
             
             /* Check if this is a duplicate of the last log */
             if (g_last_log.is_active && 
-                g_last_log.hash == msg_hash &&
                 g_last_log.level == level &&
                 strcmp(g_last_log.module_name, mod_name) == 0 &&
                 strcmp(g_last_log.message, logMsg) == 0)
@@ -748,8 +720,8 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 g_last_log.count++;
                 g_last_log.last_timestamp = current_time;
                 is_duplicate = true;
-                DUP_DEBUG_LOG("SUPPRESSED duplicate #%u: module=%s, hash=0x%08x, msg_preview='%.50s'",
-                             g_last_log.count, mod_name, msg_hash, logMsg);
+                DUP_DEBUG_LOG("SUPPRESSED duplicate #%u: module=%s, msg_preview='%.50s'",
+                             g_last_log.count, mod_name, logMsg);
                 pthread_mutex_unlock(&g_duplicate_mutex);
             }
             else
@@ -772,14 +744,13 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 g_last_log.module_name[sizeof(g_last_log.module_name) - 1] = '\0';
                 strncpy(g_last_log.message, logMsg, sizeof(g_last_log.message) - 1);
                 g_last_log.message[sizeof(g_last_log.message) - 1] = '\0';
-                g_last_log.hash = msg_hash;
                 g_last_log.level = level;
                 g_last_log.count = 1;
                 g_last_log.first_timestamp = current_time;
                 g_last_log.last_timestamp = current_time;
                 g_last_log.is_active = true;
-                DUP_DEBUG_LOG("TRACKING new message: module=%s, hash=0x%08x, msg_preview='%.50s'",
-                             mod_name, msg_hash, logMsg);
+                DUP_DEBUG_LOG("TRACKING new message: module=%s, msg_preview='%.50s'",
+                             mod_name, logMsg);
                 pthread_mutex_unlock(&g_duplicate_mutex);
             }
         }
