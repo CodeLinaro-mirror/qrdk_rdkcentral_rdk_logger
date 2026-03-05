@@ -79,13 +79,15 @@ static pthread_mutex_t gLoggingMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Pattern-based duplicate log detection */
 #define MAX_LOG_HASH_SIZE       256
-#define MAX_PATTERN_LENGTH      3  /* Support patterns up to length 3 (ABC ABC ABC...) */
-#define HISTORY_BUFFER_SIZE     6  /* Need 2*MAX_PATTERN_LENGTH to detect patterns */
+#define MAX_PATTERN_LENGTH      10  /* Support patterns up to length 10 */
+#define HISTORY_BUFFER_SIZE     20  /* Need 2*MAX_PATTERN_LENGTH to detect patterns */
 
 typedef struct {
     char module_name[64];
     char message[LOG4C_MSG_BUFFER_SIZE];
     rdk_LogLevel level;
+    /* Fingerprint for fast comparison (message length + first 4 chars hash) */
+    unsigned int fingerprint;
 } log_entry_t;
 
 typedef struct {
@@ -135,7 +137,31 @@ static inline bool is_duplicate_debug_enabled(void)
         } \
     } while(0)
 
-/* Check if two log entries match (module, level, and message) */
+/* Compute a simple fingerprint for fast comparison
+ * Uses message length and first 4 characters for O(1) mismatch detection
+ */
+static inline unsigned int compute_fingerprint(const char* message)
+{
+    if (!message)
+    {
+        return 0;
+    }
+    
+    size_t len = strlen(message);
+    unsigned int fp = (unsigned int)len;
+    
+    /* XOR first 4 bytes (if available) for better distribution */
+    for (size_t i = 0; i < 4 && i < len; i++)
+    {
+        fp ^= ((unsigned int)(unsigned char)message[i]) << (i * 8);
+    }
+    
+    return fp;
+}
+
+/* Check if two log entries match (module, level, and message)
+ * Uses fingerprint for fast early rejection before expensive strcmp
+ */
 static inline bool log_entries_match(const log_entry_t* a, const log_entry_t* b)
 {
     /* Safety: NULL pointer checks */
@@ -144,9 +170,26 @@ static inline bool log_entries_match(const log_entry_t* a, const log_entry_t* b)
         return false;
     }
     
-    return (a->level == b->level &&
-            strcmp(a->module_name, b->module_name) == 0 &&
-            strcmp(a->message, b->message) == 0);
+    /* Fast path: Check fingerprint first (O(1) rejection) */
+    if (a->fingerprint != b->fingerprint)
+    {
+        return false;
+    }
+    
+    /* Fast path: Check level (O(1)) */
+    if (a->level != b->level)
+    {
+        return false;
+    }
+    
+    /* Medium path: Check module name (typically short string) */
+    if (strcmp(a->module_name, b->module_name) != 0)
+    {
+        return false;
+    }
+    
+    /* Slow path: Full message comparison (only if fingerprint matched) */
+    return strcmp(a->message, b->message) == 0;
 }
 
 /* Flush pattern summary if pattern is active */
@@ -211,6 +254,7 @@ static void add_to_history(const char* module_name, const char* message, rdk_Log
     entry->message[sizeof(entry->message) - 1] = '\0';
     
     entry->level = level;
+    entry->fingerprint = compute_fingerprint(message);
     
     /* Move head forward */
     g_pattern_tracker.history_head = (pos + 1) % HISTORY_BUFFER_SIZE;
@@ -255,11 +299,18 @@ static void store_pattern_entry(int index, const log_entry_t* entry)
     dest->message[sizeof(dest->message) - 1] = '\0';
     
     dest->level = entry->level;
+    dest->fingerprint = entry->fingerprint;
 }
 
 /* Try to detect a repeating pattern from current message and history
- * Returns detected pattern length (1-3), or 0 if no pattern detected
+ * Returns detected pattern length (1-10), or 0 if no pattern detected
  * current_entry: the new message that just arrived
+ * 
+ * Algorithm: For pattern length N, we need current to match history[N-1],
+ * and history[i] to match history[i+N] for all i from 0 to N-1
+ * 
+ * Optimization: Check longer patterns first (they're less common, fail faster)
+ * Uses fingerprint for O(1) mismatch detection before expensive strcmp
  */
 static int try_detect_pattern(const log_entry_t* current_entry)
 {
@@ -270,58 +321,124 @@ static int try_detect_pattern(const log_entry_t* current_entry)
         return 0;
     }
     
-    /* Try pattern length 1: A A  
+    /* Try pattern length 1 first (most common case - single duplicate)
+     * Pattern: A A A ...
      * Need: current matches history[0]
      */
     log_entry_t* h0 = get_history(0);
     if (h0 && log_entries_match(current_entry, h0))
     {
         DUP_DEBUG_LOG("Pattern detected: length=1 (A A...)");
-        /* Store pattern */
         store_pattern_entry(0, h0);
         return 1;
     }
     
-    /* Try pattern length 2: A B A B
-     * Need: current matches history[1], and history[0] matches history[2]
-     * History layout: ... [hist2=A] [hist1=B] [hist0=A] [current=B]
-     * Additional safety: Verify h0 and h1 are different to avoid false match with single repeats
+    /* Try patterns from length 2 to MAX_PATTERN_LENGTH
+     * Pattern length N requires 2*N messages in history
+     * Check from longer to shorter as longer patterns are rarer and fail faster
      */
-    log_entry_t* h1 = get_history(1);
-    log_entry_t* h2 = get_history(2);
-    if (h1 && h2 && 
-        log_entries_match(current_entry, h1) &&
-        log_entries_match(h0, h2) &&
-        !log_entries_match(h0, h1))  /* Safety: Ensure A != B */
+    for (int pattern_len = MAX_PATTERN_LENGTH; pattern_len >= 2; pattern_len--)
     {
-        DUP_DEBUG_LOG("Pattern detected: length=2 (A B A B...)");
-        /* Store pattern: pattern[0]=A, pattern[1]=B */
-        store_pattern_entry(0, h0);  /* A */
-        store_pattern_entry(1, current_entry); /* B */
-        return 2;
-    }
-    
-    /* Try pattern length 3: A B C A B C
-     * Need: current matches history[2], history[0] matches history[3], history[1] matches history[4]
-     * History layout: [hist4=A] [hist3=B] [hist2=C] [hist1=A] [hist0=B] [current=C]
-     * Additional safety: Ensure A, B, C are all different
-     */
-    log_entry_t* h3 = get_history(3);
-    log_entry_t* h4 = get_history(4);
-    if (h2 && h3 && h4 &&
-        log_entries_match(current_entry, h2) &&
-        log_entries_match(h0, h3) &&
-        log_entries_match(h1, h4) &&
-        !log_entries_match(h0, h1) &&  /* Safety: B != A */
-        !log_entries_match(h1, current_entry) &&  /* Safety: A != C */
-        !log_entries_match(h0, current_entry))    /* Safety: B != C */
-    {
-        DUP_DEBUG_LOG("Pattern detected: length=3 (A B C A B C...)");
-        /* Store pattern as [A, B, C] which is [hist1, hist0, current] */
-        store_pattern_entry(0, h1);          /* A */
-        store_pattern_entry(1, h0);          /* B */
-        store_pattern_entry(2, current_entry); /* C */
-        return 3;
+        /* Safety: Need at least 2*pattern_len messages to detect pattern */
+        int needed_history = 2 * pattern_len - 1; /* -1 because current is the 2*Nth message */
+        if (g_pattern_tracker.history_count < needed_history)
+        {
+            continue; /* Not enough history for this pattern length */
+        }
+        
+        /* Check if current matches history[pattern_len - 1] */
+        log_entry_t* first_match = get_history(pattern_len - 1);
+        if (!first_match || !log_entries_match(current_entry, first_match))
+        {
+            continue; /* Current doesn't match expected position, try next pattern length */
+        }
+        
+        /* Check if all other positions match: history[i] must match history[i + pattern_len] */
+        bool pattern_matches = true;
+        for (int i = 0; i < pattern_len - 1; i++)
+        {
+            log_entry_t* pos1 = get_history(i);
+            log_entry_t* pos2 = get_history(i + pattern_len);
+            
+            /* Safety: NULL checks */
+            if (!pos1 || !pos2)
+            {
+                pattern_matches = false;
+                break;
+            }
+            
+            if (!log_entries_match(pos1, pos2))
+            {
+                pattern_matches = false;
+                break; /* Mismatch found, not this pattern length */
+            }
+        }
+        
+        if (pattern_matches)
+        {
+            /* Pattern detected! Now verify uniqueness: all elements in pattern should be different
+             * This prevents false positives like detecting \"A A\" as length-2 pattern \"A A\"
+             * We want true alternating patterns, not repeated single messages
+             */
+            bool all_unique = true;
+            
+            /* Build pattern array for uniqueness check */
+            log_entry_t* pattern_elements[MAX_PATTERN_LENGTH];
+            for (int i = 0; i < pattern_len; i++)
+            {
+                int hist_idx = pattern_len - 1 - i;
+                pattern_elements[i] = get_history(hist_idx);
+                
+                /* Safety: NULL check */
+                if (!pattern_elements[i])
+                {
+                    all_unique = false;
+                    break;
+                }
+            }
+            
+            /* Check uniqueness only for pattern_len >= 2 */
+            if (all_unique && pattern_len >= 2)
+            {
+                for (int i = 0; i < pattern_len - 1; i++)
+                {
+                    for (int j = i + 1; j < pattern_len; j++)
+                    {
+                        if (log_entries_match(pattern_elements[i], pattern_elements[j]))
+                        {
+                            all_unique = false;
+                            break;
+                        }
+                    }
+                    if (!all_unique) break;
+                }
+            }
+            
+            if (!all_unique)
+            {
+                continue; /* Pattern elements not unique, try next length */
+            }
+            
+            /* Valid pattern found! Store it */
+            DUP_DEBUG_LOG("Pattern detected: length=%d", pattern_len);
+            
+            /* Store pattern: pattern[0] is oldest, pattern[pattern_len-1] is current
+             * History layout: [hist[pattern_len-1]] [hist[pattern_len-2]] ... [hist[0]] [current]
+             * Pattern should be: [hist[pattern_len-1]] [hist[pattern_len-2]] ... [hist[0]] [current]
+             */
+            for (int i = 0; i < pattern_len - 1; i++)
+            {
+                int hist_idx = pattern_len - 1 - i;
+                log_entry_t* hist_entry = get_history(hist_idx);
+                if (hist_entry)
+                {
+                    store_pattern_entry(i, hist_entry);
+                }
+            }
+            store_pattern_entry(pattern_len - 1, current_entry);
+            
+            return pattern_len;
+        }
     }
     
     return 0; /* No pattern detected */
@@ -913,6 +1030,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
             strncpy(current_entry.message, logMsg, sizeof(current_entry.message) - 1);
             current_entry.message[sizeof(current_entry.message) - 1] = '\0';
             current_entry.level = level;
+            current_entry.fingerprint = compute_fingerprint(logMsg);
             
             pthread_mutex_lock(&g_duplicate_mutex);
             
