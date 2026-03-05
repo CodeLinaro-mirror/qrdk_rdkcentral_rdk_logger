@@ -445,13 +445,23 @@ static int try_detect_pattern(const log_entry_t* current_entry)
             /* Valid pattern found! Store it */
             DUP_DEBUG_LOG("Pattern detected: length=%d", pattern_len);
             
-            /* Store pattern: pattern[0] is oldest, pattern[pattern_len-1] is current
-             * History layout: [hist[pattern_len-1]] [hist[pattern_len-2]] ... [hist[0]] [current]
-             * Pattern should be: [hist[pattern_len-1]] [hist[pattern_len-2]] ... [hist[0]] [current]
+            /* Store pattern for future matching
+             * Example: Messages A B A B (pattern length 2)
+             * History when B₄ arrives: get_history(0)=A₃, get_history(1)=B₂, get_history(2)=A₁
+             * Current: B₄
+             * Pattern detected: Every 2 positions repeats (A at even, B at odd)
+             * Next message should be A
+             * 
+             * We need to store the most recent complete cycle: [A₃, B₄]
+             * pattern[0] = A (so next message matches this)
+             * pattern[1] = B (so message after that matches this)
+             * 
+             * Storage: pattern[i] = get_history(pattern_len - 2 - i) for i < pattern_len-1
+             *          pattern[pattern_len-1] = current
              */
             for (int i = 0; i < pattern_len - 1; i++)
             {
-                int hist_idx = pattern_len - 1 - i;
+                int hist_idx = pattern_len - 2 - i;  /* BUG FIX: was pattern_len - 1 - i */
                 log_entry_t* hist_entry = get_history(hist_idx);
                 if (hist_entry)
                 {
@@ -1129,11 +1139,14 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                         /* New pattern detected - initialize pattern tracking */
                         g_pattern_tracker.pattern_length = detected_len;
                         g_pattern_tracker.next_expected_index = 0; /* Next message should match pattern[0] */
-                    g_pattern_tracker.repeat_count = 0; /* No repetitions yet, just initial detection */
+                        g_pattern_tracker.repeat_count = 0; /* No repetitions yet, just detected */
+                        g_pattern_tracker.first_timestamp = current_time;
+                        g_pattern_tracker.last_timestamp = current_time;
                         
                         /* Now add to history since we detected a pattern */
                         add_to_history(mod_name, logMsg, level);
                         
+                        /* DO NOT suppress this message - it broke the old pattern and should be logged */
                         DUP_DEBUG_LOG("NEW pattern started: length=%d, msg='%.30s'", detected_len, logMsg);
                         pthread_mutex_unlock(&g_duplicate_mutex);
                     }
@@ -1161,7 +1174,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                     /* Pattern detected! Initialize tracking */
                     g_pattern_tracker.pattern_length = detected_len;
                     g_pattern_tracker.next_expected_index = 0;
-                    g_pattern_tracker.repeat_count = 0; /* No repetitions yet, just initial detection */
+                    g_pattern_tracker.repeat_count = 1; /* Already seen one repetition (that's how we detected it) */
                     g_pattern_tracker.first_timestamp = current_time;
                     g_pattern_tracker.last_timestamp = current_time;
                     is_duplicate = true; /* Suppress this message */
