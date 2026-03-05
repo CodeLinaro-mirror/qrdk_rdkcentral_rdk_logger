@@ -211,17 +211,21 @@ static inline bool log_entries_match(const log_entry_t* a, const log_entry_t* b)
     return strcmp(a->message, b->message) == 0;
 }
 
-/* Flush pattern summary if pattern is active */
+/* Flush pattern summary when pattern breaks
+ * Only prints if actual repetitions occurred (repeat_count > 0)
+ */
 static void flush_pattern_summary(log4c_category_t* cat, int log4cPriority)
 {
     /* Safety: NULL check for category and validate pattern_length */
     if (!cat || g_pattern_tracker.pattern_length <= 0 || 
-        g_pattern_tracker.pattern_length > MAX_PATTERN_LENGTH ||
-        g_pattern_tracker.repeat_count == 0)
+        g_pattern_tracker.pattern_length > MAX_PATTERN_LENGTH)
     {
         return;
     }
     
+    /* Only print summary if pattern actually repeated (repeat_count > 0)
+     * repeat_count = 0 means pattern was detected but never repeated, so nothing to report
+     */
     if (g_pattern_tracker.repeat_count > 0)
     {
         double duration = difftime(g_pattern_tracker.last_timestamp, g_pattern_tracker.first_timestamp);
@@ -1125,10 +1129,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                         /* New pattern detected - initialize pattern tracking */
                         g_pattern_tracker.pattern_length = detected_len;
                         g_pattern_tracker.next_expected_index = 0; /* Next message should match pattern[0] */
-                        g_pattern_tracker.repeat_count = 1; /* First complete cycle seen */
-                        g_pattern_tracker.first_timestamp = current_time;
-                        g_pattern_tracker.last_timestamp = current_time;
-                        is_duplicate = true; /* Suppress current message as it's part of detected pattern */
+                    g_pattern_tracker.repeat_count = 0; /* No repetitions yet, just initial detection */
                         
                         /* Now add to history since we detected a pattern */
                         add_to_history(mod_name, logMsg, level);
@@ -1160,7 +1161,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                     /* Pattern detected! Initialize tracking */
                     g_pattern_tracker.pattern_length = detected_len;
                     g_pattern_tracker.next_expected_index = 0;
-                    g_pattern_tracker.repeat_count = 1;
+                    g_pattern_tracker.repeat_count = 0; /* No repetitions yet, just initial detection */
                     g_pattern_tracker.first_timestamp = current_time;
                     g_pattern_tracker.last_timestamp = current_time;
                     is_duplicate = true; /* Suppress this message */
