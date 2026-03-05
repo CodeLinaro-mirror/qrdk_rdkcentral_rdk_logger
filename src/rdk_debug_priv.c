@@ -114,6 +114,9 @@ static bool g_duplicate_suppression_initialized = false;
 /* Debug flag file - create this file to enable debug logging at runtime */
 #define DUPLICATE_DEBUG_FLAG_FILE "/tmp/rdk_logger_debug"
 
+/* Disable suppression flag - create this file to DISABLE pattern suppression at runtime */
+#define SUPPRESSION_DISABLE_FLAG_FILE "/tmp/rdk_logger_suppress_disable"
+
 /* Check if debug mode is enabled by checking for flag file */
 static inline bool is_duplicate_debug_enabled(void)
 {
@@ -126,6 +129,22 @@ static inline bool is_duplicate_debug_enabled(void)
     {
         last_check = now;
         last_result = (access(DUPLICATE_DEBUG_FLAG_FILE, F_OK) == 0);
+    }
+    return last_result;
+}
+
+/* Check if pattern suppression is disabled at runtime */
+static inline bool is_suppression_disabled(void)
+{
+    static time_t last_check = 0;
+    static bool last_result = false;
+    time_t now = time(NULL);
+    
+    /* Check file existence every 5 seconds to avoid excessive file system calls */
+    if (now - last_check >= 5)
+    {
+        last_check = now;
+        last_result = (access(SUPPRESSION_DISABLE_FLAG_FILE, F_OK) == 0);
     }
     return last_result;
 }
@@ -1019,7 +1038,8 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         va_end(localArg);
 
         /* Pattern-based duplicate detection (only for messages that fit in buffer) */
-        if (n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
+        /* Skip pattern detection if suppression is disabled at runtime */
+        if (!is_suppression_disabled() && n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
         {
             const char* mod_name = (module_name && *module_name) ? module_name : "";
             log_entry_t current_entry;
