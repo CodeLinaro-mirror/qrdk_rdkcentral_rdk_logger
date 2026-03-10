@@ -114,6 +114,9 @@ static bool g_duplicate_suppression_initialized = false;
 /* Debug flag file - create this file to enable debug logging at runtime */
 #define DUPLICATE_DEBUG_FLAG_FILE "/tmp/rdk_logger_debug"
 
+/* Enable suppression flag - create this file in nvram to ENABLE pattern suppression on boot (persistent) */
+#define SUPPRESSION_ENABLE_FLAG_FILE "/nvram/rdk_logger_pattern_enable"
+
 /* Disable suppression flag - create this file to DISABLE pattern suppression at runtime */
 #define SUPPRESSION_DISABLE_FLAG_FILE "/tmp/rdk_logger_suppress_disable"
 
@@ -133,7 +136,29 @@ static inline bool is_duplicate_debug_enabled(void)
     return last_result;
 }
 
-/* Check if pattern suppression is disabled at runtime */
+/* Check if pattern suppression is enabled
+ * Feature is DISABLED by default and only enabled if persistent flag file exists
+ * Returns true if suppression should be active
+ */
+static inline bool is_suppression_enabled(void)
+{
+    static time_t last_check = 0;
+    static bool last_result = false;
+    time_t now = time(NULL);
+    
+    /* Check file existence every 5 seconds to avoid excessive file system calls */
+    if (now - last_check >= 5)
+    {
+        last_check = now;
+        /* Enabled only if persistent enable flag exists in nvram */
+        last_result = (access(SUPPRESSION_ENABLE_FLAG_FILE, F_OK) == 0);
+    }
+    return last_result;
+}
+
+/* Check if pattern suppression is disabled at runtime
+ * Returns true if suppression should be turned off (even if enabled)
+ */
 static inline bool is_suppression_disabled(void)
 {
     static time_t last_check = 0;
@@ -1011,8 +1036,10 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         
         g_duplicate_suppression_initialized = true;
         DUP_DEBUG_LOG("=== Pattern-Based Duplicate Suppression INITIALIZED ===");
-        DUP_DEBUG_LOG("Max pattern length: %d, Buffer size: %d bytes, Debug flag file: %s", 
-                     MAX_PATTERN_LENGTH, LOG4C_MSG_BUFFER_SIZE, DUPLICATE_DEBUG_FLAG_FILE);
+        DUP_DEBUG_LOG("Max pattern length: %d, Buffer size: %d bytes", 
+                     MAX_PATTERN_LENGTH, LOG4C_MSG_BUFFER_SIZE);
+        DUP_DEBUG_LOG("Feature DISABLED by default - to enable: touch %s", SUPPRESSION_ENABLE_FLAG_FILE);
+        DUP_DEBUG_LOG("To disable at runtime: touch %s", SUPPRESSION_DISABLE_FLAG_FILE);
         DUP_DEBUG_LOG("To enable debug logs: touch %s", DUPLICATE_DEBUG_FLAG_FILE);
     }
 
@@ -1063,8 +1090,9 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         va_end(localArg);
 
         /* Pattern-based duplicate detection (only for messages that fit in buffer) */
-        /* Skip pattern detection if suppression is disabled at runtime */
-        if (!is_suppression_disabled() && n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
+        /* Feature is disabled by default - only enabled if nvram flag exists */
+        /* Can be disabled at runtime even if enabled on boot */
+        if (is_suppression_enabled() && !is_suppression_disabled() && n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
         {
             const char* mod_name = (module_name && *module_name) ? module_name : "";
             log_entry_t current_entry;
@@ -1182,18 +1210,18 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 
                 if (detected_len > 0)
                 {
-                    /* Pattern detected! Initialize tracking */
+                    /* Pattern detected! Initialize tracking and LOG this message (don't suppress) */
                     g_pattern_tracker.pattern_length = detected_len;
-                    g_pattern_tracker.next_expected_index = 0;
-                    g_pattern_tracker.repeat_count = 1; /* Already seen one repetition (that's how we detected it) */
+                    g_pattern_tracker.next_expected_index = 0; /* Next message should match pattern[0] */
+                    g_pattern_tracker.repeat_count = 0; /* No repeats yet, just detected the pattern */
                     g_pattern_tracker.first_timestamp = current_time;
                     g_pattern_tracker.last_timestamp = current_time;
-                    is_duplicate = true; /* Suppress this message */
+                    /* is_duplicate stays false - log this message to complete the visible pattern */
                     
                     /* Add to history since pattern detected */
                     add_to_history(mod_name, logMsg, level);
                     
-                    DUP_DEBUG_LOG("FIRST pattern detected: length=%d, msg='%.30s'", detected_len, logMsg);
+                    DUP_DEBUG_LOG("Pattern DETECTED: length=%d, will start suppressing next cycle, msg='%.30s'", detected_len, logMsg);
                     pthread_mutex_unlock(&g_duplicate_mutex);
                 }
                 else
