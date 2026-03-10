@@ -237,14 +237,19 @@ static void flush_pattern_summary(log4c_category_t* cat, int log4cPriority)
         
         if (g_pattern_tracker.pattern_length == 1)
         {
+            /* For single messages, showing the message inline is helpful */
             log4c_category_log(cat, log4cPriority, 
-                              "[PATTERN] Previous message repeated %u times (suppressed for %.0f seconds)\n",
-                              suppressed_messages, duration);
+                              "[PATTERN] Previous message repeated %u times (suppressed for %.1f seconds): '%s'\n",
+                              suppressed_messages, duration, 
+                              g_pattern_tracker.pattern[0].message);
         }
         else
         {
+            /* For multi-message patterns, the messages are already visible above
+             * (the first occurrence was logged before suppression started)
+             * So just show the summary - users can look up to see what repeated */
             log4c_category_log(cat, log4cPriority, 
-                              "[PATTERN] Previous %d-message pattern repeated %u times (%u messages suppressed for %.0f seconds)\n",
+                              "[PATTERN] Previous %d-message pattern repeated %u times (%u messages suppressed for %.1f seconds)\n",
                               g_pattern_tracker.pattern_length, g_pattern_tracker.repeat_count, 
                               suppressed_messages, duration);
         }
