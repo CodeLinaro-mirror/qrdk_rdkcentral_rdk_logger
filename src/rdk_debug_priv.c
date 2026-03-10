@@ -260,27 +260,20 @@ static void flush_pattern_summary(log4c_category_t* cat, int log4cPriority)
                      g_pattern_tracker.pattern_length, g_pattern_tracker.repeat_count, 
                      suppressed_messages, duration);
         
-        /* Format timestamp for readability */
-        struct tm *tm_info = localtime(&g_pattern_tracker.first_timestamp);
-        char time_str[64];
-        strftime(time_str, sizeof(time_str), "%H:%M:%S", tm_info);
-        
+        /* Simplified summary format without message text or timestamp */
         if (g_pattern_tracker.pattern_length == 1)
         {
-            /* For single messages, showing the message inline is helpful */
+            /* For single messages, use simpler format */
             log4c_category_log(cat, log4cPriority, 
-                              "[PATTERN] Previous message repeated %u times (suppressed for %.1f seconds): '%s'\n",
-                              suppressed_messages, duration, 
-                              g_pattern_tracker.pattern[0].message);
+                              "[PATTERN] Message repeated %u times (%u messages suppressed for %.1f seconds)\n",
+                              g_pattern_tracker.repeat_count, suppressed_messages, duration);
         }
         else
         {
-            /* For multi-message patterns, include first line preview and timestamp for easy identification */
+            /* For multi-message patterns, just show pattern length and counts */
             log4c_category_log(cat, log4cPriority, 
-                              "[PATTERN] %d-message pattern starting with '%s' (first at %s) repeated %u times (%u messages suppressed for %.1f seconds)\n",
+                              "[PATTERN] %d-message pattern repeated %u times (%u messages suppressed for %.1f seconds)\n",
                               g_pattern_tracker.pattern_length,
-                              g_pattern_tracker.pattern[0].message,
-                              time_str,
                               g_pattern_tracker.repeat_count, 
                               suppressed_messages, duration);
         }
@@ -1235,18 +1228,18 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
                 
                 if (detected_len > 0)
                 {
-                    /* Pattern detected! Initialize tracking and LOG this message (don't suppress) */
+                    /* Pattern detected! Initialize tracking and LOG this message (don't suppress)  */
                     g_pattern_tracker.pattern_length = detected_len;
                     g_pattern_tracker.next_expected_index = 0; /* Next message should match pattern[0] */
                     g_pattern_tracker.repeat_count = 0; /* No repeats yet, just detected the pattern */
                     g_pattern_tracker.first_timestamp = current_time;
                     g_pattern_tracker.last_timestamp = current_time;
-                    /* is_duplicate stays false - log this message to complete the visible pattern */
+                    /* is_duplicate stays false - log this message to complete 2nd visible cycle */
                     
                     /* Add to history since pattern detected */
                     add_to_history(mod_name, logMsg, level);
                     
-                    DUP_DEBUG_LOG("Pattern DETECTED: length=%d, will start suppressing next cycle, msg='%.30s'", detected_len, logMsg);
+                    DUP_DEBUG_LOG("Pattern DETECTED: length=%d, will start suppressing 3rd cycle onward, msg='%.30s'", detected_len, logMsg);
                     pthread_mutex_unlock(&g_duplicate_mutex);
                 }
                 else
