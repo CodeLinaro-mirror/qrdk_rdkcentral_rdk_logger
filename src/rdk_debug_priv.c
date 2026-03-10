@@ -1090,9 +1090,34 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         va_end(localArg);
 
         /* Pattern-based duplicate detection (only for messages that fit in buffer) */
+        /* IMPORTANT: Only detect patterns on messages that will actually be logged!
+         * Messages filtered by log level are completely invisible to pattern detection.
+         * This prevents misleading summaries for DEBUG messages when DEBUG level is disabled. */
         /* Feature is disabled by default - only enabled if nvram flag exists */
         /* Can be disabled at runtime even if enabled on boot */
-        if (is_suppression_enabled() && !is_suppression_disabled() && n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
+        bool will_be_logged = log4c_category_is_priority_enabled(cat, log4cPriority);
+        bool suppression_active = is_suppression_enabled() && !is_suppression_disabled();
+        
+        /* If suppression was just disabled, flush any active pattern before proceeding */
+        if (!suppression_active && will_be_logged)
+        {
+            pthread_mutex_lock(&g_duplicate_mutex);
+            if (g_pattern_tracker.pattern_length > 0 && g_pattern_tracker.repeat_count > 0)
+            {
+                /* Pattern is active but suppression disabled - flush summary */
+                DUP_DEBUG_LOG("Suppression disabled, flushing active pattern");
+                pthread_mutex_unlock(&g_duplicate_mutex);
+                flush_pattern_summary(cat, log4cPriority);
+                pthread_mutex_lock(&g_duplicate_mutex);
+                g_pattern_tracker.pattern_length = 0;
+                g_pattern_tracker.next_expected_index = 0;
+                g_pattern_tracker.repeat_count = 0;
+            }
+            pthread_mutex_unlock(&g_duplicate_mutex);
+        }
+        
+        /* Only process pattern detection for messages that will actually be logged */
+        if (will_be_logged && suppression_active && n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
         {
             const char* mod_name = (module_name && *module_name) ? module_name : "";
             log_entry_t current_entry;
