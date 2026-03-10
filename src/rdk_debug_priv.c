@@ -235,6 +235,11 @@ static void flush_pattern_summary(log4c_category_t* cat, int log4cPriority)
                      g_pattern_tracker.pattern_length, g_pattern_tracker.repeat_count, 
                      suppressed_messages, duration);
         
+        /* Format timestamp for readability */
+        struct tm *tm_info = localtime(&g_pattern_tracker.first_timestamp);
+        char time_str[64];
+        strftime(time_str, sizeof(time_str), "%H:%M:%S", tm_info);
+        
         if (g_pattern_tracker.pattern_length == 1)
         {
             /* For single messages, showing the message inline is helpful */
@@ -245,12 +250,13 @@ static void flush_pattern_summary(log4c_category_t* cat, int log4cPriority)
         }
         else
         {
-            /* For multi-message patterns, the messages are already visible above
-             * (the first occurrence was logged before suppression started)
-             * So just show the summary - users can look up to see what repeated */
+            /* For multi-message patterns, include first line preview and timestamp for easy identification */
             log4c_category_log(cat, log4cPriority, 
-                              "[PATTERN] Previous %d-message pattern repeated %u times (%u messages suppressed for %.1f seconds)\n",
-                              g_pattern_tracker.pattern_length, g_pattern_tracker.repeat_count, 
+                              "[PATTERN] %d-message pattern starting with '%s' (first at %s) repeated %u times (%u messages suppressed for %.1f seconds)\n",
+                              g_pattern_tracker.pattern_length,
+                              g_pattern_tracker.pattern[0].message,
+                              time_str,
+                              g_pattern_tracker.repeat_count, 
                               suppressed_messages, duration);
         }
     }
