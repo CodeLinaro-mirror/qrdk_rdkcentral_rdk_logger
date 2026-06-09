@@ -181,8 +181,9 @@ static inline bool is_suppression_disabled(void)
         } \
     } while(0)
 
-/* Compute a simple fingerprint for fast comparison
- * Uses message length and first 4 characters for O(1) mismatch detection
+/* Compute FNV-1a 32-bit fingerprint for fast comparison
+ * Single-pass, no strlen needed, near-ideal collision resistance for 32 bits.
+ * ~2 ops/byte (XOR + multiply), no tables, no alignment requirements.
  */
 static inline unsigned int compute_fingerprint(const char* message)
 {
@@ -191,16 +192,16 @@ static inline unsigned int compute_fingerprint(const char* message)
         return 0;
     }
     
-    size_t len = strlen(message);
-    unsigned int fp = (unsigned int)len;
+    unsigned int hash = 2166136261u; /* FNV offset basis */
+    const unsigned char* p = (const unsigned char*)message;
     
-    /* XOR first 4 bytes (if available) for better distribution */
-    for (size_t i = 0; i < 4 && i < len; i++)
+    while (*p)
     {
-        fp ^= ((unsigned int)(unsigned char)message[i]) << (i * 8);
+        hash ^= *p++;
+        hash *= 16777619u; /* FNV prime */
     }
     
-    return fp;
+    return hash;
 }
 
 /* Check if two log entries match (module, level, and message)
@@ -306,7 +307,7 @@ static void add_to_history(const char* module_name, const char* message, rdk_Log
     entry->message[sizeof(entry->message) - 1] = '\0';
     
     entry->level = level;
-    entry->fingerprint = compute_fingerprint(message);
+    entry->fingerprint = compute_fingerprint(entry->message);
     
     /* Move head forward */
     g_pattern_tracker.history_head = (pos + 1) % HISTORY_BUFFER_SIZE;
@@ -1121,7 +1122,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
             strncpy(current_entry.message, logMsg, sizeof(current_entry.message) - 1);
             current_entry.message[sizeof(current_entry.message) - 1] = '\0';
             current_entry.level = level;
-            current_entry.fingerprint = compute_fingerprint(logMsg);
+            current_entry.fingerprint = compute_fingerprint(current_entry.message);
             
             pthread_mutex_lock(&g_duplicate_mutex);
             
