@@ -110,10 +110,11 @@ typedef enum {
  * --------------------------------------------------------------------- */
 
 /**
- * @brief Read RFC parameters from syscfg and populate config.
+ * @brief Read RFC parameters from the INI config file and populate config.
  *
- * Reads RDKLogSuppressorEnable and RDKLogSuppressorMaxPatternLength from
- * syscfg. Values outside valid ranges fall back to defaults with a WARNING
+ * Reads from /nvram/rdk_log_suppressor.ini (RFC override) if it exists,
+ * otherwise falls back to /etc/rdk_log_suppressor.ini (Yocto default).
+ * Values outside valid ranges fall back to defaults with a WARNING
  * log (AC-5). Always emits an INFO log confirming the resolved state (AC-4).
  *
  * Must be called before rdk_suppressor_init().
