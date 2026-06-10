@@ -79,14 +79,6 @@ AC_CHECK_FUNCS([memset strdup strerror])
 
 PKG_CHECK_MODULES([LOG4C], [log4c >= 1.2.3])
 
-PKG_CHECK_MODULES([SYSCFG], [syscfg], [
-    AC_DEFINE([HAVE_SYSCFG], [1], [Define if syscfg is available])
-], [
-    AC_MSG_ERROR([syscfg not found; required for RDKLogSuppressor RFC support])
-])
-AC_SUBST([SYSCFG_CFLAGS])
-AC_SUBST([SYSCFG_LIBS])
-
 AC_CONFIG_FILES([Makefile
                  cfg/Makefile
                  src/Makefile

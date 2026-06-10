@@ -21,7 +21,10 @@ SUBDIRS = src include utils
 DIST_SUBDIRS = cfg src include
 
 distcleancheck_listfiles = *-libtool
-sysconf_DATA= debug.ini log4crc
+sysconf_DATA= debug.ini log4crc rdk_log_suppressor.ini
+
+rdk_log_suppressor.ini: conf/rdk_log_suppressor.ini
+	cp $< $@
 
 ### IPK_GENERATION_PACKAGE###
 IPK_GEN_PATH = $(abs_top_builddir)/ipk
