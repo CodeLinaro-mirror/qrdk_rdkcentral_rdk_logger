@@ -48,6 +48,7 @@
 
 #include "rdk_debug_priv.h"
 #include "rdk_dynamic_logger.h"
+#include "rdk_log_suppressor.h"
 #include "log4c.h"
 #include <log4c/appender_type_rollingfile.h>
 #include <log4c/rollingpolicy.h>
@@ -77,435 +78,8 @@ static pthread_mutex_t gLoggingMutex = PTHREAD_MUTEX_INITIALIZER;
 /* Define the priority as -ve to avoid printing */
 #define LOG4C_PRIORITY_NONE     -1
 
-/* Pattern-based duplicate log detection */
-#define MAX_LOG_HASH_SIZE       256
-#define MAX_PATTERN_LENGTH      10  /* Support patterns up to length 10 */
-#define HISTORY_BUFFER_SIZE     20  /* Need 2*MAX_PATTERN_LENGTH to detect patterns */
-
-typedef struct {
-    char module_name[64];
-    char message[LOG4C_MSG_BUFFER_SIZE];
-    rdk_LogLevel level;
-    /* Fingerprint for fast comparison (message length + first 4 chars hash) */
-    unsigned int fingerprint;
-} log_entry_t;
-
-typedef struct {
-    /* History buffer to store recent messages (circular buffer) */
-    log_entry_t history[HISTORY_BUFFER_SIZE];
-    int history_head;    /* Next write position in circular buffer (0 to HISTORY_BUFFER_SIZE-1) */
-    int history_count;   /* Number of messages in history (0 to HISTORY_BUFFER_SIZE) */
-    
-    /* Pattern tracking state */
-    int pattern_length;         /* 0=inactive, 1-3=active pattern of that length */
-    int next_expected_index;    /* Which entry in pattern we expect next (0 to pattern_length-1) */
-    unsigned int repeat_count;  /* How many complete pattern cycles we've seen */
-    time_t first_timestamp;
-    time_t last_timestamp;
-    
-    /* Pattern storage (stores the detected pattern) */
-    log_entry_t pattern[MAX_PATTERN_LENGTH];
-} pattern_tracker_t;
-
-static pattern_tracker_t g_pattern_tracker = {0};
-static pthread_mutex_t g_duplicate_mutex = PTHREAD_MUTEX_INITIALIZER;
-static bool g_duplicate_suppression_initialized = false;
-
-/* Debug flag file - create this file to enable debug logging at runtime */
-#define DUPLICATE_DEBUG_FLAG_FILE "/tmp/rdk_logger_debug"
-
-/* Enable suppression flag - create this file in nvram to ENABLE pattern suppression on boot (persistent) */
-#define SUPPRESSION_ENABLE_FLAG_FILE "/nvram/rdk_logger_pattern_enable"
-
-/* Disable suppression flag - create this file to DISABLE pattern suppression at runtime */
-#define SUPPRESSION_DISABLE_FLAG_FILE "/tmp/rdk_logger_suppress_disable"
-
-/* Check if debug mode is enabled by checking for flag file */
-static inline bool is_duplicate_debug_enabled(void)
-{
-    static time_t last_check = 0;
-    static bool last_result = false;
-    time_t now = time(NULL);
-    
-    /* Check file existence every 5 seconds to avoid excessive file system calls */
-    if (now - last_check >= 5)
-    {
-        last_check = now;
-        last_result = (access(DUPLICATE_DEBUG_FLAG_FILE, F_OK) == 0);
-    }
-    return last_result;
-}
-
-/* Check if pattern suppression is enabled
- * Feature is DISABLED by default and only enabled if persistent flag file exists
- * Returns true if suppression should be active
- */
-static inline bool is_suppression_enabled(void)
-{
-    static time_t last_check = 0;
-    static bool last_result = false;
-    time_t now = time(NULL);
-    
-    /* Check file existence every 5 seconds to avoid excessive file system calls */
-    if (now - last_check >= 5)
-    {
-        last_check = now;
-        /* Enabled only if persistent enable flag exists in nvram */
-        last_result = (access(SUPPRESSION_ENABLE_FLAG_FILE, F_OK) == 0);
-    }
-    return last_result;
-}
-
-/* Check if pattern suppression is disabled at runtime
- * Returns true if suppression should be turned off (even if enabled)
- */
-static inline bool is_suppression_disabled(void)
-{
-    static time_t last_check = 0;
-    static bool last_result = false;
-    time_t now = time(NULL);
-    
-    /* Check file existence every 5 seconds to avoid excessive file system calls */
-    if (now - last_check >= 5)
-    {
-        last_check = now;
-        last_result = (access(SUPPRESSION_DISABLE_FLAG_FILE, F_OK) == 0);
-    }
-    return last_result;
-}
-
-#define DUP_DEBUG_LOG(fmt, ...) \
-    do { \
-        if (is_duplicate_debug_enabled()) { \
-            fprintf(stderr, "[DUP_SUPPRESS_DEBUG] " fmt "\n", ##__VA_ARGS__); \
-        } \
-    } while(0)
-
-/* Compute FNV-1a 32-bit fingerprint for fast comparison
- * Single-pass, no strlen needed, near-ideal collision resistance for 32 bits.
- * ~2 ops/byte (XOR + multiply), no tables, no alignment requirements.
- */
-static inline unsigned int compute_fingerprint(const char* message)
-{
-    if (!message)
-    {
-        return 0;
-    }
-    
-    unsigned int hash = 2166136261u; /* FNV offset basis */
-    const unsigned char* p = (const unsigned char*)message;
-    
-    while (*p)
-    {
-        hash ^= *p++;
-        hash *= 16777619u; /* FNV prime */
-    }
-    
-    return hash;
-}
-
-/* Check if two log entries match (module, level, and message)
- * Uses fingerprint for fast early rejection before expensive strcmp
- */
-static inline bool log_entries_match(const log_entry_t* a, const log_entry_t* b)
-{
-    /* Safety: NULL pointer checks */
-    if (!a || !b)
-    {
-        return false;
-    }
-    
-    /* Fast path: Check fingerprint first (O(1) rejection) */
-    if (a->fingerprint != b->fingerprint)
-    {
-        return false;
-    }
-    
-    /* Fast path: Check level (O(1)) */
-    if (a->level != b->level)
-    {
-        return false;
-    }
-    
-    /* Medium path: Check module name (typically short string) */
-    if (strcmp(a->module_name, b->module_name) != 0)
-    {
-        return false;
-    }
-    
-    /* Slow path: Full message comparison (only if fingerprint matched) */
-    return strcmp(a->message, b->message) == 0;
-}
-
-/* Flush pattern summary when pattern breaks
- * Only prints if actual repetitions occurred (repeat_count > 0)
- */
-static void flush_pattern_summary(log4c_category_t* cat, int log4cPriority)
-{
-    /* Safety: NULL check for category and validate pattern_length */
-    if (!cat || g_pattern_tracker.pattern_length <= 0 || 
-        g_pattern_tracker.pattern_length > MAX_PATTERN_LENGTH)
-    {
-        return;
-    }
-    
-    /* Only print summary if pattern actually repeated (repeat_count > 0)
-     * repeat_count = 0 means pattern was detected but never repeated, so nothing to report
-     */
-    if (g_pattern_tracker.repeat_count > 0)
-    {
-        double duration = difftime(g_pattern_tracker.last_timestamp, g_pattern_tracker.first_timestamp);
-        unsigned int suppressed_messages = g_pattern_tracker.repeat_count * g_pattern_tracker.pattern_length;
-        
-        DUP_DEBUG_LOG("Flushing pattern: length=%d, cycles=%u, total_suppressed=%u, duration=%.0f seconds",
-                     g_pattern_tracker.pattern_length, g_pattern_tracker.repeat_count, 
-                     suppressed_messages, duration);
-        
-        /* Simplified summary format without message text or timestamp */
-        if (g_pattern_tracker.pattern_length == 1)
-        {
-            /* For single messages, use simpler format */
-            log4c_category_log(cat, log4cPriority, 
-                              "[PATTERN] Message repeated %u times (%u messages suppressed for %.1f seconds)\n",
-                              g_pattern_tracker.repeat_count, suppressed_messages, duration);
-        }
-        else
-        {
-            /* For multi-message patterns, just show pattern length and counts */
-            log4c_category_log(cat, log4cPriority, 
-                              "[PATTERN] %d-message pattern repeated %u times (%u messages suppressed for %.1f seconds)\n",
-                              g_pattern_tracker.pattern_length,
-                              g_pattern_tracker.repeat_count, 
-                              suppressed_messages, duration);
-        }
-    }
-    
-    /* Reset pattern tracking state */
-    g_pattern_tracker.pattern_length = 0;
-    g_pattern_tracker.next_expected_index = 0;
-    g_pattern_tracker.repeat_count = 0;
-}
-
-/* Add a log entry to the circular history buffer */
-static void add_to_history(const char* module_name, const char* message, rdk_LogLevel level)
-{
-    /* Safety: Check for NULL message pointer */
-    if (!message)
-    {
-        DUP_DEBUG_LOG("WARNING: add_to_history called with NULL message");
-        return;
-    }
-    
-    int pos = g_pattern_tracker.history_head;
-    log_entry_t* entry = &g_pattern_tracker.history[pos];
-    const char* mod_name = (module_name && *module_name) ? module_name : "";
-    
-    strncpy(entry->module_name, mod_name, sizeof(entry->module_name) - 1);
-    entry->module_name[sizeof(entry->module_name) - 1] = '\0';
-    
-    strncpy(entry->message, message, sizeof(entry->message) - 1);
-    entry->message[sizeof(entry->message) - 1] = '\0';
-    
-    entry->level = level;
-    entry->fingerprint = compute_fingerprint(entry->message);
-    
-    /* Move head forward */
-    g_pattern_tracker.history_head = (pos + 1) % HISTORY_BUFFER_SIZE;
-    
-    /* Increment count if not full */
-    if (g_pattern_tracker.history_count < HISTORY_BUFFER_SIZE)
-    {
-        g_pattern_tracker.history_count++;
-    }
-}
-
-/* Get history entry at offset (0 = most recent, 1 = second most recent, etc.) */
-static log_entry_t* get_history(int offset)
-{
-    /* Safety: Validate offset bounds */
-    if (offset < 0 || offset >= g_pattern_tracker.history_count || offset >= HISTORY_BUFFER_SIZE)
-    {
-        return NULL;  /* Invalid offset or not enough history */
-    }
-    
-    /* Calculate position: most recent is head-1, second most recent is head-2, etc. */
-    int pos = (g_pattern_tracker.history_head - 1 - offset + HISTORY_BUFFER_SIZE) % HISTORY_BUFFER_SIZE;
-    return &g_pattern_tracker.history[pos];
-}
-
-/* Store a log entry in the pattern array at specified index */
-static void store_pattern_entry(int index, const log_entry_t* entry)
-{
-    /* Safety: Validate index and entry pointer */
-    if (index < 0 || index >= MAX_PATTERN_LENGTH || !entry)
-    {
-        DUP_DEBUG_LOG("ERROR: store_pattern_entry invalid params: index=%d, entry=%p", index, (void*)entry);
-        return;
-    }
-    
-    log_entry_t* dest = &g_pattern_tracker.pattern[index];
-    
-    strncpy(dest->module_name, entry->module_name, sizeof(dest->module_name) - 1);
-    dest->module_name[sizeof(dest->module_name) - 1] = '\0';
-    
-    strncpy(dest->message, entry->message, sizeof(dest->message) - 1);
-    dest->message[sizeof(dest->message) - 1] = '\0';
-    
-    dest->level = entry->level;
-    dest->fingerprint = entry->fingerprint;
-}
-
-/* Try to detect a repeating pattern from current message and history
- * Returns detected pattern length (1-10), or 0 if no pattern detected
- * current_entry: the new message that just arrived
- * 
- * Algorithm: For pattern length N, we need current to match history[N-1],
- * and history[i] to match history[i+N] for all i from 0 to N-1
- * 
- * Optimization: Check longer patterns first (they're less common, fail faster)
- * Uses fingerprint for O(1) mismatch detection before expensive strcmp
- */
-static int try_detect_pattern(const log_entry_t* current_entry)
-{
-    /* Safety: NULL check for current_entry */
-    if (!current_entry)
-    {
-        DUP_DEBUG_LOG("ERROR: try_detect_pattern called with NULL current_entry");
-        return 0;
-    }
-    
-    /* Try pattern length 1 first (most common case - single duplicate)
-     * Pattern: A A A ...
-     * Need: current matches history[0]
-     */
-    log_entry_t* h0 = get_history(0);
-    if (h0 && log_entries_match(current_entry, h0))
-    {
-        DUP_DEBUG_LOG("Pattern detected: length=1 (A A...)");
-        store_pattern_entry(0, h0);
-        return 1;
-    }
-    
-    /* Try patterns from length 2 to MAX_PATTERN_LENGTH
-     * Pattern length N requires 2*N messages in history
-     * Check from longer to shorter as longer patterns are rarer and fail faster
-     */
-    for (int pattern_len = MAX_PATTERN_LENGTH; pattern_len >= 2; pattern_len--)
-    {
-        /* Safety: Need at least 2*pattern_len messages to detect pattern */
-        int needed_history = 2 * pattern_len - 1; /* -1 because current is the 2*Nth message */
-        if (g_pattern_tracker.history_count < needed_history)
-        {
-            continue; /* Not enough history for this pattern length */
-        }
-        
-        /* Check if current matches history[pattern_len - 1] */
-        log_entry_t* first_match = get_history(pattern_len - 1);
-        if (!first_match || !log_entries_match(current_entry, first_match))
-        {
-            continue; /* Current doesn't match expected position, try next pattern length */
-        }
-        
-        /* Check if all other positions match: history[i] must match history[i + pattern_len] */
-        bool pattern_matches = true;
-        for (int i = 0; i < pattern_len - 1; i++)
-        {
-            log_entry_t* pos1 = get_history(i);
-            log_entry_t* pos2 = get_history(i + pattern_len);
-            
-            /* Safety: NULL checks */
-            if (!pos1 || !pos2)
-            {
-                pattern_matches = false;
-                break;
-            }
-            
-            if (!log_entries_match(pos1, pos2))
-            {
-                pattern_matches = false;
-                break; /* Mismatch found, not this pattern length */
-            }
-        }
-        
-        if (pattern_matches)
-        {
-            /* Pattern detected! Now verify uniqueness: all elements in pattern should be different
-             * This prevents false positives like detecting \"A A\" as length-2 pattern \"A A\"
-             * We want true alternating patterns, not repeated single messages
-             */
-            bool all_unique = true;
-            
-            /* Build pattern array for uniqueness check */
-            log_entry_t* pattern_elements[MAX_PATTERN_LENGTH];
-            for (int i = 0; i < pattern_len; i++)
-            {
-                int hist_idx = pattern_len - 1 - i;
-                pattern_elements[i] = get_history(hist_idx);
-                
-                /* Safety: NULL check */
-                if (!pattern_elements[i])
-                {
-                    all_unique = false;
-                    break;
-                }
-            }
-            
-            /* Check uniqueness only for pattern_len >= 2 */
-            if (all_unique && pattern_len >= 2)
-            {
-                for (int i = 0; i < pattern_len - 1; i++)
-                {
-                    for (int j = i + 1; j < pattern_len; j++)
-                    {
-                        if (log_entries_match(pattern_elements[i], pattern_elements[j]))
-                        {
-                            all_unique = false;
-                            break;
-                        }
-                    }
-                    if (!all_unique) break;
-                }
-            }
-            
-            if (!all_unique)
-            {
-                continue; /* Pattern elements not unique, try next length */
-            }
-            
-            /* Valid pattern found! Store it */
-            DUP_DEBUG_LOG("Pattern detected: length=%d", pattern_len);
-            
-            /* Store pattern for future matching
-             * Example: Messages A B A B (pattern length 2)
-             * History when B₄ arrives: get_history(0)=A₃, get_history(1)=B₂, get_history(2)=A₁
-             * Current: B₄
-             * Pattern detected: Every 2 positions repeats (A at even, B at odd)
-             * Next message should be A
-             * 
-             * We need to store the most recent complete cycle: [A₃, B₄]
-             * pattern[0] = A (so next message matches this)
-             * pattern[1] = B (so message after that matches this)
-             * 
-             * Storage: pattern[i] = get_history(pattern_len - 2 - i) for i < pattern_len-1
-             *          pattern[pattern_len-1] = current
-             */
-            for (int i = 0; i < pattern_len - 1; i++)
-            {
-                int hist_idx = pattern_len - 2 - i;  /* BUG FIX: was pattern_len - 1 - i */
-                log_entry_t* hist_entry = get_history(hist_idx);
-                if (hist_entry)
-                {
-                    store_pattern_entry(i, hist_entry);
-                }
-            }
-            store_pattern_entry(pattern_len - 1, current_entry);
-            
-            return pattern_len;
-        }
-    }
-    
-    return 0; /* No pattern detected */
-}
+/* Suppressor config — read once at init, immutable after (AC-4) */
+static rdk_suppressor_config_t g_suppressor_config;
 
 /**
  * Declare format/layout APIs.
@@ -765,6 +339,10 @@ void rdk_dbg_priv_init(void)
     if (NULL != legacy)
         (void) log4c_layout_set_type(legacy, &log4c_layout_type_comcast_dated);
 
+    /* Read RFC parameters once at startup (AC-4: value fixed for process lifetime) */
+    rdk_suppressor_read_config(&g_suppressor_config);
+    rdk_suppressor_init(&g_suppressor_config);
+
     return;
 }
 
@@ -1022,21 +600,6 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     log4c_category_t* cat = NULL;
     int prio = 0;
 
-    /* Initialize duplicate suppression feature flag on first call */
-    if (!g_duplicate_suppression_initialized)
-    {
-        /* Safety: Ensure global state is properly initialized (should be zero-initialized already) */
-        memset(&g_pattern_tracker, 0, sizeof(g_pattern_tracker));
-        
-        g_duplicate_suppression_initialized = true;
-        DUP_DEBUG_LOG("=== Pattern-Based Duplicate Suppression INITIALIZED ===");
-        DUP_DEBUG_LOG("Max pattern length: %d, Buffer size: %d bytes", 
-                     MAX_PATTERN_LENGTH, LOG4C_MSG_BUFFER_SIZE);
-        DUP_DEBUG_LOG("Feature DISABLED by default - to enable: touch %s", SUPPRESSION_ENABLE_FLAG_FILE);
-        DUP_DEBUG_LOG("To disable at runtime: touch %s", SUPPRESSION_DISABLE_FLAG_FILE);
-        DUP_DEBUG_LOG("To enable debug logs: touch %s", DUPLICATE_DEBUG_FLAG_FILE);
-    }
-
     /* Handling process request here. This is not a blocking call and it shall return immediately */
     rdk_dyn_log_process_pending_request();
 
@@ -1069,193 +632,34 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
         char logMsg[LOG4C_MSG_BUFFER_SIZE] = "";
         int n = 0;
         int log4cPriority = rdk_logLevel_to_log4c_priority(level);
-        time_t current_time = time(NULL);
-        bool is_duplicate = false;
-
-        /* Safety: Check if time() failed */
-        if (current_time == (time_t)(-1))
-        {
-            current_time = 0;  /* Fallback to epoch time if time() fails */
-            DUP_DEBUG_LOG("WARNING: time() call failed, using fallback time");
-        }
 
         va_copy(localArg, args);
         n = vsnprintf(logMsg, LOG4C_MSG_BUFFER_SIZE, format, localArg);
         va_end(localArg);
 
-        /* Pattern-based duplicate detection (only for messages that fit in buffer) */
-        /* IMPORTANT: Only detect patterns on messages that will actually be logged!
-         * Messages filtered by log level are completely invisible to pattern detection.
-         * This prevents misleading summaries for DEBUG messages when DEBUG level is disabled. */
-        /* Feature is disabled by default - only enabled if nvram flag exists */
-        /* Can be disabled at runtime even if enabled on boot */
+        /* AC-3: Only pass messages that will actually be logged to the suppressor.
+         * Messages filtered by the active log-level are completely invisible to
+         * pattern tracking — not stored, not advancing state, not triggering summaries. */
         bool will_be_logged = log4c_category_is_priority_enabled(cat, log4cPriority);
-        bool suppression_active = is_suppression_enabled() && !is_suppression_disabled();
-        
-        /* If suppression was just disabled, flush any active pattern before proceeding */
-        if (!suppression_active && will_be_logged)
+        bool is_duplicate = false;
+
+        if (will_be_logged && n > 0 && n <= LOG4C_MSG_BUFFER_SIZE)
         {
-            pthread_mutex_lock(&g_duplicate_mutex);
-            if (g_pattern_tracker.pattern_length > 0 && g_pattern_tracker.repeat_count > 0)
+            char summary[RDK_SUPPRESSOR_MSG_SIZE] = {0};
+            rdk_suppress_action_t action =
+                rdk_suppressor_process_message(module_name, logMsg, level, summary);
+
+            if (action == RDK_SUPPRESS_DROP)
             {
-                /* Pattern is active but suppression disabled - flush summary */
-                DUP_DEBUG_LOG("Suppression disabled, flushing active pattern");
-                pthread_mutex_unlock(&g_duplicate_mutex);
-                flush_pattern_summary(cat, log4cPriority);
-                pthread_mutex_lock(&g_duplicate_mutex);
-                g_pattern_tracker.pattern_length = 0;
-                g_pattern_tracker.next_expected_index = 0;
-                g_pattern_tracker.repeat_count = 0;
+                is_duplicate = true;
             }
-            pthread_mutex_unlock(&g_duplicate_mutex);
-        }
-        
-        /* Only process pattern detection for messages that will actually be logged */
-        if (will_be_logged && suppression_active && n <= LOG4C_MSG_BUFFER_SIZE && n > 0)
-        {
-            const char* mod_name = (module_name && *module_name) ? module_name : "";
-            log_entry_t current_entry;
-            
-            /* Prepare current log entry */
-            strncpy(current_entry.module_name, mod_name, sizeof(current_entry.module_name) - 1);
-            current_entry.module_name[sizeof(current_entry.module_name) - 1] = '\0';
-            strncpy(current_entry.message, logMsg, sizeof(current_entry.message) - 1);
-            current_entry.message[sizeof(current_entry.message) - 1] = '\0';
-            current_entry.level = level;
-            current_entry.fingerprint = compute_fingerprint(current_entry.message);
-            
-            pthread_mutex_lock(&g_duplicate_mutex);
-            
-            /* Check if we have an active pattern */
-            if (g_pattern_tracker.pattern_length > 0)
+            else if (action == RDK_SUPPRESS_SUMMARY)
             {
-                /* Safety: Validate pattern state before accessing arrays */
-                if (g_pattern_tracker.pattern_length > MAX_PATTERN_LENGTH ||
-                    g_pattern_tracker.next_expected_index < 0 ||
-                    g_pattern_tracker.next_expected_index >= g_pattern_tracker.pattern_length)
-                {
-                    /* Corrupted state - reset pattern tracking */
-                    DUP_DEBUG_LOG("ERROR: Corrupted pattern state detected, resetting (len=%d, idx=%d)",
-                                 g_pattern_tracker.pattern_length, g_pattern_tracker.next_expected_index);
-                    g_pattern_tracker.pattern_length = 0;
-                    g_pattern_tracker.next_expected_index = 0;
-                    g_pattern_tracker.repeat_count = 0;
-                    pthread_mutex_unlock(&g_duplicate_mutex);
-                }
-                else
-                {
-                /* Pattern is active - check if current message continues it */
-                int expected_idx = g_pattern_tracker.next_expected_index;
-                log_entry_t* expected_entry = &g_pattern_tracker.pattern[expected_idx];
-                
-                if (log_entries_match(&current_entry, expected_entry))
-                {
-                    /* Message matches pattern - suppress it */
-                    g_pattern_tracker.last_timestamp = current_time;
-                    
-                    /* Move to next position in pattern (pattern_length already validated above) */
-                    g_pattern_tracker.next_expected_index = (expected_idx + 1) % g_pattern_tracker.pattern_length;
-                    
-                    /* If we completed a full pattern cycle, increment repeat count */
-                    if (g_pattern_tracker.next_expected_index == 0)
-                    {
-                        /* Safety: Check for overflow (very unlikely but possible) */
-                        if (g_pattern_tracker.repeat_count < UINT_MAX)
-                        {
-                            g_pattern_tracker.repeat_count++;
-                        }
-                    }
-                    
-                    is_duplicate = true;
-                    DUP_DEBUG_LOG("SUPPRESSED: pattern continues (length=%d, cycles=%u, pos=%d->%d, msg='%.30s')",
-                                 g_pattern_tracker.pattern_length, g_pattern_tracker.repeat_count,
-                                 expected_idx, g_pattern_tracker.next_expected_index, logMsg);
-                    
-                    /* Add to history for potential future pattern changes */
-                    add_to_history(mod_name, logMsg, level);
-                    pthread_mutex_unlock(&g_duplicate_mutex);
-                }
-                else
-                {
-                    /* Pattern broken - flush summary and try to detect new pattern */
-                    bool need_flush = (g_pattern_tracker.repeat_count > 0);
-                    pthread_mutex_unlock(&g_duplicate_mutex);
-                    
-                    if (need_flush)
-                    {
-                        DUP_DEBUG_LOG("Pattern BROKEN, flushing summary");
-                        flush_pattern_summary(cat, log4cPriority);
-                    }
-                    
-                    /* Try to detect new pattern using current message and history (DON'T add to history yet) */
-                    pthread_mutex_lock(&g_duplicate_mutex);
-                    
-                    int detected_len = try_detect_pattern(&current_entry);
-                    
-                    if (detected_len > 0)
-                    {
-                        /* New pattern detected - initialize pattern tracking */
-                        g_pattern_tracker.pattern_length = detected_len;
-                        g_pattern_tracker.next_expected_index = 0; /* Next message should match pattern[0] */
-                        g_pattern_tracker.repeat_count = 0; /* No repetitions yet, just detected */
-                        g_pattern_tracker.first_timestamp = current_time;
-                        g_pattern_tracker.last_timestamp = current_time;
-                        
-                        /* Now add to history since we detected a pattern */
-                        add_to_history(mod_name, logMsg, level);
-                        
-                        /* DO NOT suppress this message - it broke the old pattern and should be logged */
-                        DUP_DEBUG_LOG("NEW pattern started: length=%d, msg='%.30s'", detected_len, logMsg);
-                        pthread_mutex_unlock(&g_duplicate_mutex);
-                    }
-                    else
-                    {
-                        /* No pattern detected - this is a normal message, add to history now */
-                        add_to_history(mod_name, logMsg, level);
-                        g_pattern_tracker.pattern_length = 0;
-                        g_pattern_tracker.next_expected_index = 0;
-                        g_pattern_tracker.repeat_count = 0;
-                        
-                        DUP_DEBUG_LOG("NO pattern: normal message, msg='%.30s'", logMsg);
-                        pthread_mutex_unlock(&g_duplicate_mutex);
-                    }
-                }
-                } /* end of else block for valid pattern state */
+                /* AC-2: Emit summary line before the current message (mutex already held) */
+                log4c_category_log(cat, log4cPriority, "%s", summary);
+                /* is_duplicate stays false — current message must be written */
             }
-            else
-            {
-                /* No active pattern - try to detect one (DON'T add to history yet) */
-                int detected_len = try_detect_pattern(&current_entry);
-                
-                if (detected_len > 0)
-                {
-                    /* Pattern detected! Initialize tracking and LOG this message (don't suppress)  */
-                    g_pattern_tracker.pattern_length = detected_len;
-                    g_pattern_tracker.next_expected_index = 0; /* Next message should match pattern[0] */
-                    g_pattern_tracker.repeat_count = 0; /* No repeats yet, just detected the pattern */
-                    g_pattern_tracker.first_timestamp = current_time;
-                    g_pattern_tracker.last_timestamp = current_time;
-                    /* is_duplicate stays false - log this message to complete 2nd visible cycle */
-                    
-                    /* Add to history since pattern detected */
-                    add_to_history(mod_name, logMsg, level);
-                    
-                    DUP_DEBUG_LOG("Pattern DETECTED: length=%d, will start suppressing 3rd cycle onward, msg='%.30s'", detected_len, logMsg);
-                    pthread_mutex_unlock(&g_duplicate_mutex);
-                }
-                else
-                {
-                    /* No pattern yet - output message normally and add to history */
-                    add_to_history(mod_name, logMsg, level);
-                    
-                    DUP_DEBUG_LOG("Added to history: msg='%.30s' (count=%d)", logMsg, g_pattern_tracker.history_count);
-                    pthread_mutex_unlock(&g_duplicate_mutex);
-                }
-            }
-        }
-        else if (n > LOG4C_MSG_BUFFER_SIZE)
-        {
-            DUP_DEBUG_LOG("SKIP tracking (message too large): size=%d bytes, module=%s", n, module_name ? module_name : "NULL");
+            /* RDK_SUPPRESS_LOG: write normally */
         }
 
         /* Only log if not a duplicate */

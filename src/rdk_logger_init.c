@@ -38,6 +38,7 @@
 #include "rdk_logger.h"
 #include "rdk_debug_priv.h"
 #include "rdk_dynamic_logger.h"
+#include "rdk_log_suppressor.h"
 
 static pthread_mutex_t gInitMutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -125,6 +126,7 @@ rdk_Error rdk_logger_deinit()
     if (isLogInited)
     {
         rdk_dyn_log_deinit();
+        rdk_suppressor_shutdown();
     }
     pthread_mutex_unlock(&gInitMutex);
 

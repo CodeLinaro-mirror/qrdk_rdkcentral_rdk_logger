@@ -19,8 +19,11 @@
 
 AM_CFLAGS = -pthread -Wall -Werror
 lib_LTLIBRARIES = librdkloggers.la
-librdkloggers_la_SOURCES = rdk_debug.c rdk_debug_priv.c rdk_dynamic_logger.c rdk_logger_init.c rdk_logger_milestone.c rdk_logger_onboard.c
-librdkloggers_la_CFLAGS  =  $(LOG4C_CFLAGS) $(GLIB_CFLAGS) $(SYSTEMD_CFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/src/include -DDEBUG_CONF_FILE="\"debug.ini\""
-librdkloggers_la_LDFLAGS = $(GLIB_LIBS)  $(LOG4C_LIBS) $(SYSTEMD_LIBS)
+librdkloggers_la_SOURCES = rdk_debug.c rdk_debug_priv.c rdk_dynamic_logger.c rdk_logger_init.c rdk_logger_milestone.c rdk_logger_onboard.c \
+                           rdk_log_suppressor_config.c \
+                           rdk_log_suppressor_engine.c \
+                           rdk_log_suppressor_summary.c
+librdkloggers_la_CFLAGS  =  $(LOG4C_CFLAGS) $(GLIB_CFLAGS) $(SYSTEMD_CFLAGS) $(SYSCFG_CFLAGS) -I$(top_srcdir)/include -I$(top_srcdir)/src/include -DDEBUG_CONF_FILE="\"debug.ini\""
+librdkloggers_la_LDFLAGS = $(GLIB_LIBS)  $(LOG4C_LIBS) $(SYSTEMD_LIBS) $(SYSCFG_LIBS)
 
 
