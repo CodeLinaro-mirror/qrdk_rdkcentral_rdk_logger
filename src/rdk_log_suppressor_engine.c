@@ -103,10 +103,18 @@ static void history_add(const char *module_name, const char *message, rdk_LogLev
     rdk_log_entry_t *e = &g_state.history[pos];
 
     const char *mod = (module_name && *module_name) ? module_name : "";
-    strncpy(e->module_name, mod, sizeof(e->module_name) - 1);
-    e->module_name[sizeof(e->module_name) - 1] = '\0';
-    strncpy(e->message, message, sizeof(e->message) - 1);
-    e->message[sizeof(e->message) - 1] = '\0';
+    size_t mod_len = strlen(mod);
+    if (mod_len >= sizeof(e->module_name))
+        mod_len = sizeof(e->module_name) - 1;
+    memcpy(e->module_name, mod, mod_len);
+    e->module_name[mod_len] = '\0';
+
+    size_t msg_len = strlen(message);
+    if (msg_len >= sizeof(e->message))
+        msg_len = sizeof(e->message) - 1;
+    memcpy(e->message, message, msg_len);
+    e->message[msg_len] = '\0';
+
     e->level       = level;
     e->fingerprint = compute_fingerprint(e->message);
 
@@ -135,13 +143,7 @@ static void pattern_store(int index, const rdk_log_entry_t *src)
     if (index < 0 || index >= (int)g_config.max_pattern_length || !src)
         return;
 
-    rdk_log_entry_t *dst = &g_state.pattern[index];
-    strncpy(dst->module_name, src->module_name, sizeof(dst->module_name) - 1);
-    dst->module_name[sizeof(dst->module_name) - 1] = '\0';
-    strncpy(dst->message, src->message, sizeof(dst->message) - 1);
-    dst->message[sizeof(dst->message) - 1] = '\0';
-    dst->level       = src->level;
-    dst->fingerprint = src->fingerprint;
+    g_state.pattern[index] = *src;  /* struct copy — src is already well-formed */
 }
 
 /* -----------------------------------------------------------------------
@@ -303,13 +305,21 @@ rdk_suppress_action_t rdk_suppressor_process_message(
     if (!g_initialized || !g_config.enabled || !message)
         return RDK_SUPPRESS_LOG;
 
-    /* Prepare current entry */
+    /* Prepare current entry — use memcpy to avoid strncpy zero-fill overhead */
     rdk_log_entry_t cur;
     const char *mod = (module_name && *module_name) ? module_name : "";
-    strncpy(cur.module_name, mod, sizeof(cur.module_name) - 1);
-    cur.module_name[sizeof(cur.module_name) - 1] = '\0';
-    strncpy(cur.message, message, sizeof(cur.message) - 1);
-    cur.message[sizeof(cur.message) - 1] = '\0';
+    size_t mod_len = strlen(mod);
+    if (mod_len >= sizeof(cur.module_name))
+        mod_len = sizeof(cur.module_name) - 1;
+    memcpy(cur.module_name, mod, mod_len);
+    cur.module_name[mod_len] = '\0';
+
+    size_t msg_len = strlen(message);
+    if (msg_len >= sizeof(cur.message))
+        msg_len = sizeof(cur.message) - 1;
+    memcpy(cur.message, message, msg_len);
+    cur.message[msg_len] = '\0';
+
     cur.level       = level;
     cur.fingerprint = compute_fingerprint(cur.message);
 
@@ -346,7 +356,8 @@ rdk_suppress_action_t rdk_suppressor_process_message(
                     if (g_state.repeat_count < UINT_MAX)
                         g_state.repeat_count++;
                 }
-                history_add(mod, message, level);
+                /* Skip history_add on DROP path — suppressed messages never
+                 * contribute to detecting a new pattern (saves ~1KB per drop) */
                 pthread_mutex_unlock(&g_state.mutex);
                 return RDK_SUPPRESS_DROP;
             }

@@ -629,7 +629,7 @@ void rdk_dbg_priv_log_msg(rdk_LogLevel level, const char *module_name, const cha
     if(cat)
     {
         va_list localArg;
-        char logMsg[LOG4C_MSG_BUFFER_SIZE] = "";
+        char logMsg[LOG4C_MSG_BUFFER_SIZE];
         int n = 0;
         int log4cPriority = rdk_logLevel_to_log4c_priority(level);
 
