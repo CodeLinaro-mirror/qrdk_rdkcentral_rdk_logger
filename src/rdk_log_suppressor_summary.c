@@ -58,7 +58,7 @@ void rdk_suppressor_format_summary(
         /* AC-2: single-message format */
         snprintf(out, out_sz,
                  "[SUPPRESS] \"%s\" repeated %u times "
-                 "(%u messages suppressed for %.0f seconds)",
+                 "(%u messages suppressed for %.0f seconds)\n",
                  state->pattern[0].message,
                  state->repeat_count,
                  suppressed,
@@ -69,7 +69,7 @@ void rdk_suppressor_format_summary(
         /* AC-2: multi-message format */
         snprintf(out, out_sz,
                  "[SUPPRESS] %d-message pattern repeated %u times "
-                 "(%u messages suppressed for %.0f seconds)",
+                 "(%u messages suppressed for %.0f seconds)\n",
                  state->pattern_length,
                  state->repeat_count,
                  suppressed,
