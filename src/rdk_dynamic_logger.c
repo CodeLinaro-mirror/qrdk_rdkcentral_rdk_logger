@@ -35,6 +35,7 @@
 #include <sys/un.h>
 
 #include "rdk_dynamic_logger.h"
+#include "rdk_dynamic_logger_parser.h"
 #include "rdk_debug_priv.h"
 
 
@@ -58,40 +59,53 @@ static char * rdk_dyn_log_logLevelToString(rdk_LogLevel log_level)
     return "NONE";
 }
 
-static void rdk_dyn_log_validate_component_name(const rdk_dynamic_log_message_t *message)
+
+static void rdk_dyn_log_validate_component_name(
+        const unsigned char *buf, size_t length)
 {
-    if (0 != memcmp(message->signature, RDK_DYNAMIC_LOG_SIGNATURE, RDK_DYNAMIC_LOG_SIGNATURE_LEN)) {
+    unsigned char log_level = 0;
+    char comp_name[RDK_DYNAMIC_LOG_COMPONENT_NAME_MAX + 1] = {0};
+    rdk_LogLevel loggingLevel;
+
+    if (!rdk_dyn_log_parse_request(
+            buf,
+            length,
+            __progname,
+            comp_name,
+            sizeof(comp_name),
+            &log_level))
         return;
-    }
 
-    if (__progname == NULL || 0 != strcmp(message->app_name, __progname)) {
-        /* The received msg is not intended for this process */
-        return;
-    }
+    loggingLevel = (rdk_LogLevel)log_level;
 
-    rdk_LogLevel loggingLevel = (rdk_LogLevel) message->log_level;
-
-    if((loggingLevel >= RDK_LOG_FATAL) && (loggingLevel <= RDK_LOG_NONE))
+    if ((loggingLevel >= RDK_LOG_FATAL) &&
+            (loggingLevel <= RDK_LOG_NONE))
     {
-        rdk_dbg_priv_set_level(message->component_name, loggingLevel);
-        fprintf(stderr, "Log level change request to %s (%u) for the component %s, is success\n", rdk_dyn_log_logLevelToString(loggingLevel), loggingLevel, message->component_name);
+        rdk_dbg_priv_set_level(comp_name, loggingLevel);
+        fprintf(
+            stderr,
+            "Log level change request to %s (%u) for the component %s, is success\n",
+            rdk_dyn_log_logLevelToString(loggingLevel),
+            loggingLevel,
+            comp_name);
     }
     else
     {
-        fprintf(stderr, "Log level change request with Invalid input (%u)\n", loggingLevel);
+        fprintf(
+            stderr,
+            "Log level change request with Invalid input (%u)\n",
+            loggingLevel);
     }
-
-    return;
 }
 
 void rdk_dyn_log_process_pending_request()
 {
-    rdk_dynamic_log_message_t message = {0};
-    struct sockaddr_un sender_addr;
+    unsigned char buf[
+        RDK_DYNAMIC_LOG_APP_NAME_MAX +
+        RDK_DYNAMIC_LOG_COMPONENT_NAME_MAX +
+        8] = {0};
     struct timeval tv;
     int numbytes, ret;
-    size_t app_len, comp_len, comp_len_offset;
-    socklen_t addr_len;
     fd_set rfds;
 
     if (pthread_mutex_trylock(&g_dl_request_mutex) != 0)
@@ -106,43 +120,54 @@ void rdk_dyn_log_process_pending_request()
         return;
     }
 
-    if(-1 == g_dl_socket) {
+    if (g_dl_socket == -1) {
         pthread_mutex_unlock(&g_dl_request_mutex);
         return;
     }
 
-    while(1) {
+    while (1) {
         FD_ZERO(&rfds);
         FD_SET(g_dl_socket, &rfds);
-        addr_len = sizeof(sender_addr);
 
         tv.tv_sec = 0;
         tv.tv_usec = 0;
-        ret = select(g_dl_socket+1,&rfds,NULL,NULL,&tv);
-        if(ret <= 0)
+
+        ret = select(g_dl_socket + 1, &rfds, NULL, NULL, &tv);
+        if (ret <= 0)
             break;
 
-        numbytes = recvfrom(g_dl_socket, &message, sizeof(message), MSG_DONTWAIT | MSG_TRUNC, (struct sockaddr *)&sender_addr, &addr_len);
+        numbytes = recvfrom(
+            g_dl_socket,
+            buf,
+            sizeof(buf),
+            MSG_DONTWAIT | MSG_TRUNC,
+            NULL,
+            NULL);
+
         if (numbytes == -1) {
-            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
                 break;
-            fprintf(stderr,"%s recvfrom failed %s\n",__func__,strerror(errno));
+
+            fprintf(
+                stderr,
+                "%s recvfrom failed %s\n",
+                __func__,
+                strerror(errno));
             pthread_mutex_unlock(&g_dl_request_mutex);
             return;
         }
 
-        if ((numbytes != (int)sizeof(message))  ||
-            (memchr(message.app_name, '\0', sizeof(message.app_name)) == NULL) ||
-            (memchr(message.component_name, '\0', sizeof(message.component_name)) == NULL))
+        if ((size_t)numbytes > sizeof(buf))
             continue;
 
-        if (0 == memcmp(message.signature, RDK_DYNAMIC_LOG_SIGNATURE, RDK_DYNAMIC_LOG_SIGNATURE_LEN))
-        {
-            rdk_dyn_log_validate_component_name(&message);
-        }
+        rdk_dyn_log_validate_component_name(
+            buf,
+            (size_t)numbytes);
     }
+
     pthread_mutex_unlock(&g_dl_request_mutex);
 }
+
 
 void rdk_dyn_log_init()
 {
