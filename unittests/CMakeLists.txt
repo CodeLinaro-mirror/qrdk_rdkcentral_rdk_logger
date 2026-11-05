@@ -25,7 +25,10 @@ find_package(GTest REQUIRED)
 enable_testing()
 
 add_executable(rdk_dynamic_logger_parser_test rdkDynamicLoggerParserTest.c)
-target_include_directories(rdk_dynamic_logger_parser_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../src/include)
+target_include_directories(rdk_dynamic_logger_parser_test PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/include
+)
 target_compile_options(rdk_dynamic_logger_parser_test PRIVATE -Wall -Wextra -Werror)
 add_test(NAME rdk_dynamic_logger_parser_test COMMAND rdk_dynamic_logger_parser_test)
 
