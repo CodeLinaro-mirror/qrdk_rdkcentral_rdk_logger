@@ -328,19 +328,19 @@ The `rdklogctrl` command-line utility allows runtime modification of log levels:
 
 ```bash
 # Set log level for a module
-rdklogctrl <app_name> <module_name> <log_level>
+rdklogctrl <pid> <module_name> <log_level>
 
 # Examples
-rdklogctrl myapp LOG.RDK.NETWORK DEBUG
-rdklogctrl receiver LOG.RDK.AUDIO INFO
-rdklogctrl player LOG.RDK.VIDEO ERROR
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.NETWORK DEBUG
+rdklogctrl "$(pidof -s receiver)" LOG.RDK.AUDIO INFO
+rdklogctrl "$(pidof -s player)" LOG.RDK.VIDEO ERROR
 
 # Disable specific log level (using ~ prefix)
-rdklogctrl myapp LOG.RDK.NETWORK ~DEBUG
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.NETWORK ~DEBUG
 ```
 
 **Parameters**:
-- `app_name`: Process name as shown by `ps` command
+- `pid`: Process ID of the target application; `rdklogctrl` resolves its name from `/proc`
 - `module_name`: Module name (must match debug.ini format)
 - `log_level`: FATAL, ERROR, WARN, NOTICE, INFO, DEBUG, TRACE, NONE
 
@@ -401,19 +401,19 @@ For backward compatibility with legacy RDK components:
 
 **Usage**:
 ```bash
-rdklogctrl <app_name> <module_name> <log_level>
+rdklogctrl <pid> <module_name> <log_level>
 ```
 
 **Examples**:
 ```bash
 # Enable debug logging for network module
-rdklogctrl receiver LOG.RDK.NETWORK DEBUG
+rdklogctrl "$(pidof -s receiver)" LOG.RDK.NETWORK DEBUG
 
 # Disable all logging for test module  
-rdklogctrl myapp LOG.RDK.TEST NONE
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.TEST NONE
 
 # Turn off only error logs (keep others)
-rdklogctrl player LOG.RDK.AUDIO ~ERROR
+rdklogctrl "$(pidof -s player)" LOG.RDK.AUDIO ~ERROR
 ```
 
 ### rdklogmilestone - Milestone Utility
@@ -762,4 +762,3 @@ int main() {
 ---
 
 **Note**: This documentation covers RDK Logger API version as implemented in the current codebase. For the most up-to-date information, refer to the source code and header files.
-

@@ -76,15 +76,18 @@ LOG.RDK.TEST=NONE
 ### rdklogctrl Command
 ```bash
 # Set log level for module
-rdklogctrl <process_name> <module_name> <level>
+rdklogctrl <pid> <module_name> <level>
+
+# Example for PID 1122
+rdklogctrl 1122 LOG.RDK.RTMESS DEBUG
 
 # Examples
-rdklogctrl myapp LOG.RDK.NETWORK DEBUG
-rdklogctrl receiver LOG.RDK.AUDIO INFO
-rdklogctrl player LOG.RDK.VIDEO ERROR
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.NETWORK DEBUG
+rdklogctrl "$(pidof -s receiver)" LOG.RDK.AUDIO INFO
+rdklogctrl "$(pidof -s player)" LOG.RDK.VIDEO ERROR
 
 # Disable specific level (~ prefix)
-rdklogctrl myapp LOG.RDK.NETWORK ~DEBUG
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.NETWORK ~DEBUG
 
 # Available levels
 FATAL ERROR WARN NOTICE INFO DEBUG TRACE NONE
@@ -307,7 +310,7 @@ int main() {
 APP_PID=$!
 
 # Change log level
-rdklogctrl myapp LOG.RDK.TEST DEBUG
+rdklogctrl "$APP_PID" LOG.RDK.TEST DEBUG
 
 # Check if change took effect (application should show more logs)
 

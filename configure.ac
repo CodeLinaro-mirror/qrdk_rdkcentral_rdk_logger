@@ -20,7 +20,7 @@
 dnl                                               -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(rdklogger, [3.1.0])
+AC_INIT(rdklogger, [3.2.0])
 AC_CONFIG_SRCDIR([src])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_MACRO_DIR([cfg])

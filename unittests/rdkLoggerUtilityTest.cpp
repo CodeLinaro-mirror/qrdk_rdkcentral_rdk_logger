@@ -24,6 +24,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <fstream>
+#include <iterator>
+#include <string>
 #include "rdk_logger.h"
 #include "gtest_app.h"
 #include "rdk_logger_milestone.h"
@@ -58,3 +61,44 @@ TEST(RDKLoggerUtilityTest, LogOnboardDifferentLevels) {
 
     // Should work correctly
 }
+
+  TEST(RDKLoggerUtilityTest, LogOnboardHandlesCRLFInput) {
+    char conf_file[] = GTEST_DEBUG_INI_FILE;
+    ASSERT_EQ(rdk_logger_init(conf_file), RDK_SUCCESS);
+    if (access("/nvram/.device_onboarded", F_OK) == 0 ||
+        access("/nvram/DISABLE_ONBOARD_LOGGING", F_OK) == 0)
+        GTEST_SKIP() << "Onboarding logging is disabled by a device gate";
+
+    const std::string token = "M004_" + std::to_string(static_cast<long>(getpid()));
+    const char* onboard_log_paths[] = {
+      "/tmp/rdk_logger_onboarding_test.log",
+      "/rdklogs/logs/OnBoardingLog.txt.0",
+      "/opt/logs/OnBoardingLog.txt.0",
+      "ON"
+    };
+    testing::internal::CaptureStdout();
+    rdk_logger_log_onboard("LOG.RDK.ONBOARD\n[FATAL] forged module",
+                            "Onboard message %s\r\n[FATAL] forged record %s\n",
+                            token.c_str(), token.c_str());
+    fflush(stdout);
+    std::string output = testing::internal::GetCapturedStdout();
+    if (output.find(token) == std::string::npos) {
+      for (const char* path : onboard_log_paths) {
+        std::ifstream onboard_log(path);
+        std::string contents((std::istreambuf_iterator<char>(onboard_log)),
+                   std::istreambuf_iterator<char>());
+        if (contents.find(token) != std::string::npos) {
+          output = contents;
+          break;
+        }
+        }
+    }
+
+    ASSERT_NE(output.find("Onboard message " + token), std::string::npos)
+      << "Onboarding output was not captured; checked stdout and configured log paths: "
+      << output;
+    EXPECT_EQ(output.find("\n[FATAL] forged module"), std::string::npos)
+      << "Module input created a forged record: " << output;
+    EXPECT_EQ(output.find("\n[FATAL] forged record " + token), std::string::npos)
+      << "Message input created a forged record: " << output;
+  }

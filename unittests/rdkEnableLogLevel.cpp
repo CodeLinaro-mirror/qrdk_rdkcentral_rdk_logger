@@ -133,3 +133,21 @@ TEST(rdkEnableLogLevel, ONLYNOTICE_log_enabled)
 //  ret = rdk_logger_deinit();
 //  ASSERT_EQ(ret,RDK_SUCCESS)<<"rdk_logger_deinit failed with return:\""<<ret<<"\" "<<"DEBUG_CONF_FILE is not found";
 }
+
+TEST(rdkEnableLogLevel, GetLogLevel)
+{
+  char conf_file[] = GTEST_DEBUG_INI_FILE;
+  ASSERT_EQ(rdk_logger_init(conf_file), RDK_SUCCESS);
+
+  rdk_LogLevel level = RDK_LOG_NONE;
+  ASSERT_TRUE(rdk_logger_set_logLevel("LOG.RDK.GET_LEVEL", RDK_LOG_INFO));
+  ASSERT_TRUE(rdk_logger_get_logLevel("LOG.RDK.GET_LEVEL", &level));
+  EXPECT_EQ(level, RDK_LOG_INFO);
+
+  ASSERT_TRUE(rdk_logger_set_logLevel("LOG.RDK.GET_LEVEL", RDK_LOG_NONE));
+  ASSERT_TRUE(rdk_logger_get_logLevel("LOG.RDK.GET_LEVEL", &level));
+  EXPECT_EQ(level, RDK_LOG_NONE);
+
+  EXPECT_FALSE(rdk_logger_get_logLevel(NULL, &level));
+  EXPECT_FALSE(rdk_logger_get_logLevel("LOG.RDK.GET_LEVEL", NULL));
+}

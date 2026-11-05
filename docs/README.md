@@ -4,7 +4,7 @@ RDK Logger is a general-purpose logging framework for RDK middleware components 
 
 On video platforms, RDK Logger serves as the logging backbone for middleware components such as the application manager, media pipeline, compositor, and Thunder plugin ecosystem. On broadband platforms, it fulfills the same role for protocol agents, platform management, and connectivity services. The same library binary and configuration model apply across all platform stacks, with the module naming convention (`LOG.RDK.<MODULE>`) providing the separation boundary between subsystems.
 
-RDK Logger operates as a shared library (`librdkloggers`) that client processes link against. It uses Log4C as its underlying backend for log routing and formatting, and exposes a compact C API centered on the `RDK_LOG` macro. A companion command-line utility (`rdklogctrl`) communicates with running processes over a local UDP socket to change log levels at runtime without requiring a restart.
+RDK Logger operates as a shared library (`librdkloggers`) that client processes link against. It uses Log4C as its underlying backend for log routing and formatting, and exposes a compact C API centered on the `RDK_LOG` macro. A companion command-line utility (`rdklogctrl`) communicates with running processes over a local unix socket to change log levels at runtime without requiring a restart.
 
 ```mermaid
 flowchart LR
@@ -31,7 +31,7 @@ class SysLog VL
 - **Unified Logging API**: Provides the `RDK_LOG(level, module, format, ...)` macro as a single, consistent logging interface used by all RDK middleware components, replacing direct use of `printf`, `fprintf`, or `syslog`.
 - **Module-Specific Log Level Control**: Maintains independent log level configuration per component using the `LOG.RDK.<MODULE>` naming convention. Modules not explicitly configured inherit the default level set under `LOG.RDK.DEFAULT`.
 - **Three-Tier Configuration Override**: Resolves the active configuration file at startup using a priority chain — `/opt/debug.ini` (highest) → `/nvram/debug.ini` → `/etc/debug.ini` (default) — enabling field-level overrides without modifying the base system image.
-- **Runtime Log Level Control**: The `rdklogctrl` utility sends UDP control messages to running processes on port 12035, enabling immediate log level changes per module without process restart.
+- **Runtime Log Level Control**: The `rdklogctrl` utility sends control messages to specific running process, enabling immediate log level changes per module without process restart.
 - **Multiple Output Destinations**: Supports console (`stdout`/`stderr`), syslog daemon, systemd journal (when available), and rolling file appenders through a pluggable Log4C backend.
 - **Configurable Log Formats**: Six log message layouts are available, ranging from plain text to detailed formats including timestamps, thread IDs, module name, and log level.
 - **Milestone Logging**: Provides a dedicated `logMilestone()` API that records timestamped system lifecycle events (using `CLOCK_MONOTONIC_RAW`) to a dedicated milestones log file, separate from general component logs.
@@ -43,7 +43,7 @@ class SysLog VL
 
 ## Design
 
-RDK Logger follows a modular library architecture where the logging policy, output routing, and runtime control concerns are separated into distinct subsystems. The public API layer provides the `RDK_LOG` macro and initialization functions. A private implementation layer (`rdk_debug_priv.c`) handles Log4C backend integration, configuration parsing, and the actual message dispatch. A runtime control layer (`rdk_dynamic_logger.c`) implements a non-blocking UDP listener that processes log level change requests from the `rdklogctrl` utility. This separation allows the logging path to remain lightweight while control plane operations are handled independently.
+RDK Logger follows a modular library architecture where the logging policy, output routing, and runtime control concerns are separated into distinct subsystems. The public API layer provides the `RDK_LOG` macro and initialization functions. A private implementation layer (`rdk_debug_priv.c`) handles Log4C backend integration, configuration parsing, and the actual message dispatch. A runtime control layer (`rdk_dynamic_logger.c`) implements a non-blocking unix socket listener that processes log level change requests from the `rdklogctrl` utility. This separation allows the logging path to remain lightweight while control plane operations are handled independently.
 
 The design prioritizes minimal overhead on the fast logging path. Level checks are performed first, and if the level is disabled for the given module, the call returns immediately without any formatting or I/O. Message formatting, timestamp generation, and backend dispatch only occur for messages that pass the level check. The Log4C backend manages output routing, file rotation, and integration with system logging facilities.
 
@@ -51,7 +51,7 @@ Northbound integration is achieved through the `rdk_logger.h` public header and 
 
 Southbound integration is handled by the Log4C library. RDK Logger registers custom layout types (formatters) and custom appender types (output backends) with Log4C before calling `log4c_init()`. The `log4crc` XML file controls how Log4C wires these layouts and appenders to log categories. This design allows the output format and destination to be changed by modifying `log4crc` rather than recompiling.
 
-The runtime control IPC mechanism uses a UDP socket (port 12035, loopback broadcast `127.255.255.255`). When `rdklogctrl` is invoked, it constructs a structured binary message with a `"COMC"` signature, the target process name, the module name, and the new log level, then broadcasts it. Each running process that has initialized RDK Logger maintains a non-blocking UDP socket and calls `rdk_dyn_log_process_pending_request()` to drain any pending control messages. The receiving side validates the signature, verifies the target process name against `__progname`, and applies the level change atomically.
+The runtime control IPC mechanism uses a unix socket. When `rdklogctrl` is invoked, it constructs a structured binary message with a `"COMC"` signature, the target process name, the module name, and the new log level, then broadcasts it. Each running process that has initialized RDK Logger maintains a non-blocking UNIX socket and calls `rdk_dyn_log_process_pending_request()` to drain any pending control messages. The receiving side validates the signature, verifies the target process name against `__progname`, and applies the level change atomically.
 
 Data persistence for standard log messages is delegated to Log4C appenders configured in `log4crc` (e.g., console/syslog/journal or Log4C file/rolling-file appenders). RDK Logger itself does not maintain a separate configuration cache beyond the Log4C category priority state applied at startup. Milestone log entries are persisted directly to a flat log file via `fopen`/`fprintf`. Onboarding log entries are appended to a separate file path and are suppressed once the device is marked as provisioned.
 
@@ -75,7 +75,7 @@ flowchart TD
         end
 
         subgraph DynControl["Runtime Control (rdk_dynamic_logger.c)"]
-            UDPListener["UDP Listener\nPort 12035\nrdk_dyn_log_process_pending_request"]
+            SocketListener["unix Socket Listener\nrdk_dyn_log_process_pending_request"]
         end
 
         subgraph Subsystems["Logging Subsystems"]
@@ -92,12 +92,12 @@ flowchart TD
     end
 
     subgraph Control["Runtime Control Tool"]
-        rdklogctrl["rdklogctrl utility\nUDP port 12035"]
+        rdklogctrl["rdklogctrl utility\nunix Socket"]
     end
 
     API --> Init
     Init --> ConfigParser
-    Init --> UDPListener
+    Init --> SocketListener
     API --> LevelFilter
     LevelFilter --> Formatter
     Formatter --> Appenders
@@ -105,8 +105,8 @@ flowchart TD
     Log4C --> Console
     Log4C --> SysLog
     Log4C --> FileFS
-    UDPListener --> ConfigParser
-    rdklogctrl -->|UDP broadcast| UDPListener
+    SocketListener --> ConfigParser
+    rdklogctrl -->|Socket unicast| SocketListener
     Milestone --> FileFS
     Onboard --> FileFS
 ```
@@ -116,9 +116,9 @@ flowchart TD
 - **Threading Architecture**: Multi-threaded (library — runs in the context of the client process threads)
 - **Main Thread / Client Application Thread**: Issues `RDK_LOG()` calls from arbitrary client threads. Mutex (`gLoggingMutex`) serializes concurrent log message dispatch through the Log4C backend.
 - **Initialization Thread**: The first caller of `rdk_logger_init()` acquires `gInitMutex` to run the one-time initialization sequence. Subsequent callers find `isLogInited = true` and return immediately under the same mutex.
-- **UDP Control Path**: The runtime control mechanism is non-blocking; `rdk_dyn_log_process_pending_request()` uses `select()` with a zero timeout and is called from within the client process's own event loop or logging path. The runtime control path requires no dedicated listener thread.
+- **Control Path**: The runtime control mechanism is non-blocking; `rdk_dyn_log_process_pending_request()` uses `select()` with a zero timeout and is called from within the client process's own event loop or logging path. The runtime control path requires no dedicated listener thread.
 - **Synchronization**: Two `pthread_mutex_t` instances are used — `gInitMutex` guards the initialization state flag and `rdk_logger_ext_init` path; `gLoggingMutex` guards extended initialization of per-module appenders. The main logging path relies on Log4C's own thread safety for category priority checks.
-- **Async / Event Dispatch**: All log messages are written synchronously within the calling thread. Runtime control updates apply immediately after `rdk_dbg_priv_log_reconfig()` updates the Log4C category priority.
+- **Async / Event Dispatch**: All log messages are written synchronously within the calling thread. Runtime control updates apply immediately after `rdk_dbg_priv_set_level()` updates the Log4C category priority.
 
 ### Platform and Integration Requirements
 
@@ -132,7 +132,7 @@ flowchart TD
 
 #### Initialization to Active State
 
-The component transitions through the following states during its lifecycle: **Initializing** (mutex acquired, check `isLogInited` flag) → **LoadingConfig** (parse the selected debug.ini, populate Log4C category priorities) → **InitializingBackend** (register custom layouts and appenders, call `log4c_init()`) → **StartingDynamicControl** (open UDP socket on port 12035, bind to `127.255.255.255`) → **Active** (processing `RDK_LOG()` calls, servicing runtime control messages) → **Shutdown** (close UDP socket, release resources).
+The component transitions through the following states during its lifecycle: **Initializing** (mutex acquired, check `isLogInited` flag) → **LoadingConfig** (parse the selected debug.ini, populate Log4C category priorities) → **InitializingBackend** (register custom layouts and appenders, call `log4c_init()`) → **StartingDynamicControl**  → **Active** (processing `RDK_LOG()` calls, servicing runtime control messages) → **Shutdown** (close unix socket, release resources).
 
 ```mermaid
 sequenceDiagram
@@ -170,20 +170,20 @@ sequenceDiagram
     PrivCore-->>Logger: RDK_SUCCESS
 
     Logger->>DynLog: rdk_dyn_log_init()
-    DynLog->>DynLog: socket(AF_INET, SOCK_DGRAM) bind port 12035
-    DynLog-->>Logger: UDP listener ready
+    DynLog->>DynLog: socket(AF_UNIX, SOCK_DGRAM) bind /tmp/.logger_<process_name>.<pid>
+    DynLog-->>Logger: Socket listener ready
 
     Note over Logger: isLogInited = true
     Logger-->>App: RDK_SUCCESS (Active)
 
     loop Runtime
         App->>Logger: RDK_LOG(level, module, format, ...)
-        Logger->>PrivCore: rdk_dbg_priv_log_msg()
+        Logger->>PrivCore: rdk_dbg_priv_log()
     end
 
     App->>Logger: rdk_logger_deinit()
     Logger->>DynLog: rdk_dyn_log_deinit()
-    DynLog->>DynLog: close UDP socket
+    DynLog->>DynLog: close unix socket
     Logger-->>App: RDK_SUCCESS
 ```
 
@@ -191,7 +191,7 @@ sequenceDiagram
 
 **State Change Triggers:**
 
-- **Module Log Level Change via rdklogctrl**: When a valid UDP control message is received matching the process name and a recognized module name, `rdk_dbg_priv_log_reconfig()` updates the Log4C category priority for that module immediately. Subsequent `RDK_LOG()` calls for that module reflect the new level without any restart.
+- **Module Log Level Change via rdklogctrl**: When a valid control message is received matching the process name and a recognized module name, `rdk_dbg_priv_set_level()` updates the Log4C category priority for that module immediately. Subsequent `RDK_LOG()` calls for that module reflect the new level without any restart.
 - **Invalid Control Message**: Messages that fail signature validation (`"COMC"` check) or have a mismatched process name are discarded; out-of-range log levels are rejected and reported to `stderr` by `rdk_dyn_log_validate_component_name()`.
 - **Configuration File Not Found**: If the selected debug.ini cannot be opened, `rdk_logger_parse_config()` returns `RDK_FAILURE`, initialization of RDK Logger fails, and `isLogInited` remains false. Log messages issued before a successful initialization are suppressed.
 
@@ -226,7 +226,7 @@ sequenceDiagram
     PrivCore->>Log4C: log4c_category_set_priority per module
     PrivCore-->>Logger: RDK_SUCCESS
     Logger->>DynLog: rdk_dyn_log_init()
-    DynLog->>DynLog: socket and bind on port 12035
+    DynLog->>DynLog: socket and bind on /tmp/.logger.<process_name>.<pid>
     DynLog-->>Logger: Socket ready
     Logger->>Logger: Set isLogInited true, release gInitMutex
     Logger-->>App: RDK_SUCCESS
@@ -234,21 +234,21 @@ sequenceDiagram
 
 #### Request Processing Call Flow
 
-`RDK_LOG()` is an alias for `rdk_logger_msg_printf()`. On every invocation the module and format pointer are validated before calling `rdk_dbg_priv_log_msg()`. Inside `rdk_dbg_priv_log_msg()`, the Log4C category priority check acts as the fast-path filter: if the level is not enabled for the module, the function returns without any formatting or I/O.
+`RDK_LOG()` is an alias for `rdk_logger_msg_printf()`. On every invocation the module and format pointer are validated before calling `rdk_dbg_priv_log()`. Inside `rdk_dbg_priv_log()`, the Log4C category priority check acts as the fast-path filter: if the level is not enabled for the module, the function returns without any formatting or I/O.
 
 ```mermaid
 sequenceDiagram
     participant Client as RDK Component Thread
     participant Macro as RDK_LOG macro
     participant MsgPrintf as rdk_logger_msg_printf
-    participant PrivLog as rdk_dbg_priv_log_msg
+    participant PrivLog as rdk_dbg_priv_log
     participant Log4C as Log4C Backend
     participant Output as Output Destination
 
     Client->>Macro: RDK_LOG(level, module, format, ...)
     Macro->>MsgPrintf: rdk_logger_msg_printf(level, module, format, args)
     MsgPrintf->>MsgPrintf: Validate module and format pointers
-    MsgPrintf->>PrivLog: rdk_dbg_priv_log_msg(level, module, format, args)
+    MsgPrintf->>PrivLog: rdk_dbg_priv_log(level, module, format, args)
     PrivLog->>Log4C: log4c_category_is_priority_enabled(category, priority)
     alt Level enabled for module
         Log4C-->>PrivLog: Enabled
@@ -272,20 +272,20 @@ sequenceDiagram
 sequenceDiagram
     participant Admin as Operator
     participant Ctrl as rdklogctrl utility
-    participant UDP as UDP Socket (port 12035)
+    participant Socket as unix Socket (/tmp/.logger.<process_name>.<pid>)
     participant Listener as rdk_dyn_log_process_pending_request
-    participant Reconfig as rdk_dbg_priv_log_reconfig
+    participant Reconfig as rdk_dbg_priv_set_level
     participant Log4C as Log4C Category
 
     Admin->>Ctrl: rdklogctrl myapp LOG.RDK.MODULE DEBUG
     Ctrl->>Ctrl: Validate module name prefix and log level string
-    Ctrl->>UDP: sendto(127.255.255.255:12035, COMC-framed packet)
+    Ctrl->>Socket: sendto(/tmp/.logger.<process_name>.<pid>, COMC-framed packet)
     Note over Listener: Called from within target process event loop
-    Listener->>UDP: select() + recvfrom() — non-blocking
-    UDP-->>Listener: Binary control packet
-    Listener->>Listener: Verify COMC signature and sender == 127.0.0.1
+    Listener->>Socket: select() + recvfrom() — non-blocking
+    Socket-->>Listener: Binary control packet
+    Listener->>Listener: Verify COMC signature
     Listener->>Listener: Match __progname against app_name field
-    Listener->>Reconfig: rdk_dbg_priv_log_reconfig("LOG.RDK.MODULE", RDK_LOG_DEBUG)
+    Listener->>Reconfig: rdk_dbg_priv_set_level("LOG.RDK.MODULE", RDK_LOG_DEBUG)
     Reconfig->>Log4C: log4c_category_set_priority(cat, LOG4C_PRIORITY_DEBUG)
     Log4C-->>Reconfig: Priority updated
     Reconfig-->>Listener: true (success)
@@ -300,12 +300,12 @@ sequenceDiagram
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `Core Logging API`        | Exposes the `RDK_LOG` macro, initialization functions, and log level enumeration. Entry point for all RDK components.                                                                                                                                                                                                                                           | `include/rdk_logger.h`, `include/rdk_debug.h`                                      |
 | `Initialization Manager`  | Implements `rdk_logger_init()`, `rdk_logger_ext_init()`, and `rdk_logger_deinit()`. Guards one-time initialization with a mutex. Receives external data through the debug.ini file path.                                                                                                                                                                        | `src/rdk_logger_init.c`                                                            |
-| `Private Core`            | Implements Log4C backend integration, all six layout formatters, three custom appender backends (`to_console`, `to_syslog`, `to_journal`) plus rolling file output via Log4C's built-in `rollingfile` appender, configuration file parsing (`rdk_logger_parse_config`), module-level log category management, and the `rdk_dbg_priv_log_msg` dispatch function. | `src/rdk_debug_priv.c`, `src/include/rdk_debug_priv.h`                             |
-| `Debug Dispatch`          | Public-facing wrappers (`rdk_logger_msg_printf`, `rdk_dbg_MsgRaw`, `rdk_logger_msg_vsprintf`) that validate parameters and forward to `rdk_dbg_priv_log_msg`. Also provides `rdk_logger_set_logLevel`, `rdk_logger_enable_logLevel`, and `rdk_logger_level_from_string`.                                                                                        | `src/rdk_debug.c`                                                                  |
-| `Dynamic Logger`          | Implements the non-blocking UDP listener (port 12035) used for runtime log level control. Validates incoming `"COMC"`-signed messages and calls `rdk_dbg_priv_log_reconfig` on matched entries.                                                                                                                                                                 | `src/rdk_dynamic_logger.c`, `src/include/rdk_dynamic_logger.h`                     |
+| `Private Core`            | Implements Log4C backend integration, all six layout formatters, three custom appender backends (`to_console`, `to_syslog`, `to_journal`) plus rolling file output via Log4C's built-in `rollingfile` appender, configuration file parsing (`rdk_logger_parse_config`), module-level log category management, and the `rdk_dbg_priv_log` dispatch function. | `src/rdk_debug_priv.c`, `src/include/rdk_debug_priv.h`                             |
+| `Debug Dispatch`          | Public-facing wrappers (`rdk_logger_msg_printf`, `rdk_dbg_MsgRaw`, `rdk_logger_msg_vsprintf`) that validate parameters and forward to `rdk_dbg_priv_log`. Also provides `rdk_logger_set_logLevel`, `rdk_logger_enable_logLevel`, and `rdk_logger_level_from_string`.                                                                                        | `src/rdk_debug.c`                                                                  |
+| `Dynamic Logger`          | Implements the non-blocking socket listener used for runtime log level control. Validates incoming `"COMC"`-signed messages and calls `rdk_dbg_priv_set_level` on matched entries.                                                                                                                                                                 | `src/rdk_dynamic_logger.c`, `src/include/rdk_dynamic_logger.h`                     |
 | `Milestone Logger`        | Provides `logMilestone(msg_code)` which appends a `<code>:<uptime_ms>` record to the milestones log file using `CLOCK_MONOTONIC_RAW`. Receives external data through the `msg_code` string argument.                                                                                                                                                            | `src/rdk_logger_milestone.c`, `include/rdk_logger_milestone.h`                     |
 | `Onboarding Logger`       | Provides `rdk_logger_log_onboard(module, msg, ...)` for writing provisioning-phase log entries to a dedicated onboarding log file. Suppressed when `/nvram/.device_onboarded` or `/nvram/DISABLE_ONBOARD_LOGGING` exists.                                                                                                                                       | `src/rdk_logger_onboard.c`                                                         |
-| `Runtime Control Utility` | CLI tool (`rdklogctrl`) that constructs and sends `"COMC"`-framed UDP messages to change log levels in running processes. Also includes the milestone CLI tool (`rdklogmilestone`) and the onboarding utility (`rdk_logger_onboard_main`).                                                                                                                      | `utils/rdklogctrl.c`, `utils/rdklogmilestone.c`, `utils/rdk_logger_onboard_main.c` |
+| `Runtime Control Utility` | CLI tool (`rdklogctrl`) that constructs and sends `"COMC"`-framed socket messages to change log levels in running processes. Also includes the milestone CLI tool (`rdklogmilestone`) and the onboarding utility (`rdk_logger_onboard_main`).                                                                                                                      | `utils/rdklogctrl.c`, `utils/rdklogmilestone.c`, `utils/rdk_logger_onboard_main.c` |
 
 ---
 
@@ -322,8 +322,7 @@ RDK Logger is a foundational library where all interactions flow inward — midd
 | syslog daemon                | System-wide log integration                                          | `openlog()`, `syslog()`, `closelog()` — active when `HAVE_SYSLOG_H` is defined                                             |
 | systemd journal              | Modern Linux logging integration                                     | `sd_journal_print()` — active when `HAVE_SYSTEMD` is defined and `libsystemd >= 209` is present                            |
 | File system                  | Configuration file parsing; milestone and onboarding log persistence | `fopen()`, `fgets()`, `fprintf()` on `/etc/debug.ini`, `/opt/debug.ini`, `/nvram/debug.ini`, milestone log, onboarding log |
-| UDP socket (loopback)        | Runtime log level control from `rdklogctrl`                          | `socket(AF_INET, SOCK_DGRAM)`, port 12035, `127.255.255.255` broadcast                                                     |
-
+| Unix-domain datagram socket | Runtime log level control from `rdklogctrl` | `socket(AF_UNIX, SOCK_DGRAM)`, `/tmp/.logger_<process_name>.<pid>` |
 ### Events Published
 
 RDK Logger operates as a logging service, receiving log messages and control commands from RDK components and routing output to configured destinations. The table below captures the operational signals it emits.
@@ -366,14 +365,14 @@ sequenceDiagram
 sequenceDiagram
     participant Operator as Operator
     participant Tool as rdklogctrl
-    participant Target as Target Process (RDK Logger UDP listener)
+    participant Target as Target Process (RDK Logger Socket listener)
 
     Operator->>Tool: rdklogctrl <process> LOG.RDK.<MODULE> <LEVEL>
     Tool->>Tool: Validate module prefix and level string
-    Tool->>Target: UDP packet to 127.255.255.255:12035
+    Tool->>Target: Ctrl Message to unix Socket 
     Note over Target: rdk_dyn_log_process_pending_request() polled by process
     Target->>Target: Verify COMC signature, sender IP, process name
-    Target->>Target: rdk_dbg_priv_log_reconfig(module, level)
+    Target->>Target: rdk_dbg_priv_set_level(module, level)
     Target->>Target: Log4C category priority updated immediately
     Target-->>Tool: (stderr confirmation in target process)
 ```
@@ -384,7 +383,7 @@ sequenceDiagram
 
 ### Key Implementation Logic
 
-- **Initialization and Lifecycle Management**: `rdk_logger_init()` in `src/rdk_logger_init.c` serializes initialization using `gInitMutex` and the `isLogInited` flag to ensure idempotent behavior in multi-threaded environments. The initialization sequence calls `rdk_dbg_priv_init()` to register layout and appender types with Log4C and invoke `log4c_init()`, then calls `rdk_dbg_priv_config()` to parse the debug.ini file and set category priorities, then `rdk_dyn_log_init()` to open the UDP control socket.
+- **Initialization and Lifecycle Management**: `rdk_logger_init()` in `src/rdk_logger_init.c` serializes initialization using `gInitMutex` and the `isLogInited` flag to ensure idempotent behavior in multi-threaded environments. The initialization sequence calls `rdk_dbg_priv_init()` to register layout and appender types with Log4C and invoke `log4c_init()`, then calls `rdk_dbg_priv_config()` to parse the debug.ini file and set category priorities, then `rdk_dyn_log_init()` to open the unix socket.
 
 - **Configuration Parsing**: `rdk_logger_parse_config()` in `src/rdk_debug_priv.c` reads the debug.ini file line-by-line, skipping comments and lines without `=`. For the `LOG.RDK.DEFAULT` entry it sets the root `LOG.RDK` category priority; for all other `LOG.RDK.*` entries it calls `log4c_category_get()` and `log4c_category_set_priority()`. Whitespace trimming is applied to both name and value tokens before comparison. Level strings are parsed case-insensitively by `rdk_logger_level_from_string()`.
 
@@ -392,9 +391,7 @@ sequenceDiagram
 
 - **Extended Initialization and File Logging**: `rdk_logger_ext_init()` accepts an `rdk_logger_ext_config_t` structure specifying a module name, log level, output type (`RDKLOG_OUTPUT_CONSOLE`, `RDKLOG_OUTPUT_SYSLOG`, `RDKLOG_OUTPUT_JOURNAL`, or `RDKLOG_OUTPUT_FILE`), format type, and an optional `rdk_LogOutput_File` file policy. When `RDKLOG_OUTPUT_FILE` is selected, the `rdk_LogOutput_File` structure must be populated with `fileName` (log file prefix, max 64 chars), `fileLocation` (directory path, max 256 chars), `fileCountMax` (maximum number of rotating files), and `fileSizeMax` (maximum size per file in bytes). This path, implemented in `rdk_dbg_priv_ext_init()`, creates or retrieves a Log4C category and attaches a dedicated `rollingfile` appender with a `sizewin` rolling policy. File rolling closes the current appender before reconfiguring, preventing data loss. This mechanism is the primary means for components that require per-component log files on disk rather than shared console or system log output.
 
-- **Runtime Log Level Control**: `rdk_dyn_log_process_pending_request()` in `src/rdk_dynamic_logger.c` uses a non-blocking `select()` call on the UDP socket to drain any pending control messages in a loop. Each message is validated for the `"COMC"` signature and loopback source address before `rdk_dyn_log_validate_component_name()` matches the target process name against `__progname`. Validated messages invoke `rdk_dbg_priv_log_reconfig()` which calls `log4c_category_set_priority()` with the new level.
-
-- **Error Handling Strategy**: If configuration file parsing fails, `rdk_logger_init()` returns `RDK_FAILURE` and writes a diagnostic message to `printf`. When `log4c_init()` encounters an error, `rdk_dbg_priv_init()` writes a diagnostic message to `stderr` and the process continues with category state unchanged. When the UDP socket cannot be bound, `rdk_dyn_log_init()` writes a diagnostic to `stderr` and the process continues with static log levels only. Onboarding log file write failures produce output on `printf` as a fallback.
+- **Runtime Log Level Control**: `rdk_dyn_log_process_pending_request()` in `src/rdk_dynamic_logger.c` uses a non-blocking `select()` call on the Unix socket to drain pending control messages. Each message is checked for its size, terminated name fields, and `"COMC"` signature before `rdk_dyn_log_validate_component_name()` matches the target process name against `__progname` and validates the log level. Validated messages invoke `rdk_dbg_priv_set_level()` to update the category priority. Sender credentials are not checked.
 
 - **Logging & Diagnostics**: All `RDK_LOG()` calls use the `LOG.RDK.<MODULE>` naming convention. The root category `LOG.RDK` acts as the default parent for any module not explicitly listed in `debug.ini`. RDK Logger itself writes internal diagnostic messages to `stderr` (not through the `RDK_LOG` path) to avoid recursion during initialization or error conditions.
 

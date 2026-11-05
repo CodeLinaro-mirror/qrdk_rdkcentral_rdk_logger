@@ -344,6 +344,14 @@ bool rdk_logger_is_logLevel_enabled(const char *module, rdk_LogLevel level);
 bool rdk_logger_set_logLevel(const char *module, rdk_LogLevel logLevel);
 
 /**
+ * @brief Get the effective log level for a module.
+ * @param module Module name.
+ * @param logLevel Receives the effective log level on success.
+ * @return TRUE if the level was retrieved, FALSE for invalid arguments or an unknown level.
+ */
+bool rdk_logger_get_logLevel(const char *module, rdk_LogLevel *logLevel);
+
+/**
  * @brief Log a message for onboard logging.
  * @param module Module name.
  * @param msg Message to log.

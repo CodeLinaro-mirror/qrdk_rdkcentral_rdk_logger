@@ -135,7 +135,7 @@ find /etc -name "*log4c*" 2>/dev/null
 **Problem:** Changes don't take effect
 ```bash
 # Command appears to work but no change
-rdklogctrl myapp LOG.RDK.NETWORK DEBUG
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.NETWORK DEBUG
 ```
 
 **Debugging:**
@@ -143,10 +143,10 @@ rdklogctrl myapp LOG.RDK.NETWORK DEBUG
 **Step 1: Verify process name**
 ```bash
 # Check exact process name
-ps aux | grep myapp
+pgrep -o myapp
 
 # Use exact name from ps output
-rdklogctrl "myapp_process_name" LOG.RDK.NETWORK DEBUG
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.NETWORK DEBUG
 ```
 
 **Step 2: Check process accessibility**
@@ -155,13 +155,13 @@ rdklogctrl "myapp_process_name" LOG.RDK.NETWORK DEBUG
 ps -ef | grep myapp
 
 # Check if process accepts socket connections
-netstat -tlnp | grep :12035
+ss -xlp | grep '/tmp/.logger_'
 ```
 
 **Step 3: Test with simple module**
 ```bash
 # Try with a known module first
-rdklogctrl myapp LOG.RDK.DEFAULT INFO
+rdklogctrl "$(pidof -s myapp)" LOG.RDK.DEFAULT INFO
 ```
 
 #### Issue: Dynamic logging not persistent
@@ -486,14 +486,11 @@ void debug_config_loading() {
 
 #### Network Debugging for rdklogctrl
 ```bash
-# Check if dynamic logger port is listening
-netstat -tlnp | grep :12035
+# List per-process dynamic logger sockets
+ss -xlpn | grep '/tmp/.logger_'
 
-# Test socket connection
-telnet localhost 12035
-
-# Monitor network traffic
-tcpdump -i lo port 12035
+# Verify socket ownership and permissions
+ls -l /tmp/.logger_<process_name>.<pid>`
 ```
 
 ### Quick Reference Checklist
